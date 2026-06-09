@@ -1,0 +1,116 @@
+/* =====================================================================
+   PRISM Deck — slide design system  (1920×1080)
+   Hybrid: .s--dark (cover/section/impact) · .s--light (content)
+   Brand: Hanwha Orange + warm dark/paper · Hanwha display type
+   ===================================================================== */
+
+*{box-sizing:border-box}
+deck-stage:not(:defined){visibility:hidden}
+
+/* ---------- slide base ----------
+   deck-stage sizes & absolutely-positions each <section>; we only style insides. */
+.s{
+  overflow:hidden;
+  font-family:var(--font-body);color:var(--beige);
+  padding:104px 132px;display:flex;flex-direction:column;
+}
+.s *{box-sizing:border-box}
+
+/* ---------- surfaces ---------- */
+.s--dark{background:
+  radial-gradient(circle at 8% -6%,rgba(243,115,33,.12),transparent 38%),
+  radial-gradient(circle at 98% 108%,rgba(167,87,136,.08),transparent 40%),
+  linear-gradient(160deg,#241C19,#1A1310)}
+.s--light{background:var(--paper);color:var(--espresso)}
+.s--paper2{background:var(--paper-2)}
+
+/* faint grid for dark slides */
+.gridlines{position:absolute;inset:0;pointer-events:none;opacity:.45;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:96px 96px;
+  -webkit-mask:radial-gradient(circle at 26% 36%,#000,transparent 78%);
+          mask:radial-gradient(circle at 26% 36%,#000,transparent 78%)}
+
+/* ---------- type atoms ---------- */
+.kicker{font-family:var(--font-mono);font-weight:600;letter-spacing:.26em;
+  text-transform:uppercase;font-size:24px;color:var(--orange)}
+.s--light .kicker{color:#C2570F}
+.eyebrow-row{display:flex;align-items:center;gap:18px}
+.eyebrow-row .num{font-family:var(--font-mono);font-weight:700;font-size:24px;
+  color:var(--orange)}
+.s-title{font-family:var(--font-head);font-weight:700;letter-spacing:-.015em;
+  line-height:1.02;font-size:88px;color:var(--beige)}
+.s--light .s-title{color:var(--espresso)}
+.s-title.sm{font-size:68px}
+.s-lead{font-family:var(--font-head);font-weight:300;font-size:34px;line-height:1.5;
+  color:var(--greige);max-width:1180px;word-break:keep-all}
+.s--light .s-lead{color:var(--espresso-2)}
+.disp{font-family:var(--font-display);line-height:.9;letter-spacing:-.01em}
+.accent-bar{width:132px;height:6px;background:var(--orange);border-radius:3px}
+.mono{font-family:var(--font-mono)}
+
+/* ---------- footer / chrome ---------- */
+.s-foot{position:absolute;left:132px;right:132px;bottom:52px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--font-mono);font-size:18px;letter-spacing:.04em}
+.s--dark .s-foot{color:var(--muted);border-top:1.5px solid var(--line);padding-top:20px}
+.s--light .s-foot{color:var(--espresso-2);border-top:1.5px solid var(--paper-line);padding-top:20px}
+.pageno{font-weight:700}
+.s-foot .mono,.s-foot .brandmark{white-space:nowrap}
+.brandmark{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.brandmark .dot{width:11px;height:11px;border-radius:50%;background:var(--orange)}
+
+/* logo slot (top-right) */
+.logoslot{display:inline-flex;align-items:center;justify-content:center;
+  height:54px;min-width:150px;padding:0 20px;border:1.6px dashed var(--line);
+  border-radius:11px;font-family:var(--font-mono);font-size:15px;letter-spacing:.1em;
+  color:var(--muted);text-transform:uppercase}
+.s--light .logoslot{border-color:var(--paper-line);color:var(--espresso-2)}
+.tr-slot{position:absolute;top:104px;right:132px}
+
+/* ---------- chips / pills ---------- */
+.pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);
+  font-weight:600;font-size:20px;letter-spacing:.04em;padding:9px 18px;border-radius:999px}
+.tag{display:inline-flex;align-items:center;font-family:var(--font-mono);font-weight:600;
+  font-size:18px;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;border-radius:8px}
+
+/* ---------- cards ---------- */
+.card{border-radius:var(--r-card);padding:34px 32px}
+.s--dark .card{background:var(--brown);border:1.5px solid var(--line)}
+.s--light .card{background:#fff;border:1.5px solid var(--paper-line);box-shadow:0 10px 26px rgba(58,47,44,.06)}
+.card.hot{background:linear-gradient(165deg,rgba(243,115,33,.16),rgba(243,115,33,.04));
+  border-color:rgba(243,115,33,.55);box-shadow:var(--glow)}
+
+/* icon placeholder */
+.iconslot{width:64px;height:64px;border-radius:15px;display:flex;align-items:center;
+  justify-content:center;font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;
+  border:1.6px dashed currentColor}
+
+/* metric */
+.metric{font-family:var(--font-display);font-weight:700;line-height:.95;letter-spacing:-.01em}
+.metric .u{font-family:var(--font-head);font-weight:700;font-size:.42em;margin-left:6px}
+
+/* screenshot slot frame */
+.shot{position:relative;border-radius:16px;overflow:hidden;
+  border:1.5px solid var(--paper-line);background:#fff}
+.s--dark .shot{border-color:var(--line);background:#15100E}
+.shot image-slot{display:block;width:100%;height:100%}
+.shot .cap{position:absolute;left:16px;bottom:14px;z-index:3;font-family:var(--font-mono);
+  font-size:16px;color:var(--muted);background:rgba(20,16,14,.6);padding:5px 12px;border-radius:8px;
+  pointer-events:none}
+
+/* divider list rows */
+.rows{display:flex;flex-direction:column}
+.row{display:flex;gap:26px;align-items:baseline;padding:24px 0}
+.s--light .row{border-top:1.5px solid var(--paper-line)}
+.s--dark .row{border-top:1.5px solid var(--line)}
+.row .rn{font-family:var(--font-display);font-weight:700;font-size:46px;color:var(--orange);
+  min-width:72px;line-height:1}
+.row .rt{font-family:var(--font-head);font-weight:700;font-size:32px}
+.s--dark .row .rt{color:var(--beige)}
+.row .rd{font-size:22px;color:var(--espresso-2);margin-top:6px;line-height:1.45}
+.s--dark .row .rd{color:var(--greige)}
+
+/* ---------- entrance (kept static for reliable PPTX/PDF/print capture) ---------- */
+

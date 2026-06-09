@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATLAS 3페이지 대안 비교</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="deck.css">
+<link rel="stylesheet" href="deck-refine.css">
+<style>
+  body{margin:0;background:#120d0b;color:var(--beige);font-family:var(--font-head);padding:34px}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px}
+  h1{font-family:var(--font-display);font-size:58px;line-height:.95;margin:0;font-weight:400;color:var(--beige);letter-spacing:-.03em}
+  .hint{font-size:18px;color:var(--greige)}
+  .wrap{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .frame{background:#EDE3D8;border-radius:22px;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+  .name{font-size:20px;font-weight:700;color:#C2570F;margin:0 0 12px 6px}
+  .slide{position:relative;aspect-ratio:16/9;background:var(--paper);overflow:hidden;border-radius:12px;padding:58px 64px;color:var(--espresso);box-sizing:border-box;border:1px solid var(--paper-line)}
+  .kicker{font-family:var(--font-mono);font-size:15px;letter-spacing:.11em;font-weight:700;color:#C2570F}
+  .title{font-family:var(--font-head);font-size:48px;font-weight:700;letter-spacing:-.04em;line-height:1.08;margin-top:14px;color:var(--espresso)}
+  .foot{position:absolute;left:64px;right:64px;bottom:38px;display:flex;justify-content:space-between;align-items:center;font-size:15px;color:#8a5a3a}.pageno{font-family:var(--font-mono);color:#C2570F}
+  .card{background:#fff;border:1.5px solid var(--paper-line);border-radius:14px;box-shadow:0 12px 28px rgba(96,81,77,.08)}
+  .orange{color:#C2570F}.blue{color:var(--blue)}.purple{color:var(--purple)}.green{color:#4F9E4A}
+
+  /* alt1 map */
+  .map{position:relative;height:455px;margin-top:28px}
+  .center{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:190px;height:190px;border-radius:50%;background:#1A1310;color:var(--beige);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:0 22px 50px rgba(26,19,16,.22);z-index:3}
+  .center .big{font-family:var(--font-display);font-size:62px;color:var(--orange);line-height:1}.center .small{font-size:20px;font-weight:700;margin-top:8px;line-height:1.2}
+  .node{position:absolute;width:160px;min-height:68px;padding:15px 16px;box-sizing:border-box;font-size:18px;font-weight:700;line-height:1.25;color:var(--espresso);z-index:2}.node small{display:block;font-size:12px;font-family:var(--font-mono);color:#8a5a3a;margin-bottom:4px;letter-spacing:.06em}.n1{left:20px;top:18px}.n2{left:265px;top:2px}.n3{right:220px;top:22px}.n4{right:28px;top:126px}.n5{right:168px;bottom:18px}.n6{left:280px;bottom:0}.n7{left:20px;bottom:110px}
+  .line{position:absolute;height:2px;background:#C9B8A8;transform-origin:left center;z-index:1}.line.hot{background:linear-gradient(90deg,#C9B8A8,#F37321)}.line.broken{background:repeating-linear-gradient(90deg,#C9B8A8 0 12px,transparent 12px 22px)}
+  .l1{left:180px;top:100px;width:245px;transform:rotate(28deg)}.l2{left:390px;top:95px;width:180px;transform:rotate(68deg)}.l3{right:350px;top:110px;width:220px;transform:rotate(138deg)}.l4{right:190px;top:220px;width:210px;transform:rotate(178deg)}.l5{right:300px;bottom:112px;width:190px;transform:rotate(220deg)}.l6{left:390px;bottom:115px;width:165px;transform:rotate(300deg)}.l7{left:190px;bottom:190px;width:230px;transform:rotate(338deg)}
+  .thesis{position:absolute;left:64px;right:64px;bottom:80px;background:#fff7ed;border:1px solid rgba(243,115,33,.25);border-radius:12px;padding:16px 20px;font-size:22px;font-weight:700;color:#7a4320;text-align:center}
+
+  /* alt2 before after */
+  .ba{display:grid;grid-template-columns:1fr 120px 1fr;gap:18px;margin-top:34px;align-items:stretch;height:430px}
+  .panel{padding:26px;display:flex;flex-direction:column}.panel.dark{background:#1A1310;color:var(--beige);border-color:#2A211D}.panel.light{background:#fff;color:var(--espresso)}
+  .panel-title{font-family:var(--font-display);font-size:54px;line-height:.9;margin-bottom:16px}.panel-sub{font-size:20px;font-weight:700;color:#8a5a3a;margin-bottom:18px}.dark .panel-sub{color:var(--greige)}
+  .list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}.chip{border-radius:999px;padding:11px 14px;font-family:var(--font-head);font-weight:700;font-size:18px;text-align:center;background:#F7F1E9;color:var(--espresso);box-shadow:0 8px 18px rgba(0,0,0,.06)}.dark .chip{background:rgba(255,255,255,.08);color:var(--beige)}
+  .arrow{display:flex;align-items:center;justify-content:center}.circle{width:86px;height:86px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:64px;color:#1A1310;box-shadow:0 18px 40px rgba(243,115,33,.35)}
+  .loop{display:flex;flex-direction:column;gap:12px;margin-top:auto}.step{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700}.dot{width:13px;height:13px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 5px rgba(243,115,33,.13)}
+  .one{font-family:var(--font-display);font-size:78px;color:#C2570F;line-height:.9;margin-top:8px}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>Page 03 Redesign Options</h1>
+    <div class="hint">대안 1 vs 대안 2 — 마음에 드는 방향 고르면 실제 3페이지에 적용</div>
+  </div>
+  <div class="wrap">
+    <div class="frame">
+      <div class="name">대안 1 · 운용역의 실제 화면 지도</div>
+      <section class="slide">
+        <div class="kicker">01 — THE PROBLEM</div>
+        <div class="title">운용 판단은 한 번인데,<br>화면은 계속 바뀝니다</div>
+        <div class="map">
+          <div class="line l1 hot"></div><div class="line l2 broken"></div><div class="line l3"></div><div class="line l4 broken"></div><div class="line l5"></div><div class="line l6 broken"></div><div class="line l7 hot"></div>
+          <div class="node card n1"><small>MARKET</small>시장 데이터</div>
+          <div class="node card n2"><small>CHART</small>종목 차트</div>
+          <div class="node card n3"><small>P&L</small>손익 현황</div>
+          <div class="node card n4"><small>RESEARCH</small>리서치 리포트</div>
+          <div class="node card n5"><small>DISCLOSURE</small>뉴스·공시</div>
+          <div class="node card n6"><small>REPORT</small>보고서 작성</div>
+          <div class="node card n7"><small>IDEA</small>아이디어·AI</div>
+          <div class="center"><div class="big">?</div><div class="small">오늘의<br>운용 판단</div></div>
+        </div>
+        <div class="thesis">문제는 화면이 많은 게 아니라, 화면 사이의 맥락이 이어지지 않는다는 점입니다.</div>
+        <div class="foot"><span>흩어진 화면, 느려지는 판단</span><span class="pageno">03</span></div>
+      </section>
+    </div>
+    <div class="frame">
+      <div class="name">대안 2 · Before / After 전환</div>
+      <section class="slide">
+        <div class="kicker">01 — THE PROBLEM</div>
+        <div class="title">7개의 모니터에서<br>하나의 운용 루프로</div>
+        <div class="ba">
+          <div class="panel card dark">
+            <div class="panel-title">Before</div>
+            <div class="panel-sub">여러 모니터를 오가는 업무</div>
+            <div class="list">
+              <div class="chip">시장 데이터</div><div class="chip">종목 차트</div><div class="chip">손익 현황</div><div class="chip">리서치</div><div class="chip">뉴스·공시</div><div class="chip">보고서</div><div class="chip">AI/아이디어</div>
+            </div>
+          </div>
+          <div class="arrow"><div class="circle">→</div></div>
+          <div class="panel card light">
+            <div class="panel-title">After</div>
+            <div class="panel-sub">ATLAS가 연결하는 하나의 판단 흐름</div>
+            <div class="one">ONE LOOP</div>
+            <div class="loop">
+              <div class="step"><span class="dot"></span>시장현황</div>
+              <div class="step"><span class="dot"></span>손익현황</div>
+              <div class="step"><span class="dot"></span>시황에이전트</div>
+              <div class="step"><span class="dot"></span>아이디어랩</div>
+              <div class="step"><span class="dot"></span>AI Committee</div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span>정보는 많고, 판단은 연결되지 않습니다</span><span class="pageno">03</span></div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

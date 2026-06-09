@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+pandas
+pytest
+httpx
+pykrx
+openpyxl
+requests
+anthropic
+yfinance

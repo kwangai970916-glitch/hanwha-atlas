@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<!-- saved from url=(0316)file:///C:/Users/infomax/Desktop/Jinkwang/03.AI/%EB%B0%94%EC%9D%B4%EB%B8%8C%EC%BD%94%EB%94%A9_%EA%B2%BD%EC%A7%84%EB%8C%80%ED%9A%8C_%EC%A3%BC%EC%8B%9D%EC%9A%B4%EC%9A%A9%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4/ai-investment-desk-os/frontend/public/atlas-deck/%ED%95%9C%ED%99%94%20ATLAS%20%EB%B0%9C%ED%91%9C%EB%8D%B1.html#2 -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한화 ATLAS — Agentic Investment Desk · 발표 덱</title>
+<link rel="stylesheet" href="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tokens.css">
+<link rel="stylesheet" href="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/deck.css">
+<link rel="stylesheet" href="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/deck-refine.css">
+<link rel="stylesheet" href="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/atlas-editor.css">
+<template id="__bundler_thumbnail"></template>
+<style id="deck-stage-print-page">@page { size: 1920px 1080px; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: none !important; overflow: visible !important; height: auto !important; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } *, *::before, *::after { animation-delay: -99s !important; animation-duration: .001s !important; animation-iteration-count: 1 !important; animation-fill-mode: both !important; animation-play-state: running !important; transition-duration: 0s !important; } }</style></head>
+<body class="atlas-edit-mode"><div class="atlas-editor-toolbar">
+      <strong>ATLAS Editor</strong>
+      <button type="button" data-action="toggle" class="is-active">편집 ON</button>
+      <button type="button" data-action="move">이동 모드</button>
+      <button type="button" data-action="addText">텍스트 추가</button>
+      <button type="button" data-action="addCard">카드 추가</button>
+      <button type="button" data-action="duplicate">복제</button>
+      <button type="button" data-action="delete">삭제</button>
+      <button type="button" data-action="bringFront">앞으로</button>
+      <button type="button" data-action="save">저장</button>
+      <button type="button" data-action="reset">초기화</button>
+      <button type="button" data-action="download">HTML 다운로드</button>
+      <span class="atlas-editor-status">자동 저장됨</span>
+    </div>
+<deck-stage width="1920" height="1080" style="--deck-rail-w: 188px;"><template shadowrootmode="open"><style>
+    :host {
+      position: fixed;
+      inset: 0;
+      display: block;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* connectedCallback holds this until document.fonts.ready (capped 2s) so
+     * the first visible paint has the deck's real typography + final rail
+     * layout. opacity (not visibility) so the active slide can't un-hide
+     * itself via the ::slotted([data-deck-active]) visibility:visible rule.
+     * Only the stage/rail hide — the black :host background stays, so the
+     * iframe doesn't flash the page's default white. */
+    :host([data-fonts-pending]) .stage,
+    :host([data-fonts-pending]) .rail { opacity: 0; pointer-events: none; }
+
+    .stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .canvas {
+      position: relative;
+      transform-origin: center center;
+      flex-shrink: 0;
+      background: #fff;
+      will-change: transform;
+    }
+
+    /* Slides live in light DOM (via <slot>) so authored CSS still applies.
+       We absolutely position each slotted child to stack them. */
+    ::slotted(*) {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      box-sizing: border-box !important;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+    }
+    ::slotted([data-deck-active]) {
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    .overlay {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translate(-50%, 6px) scale(0.92);
+      filter: blur(6px);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      background: #000;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 12px;
+      font-feature-settings: "tnum" 1;
+      letter-spacing: 0.01em;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 260ms ease, transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease;
+      transform-origin: center bottom;
+      z-index: 2147483000;
+      user-select: none;
+    }
+    .overlay[data-visible] {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, 0) scale(1);
+      filter: blur(0);
+    }
+
+    .btn {
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      color: inherit;
+      font: inherit;
+      cursor: default;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 999px;
+      color: rgba(255,255,255,0.72);
+      transition: background 140ms ease, color 140ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn:active { background: rgba(255,255,255,0.18); }
+    .btn:focus { outline: none; }
+    .btn:focus-visible { outline: none; }
+    .btn::-moz-focus-inner { border: 0; }
+    .btn svg { width: 14px; height: 14px; display: block; }
+    .btn.reset {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 0 10px 0 12px;
+      gap: 6px;
+      color: rgba(255,255,255,0.72);
+    }
+    .btn.reset .kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1;
+      color: rgba(255,255,255,0.88);
+      background: rgba(255,255,255,0.12);
+      border-radius: 4px;
+    }
+
+    .count {
+      font-variant-numeric: tabular-nums;
+      color: #fff;
+      font-weight: 500;
+      padding: 0 8px;
+      min-width: 42px;
+      text-align: center;
+      font-size: 12px;
+    }
+    .count .sep { color: rgba(255,255,255,0.45); margin: 0 3px; font-weight: 400; }
+    .count .total { color: rgba(255,255,255,0.55); }
+
+    .divider {
+      width: 1px;
+      height: 14px;
+      background: rgba(255,255,255,0.18);
+      margin: 0 2px;
+    }
+
+    /* ── Thumbnail rail ──────────────────────────────────────────────────
+       Fixed column on the left; each thumbnail is a static deep-clone of
+       the light-DOM slide scaled into a 16:9 (or design-aspect) frame. The
+       stage re-fits around it (see _fit); hidden during present / noscale
+       / print so capture geometry and fullscreen output are unchanged. */
+    .rail {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--deck-rail-w, 188px);
+      background: #141414;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 2147482500;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.18) transparent;
+    }
+    .rail::-webkit-scrollbar { width: 8px; }
+    .rail::-webkit-scrollbar-track { background: transparent; margin: 2px; }
+    .rail::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.18);
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    .rail::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.28);
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    :host([no-rail]) .rail,
+    :host([noscale]) .rail { display: none; }
+    .rail[data-presenting] { display: none; }
+    @media (max-width: 640px) {
+      .rail, .rail-resize { display: none; }
+    }
+    /* User-driven show/hide (the TweaksPanel toggle) slides instead of
+       popping. Transitions are gated on :host([data-rail-anim]) — set only
+       for the 200ms around the toggle — so window-resize and rail-width
+       drag (which also call _fit) don't lag behind the cursor. */
+    .rail[data-user-hidden] { transform: translateX(-100%); }
+    :host([data-rail-anim]) .rail { transition: transform 200ms cubic-bezier(.3,.7,.4,1); }
+    :host([data-rail-anim]) .stage { transition: left 200ms cubic-bezier(.3,.7,.4,1); }
+    :host([data-rail-anim]) .canvas { transition: transform 200ms cubic-bezier(.3,.7,.4,1); }
+    /* transition shorthand replaces rather than merges — repeat the base
+       .overlay opacity/transform/filter transitions so visibility changes
+       during the 200ms toggle window still fade instead of popping. */
+    :host([data-rail-anim]) .overlay {
+      transition: margin-left 200ms cubic-bezier(.3,.7,.4,1),
+                  opacity 260ms ease,
+                  transform 260ms cubic-bezier(.2,.8,.2,1),
+                  filter 260ms ease;
+    }
+
+    .thumb {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .thumb .num {
+      width: 16px;
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 500;
+      text-align: right;
+      color: rgba(255,255,255,0.55);
+      padding-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .thumb .frame {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      aspect-ratio: var(--deck-aspect);
+      background: #fff;
+      border-radius: 4px;
+      outline: 2px solid transparent;
+      outline-offset: 0;
+      overflow: hidden;
+      transition: outline-color 120ms ease;
+    }
+    .thumb:hover .frame { outline-color: rgba(255,255,255,0.25); }
+    .thumb { outline: none; }
+    .thumb:focus-visible .frame { outline-color: rgba(255,255,255,0.5); }
+    .thumb[data-current] .num { color: #fff; }
+    .thumb[data-current] .frame { outline-color: #D97757; }
+    .thumb[data-dragging] { opacity: 0.35; }
+    .thumb::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      right: 0;
+      height: 3px;
+      border-radius: 2px;
+      background: #D97757;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .thumb[data-drop="before"]::before { top: -8px; opacity: 1; }
+    .thumb[data-drop="after"]::before { bottom: -8px; opacity: 1; }
+    .thumb[data-skip] .frame { opacity: 0.35; }
+    .thumb[data-skip] .frame::after {
+      content: 'Skipped';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .ctxmenu {
+      position: fixed;
+      min-width: 150px;
+      padding: 4px;
+      background: #242424;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 7px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+      z-index: 2147483100;
+      display: none;
+      font-size: 12px;
+    }
+    .ctxmenu[data-open] { display: block; }
+    .ctxmenu button {
+      display: block;
+      width: 100%;
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #e8e8e8;
+      font: inherit;
+      text-align: left;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .ctxmenu button:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+    .ctxmenu button:disabled { opacity: 0.35; cursor: default; }
+    .ctxmenu hr {
+      border: 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin: 4px 2px;
+    }
+
+    .rail-resize {
+      position: fixed;
+      left: calc(var(--deck-rail-w, 188px) - 3px);
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      cursor: col-resize;
+      z-index: 2147482600;
+      touch-action: none;
+    }
+    .rail-resize:hover,
+    .rail-resize[data-dragging] { background: rgba(255,255,255,0.12); }
+    :host([no-rail]) .rail-resize,
+    :host([noscale]) .rail-resize,
+    .rail[data-presenting] + .rail-resize,
+    .rail[data-user-hidden] + .rail-resize { display: none; }
+
+    /* Delete-confirm popup — matches the SPA's ConfirmDialog layout
+       (title + message body, depressed footer with Cancel / Delete). */
+    .confirm-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 2147483200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .confirm-backdrop[data-open] { display: flex; }
+    .confirm {
+      width: 320px;
+      max-width: calc(100vw - 32px);
+      background: #2a2a2a;
+      color: #e8e8e8;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+      overflow: hidden;
+      font-family: inherit;
+      animation: deck-confirm-in 0.18s ease;
+    }
+    @keyframes deck-confirm-in {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .confirm .body { padding: 20px 20px 16px; }
+    .confirm .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .confirm .msg { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.65); }
+    .confirm .footer {
+      padding: 14px 20px;
+      background: #1f1f1f;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .confirm button {
+      appearance: none;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .confirm .cancel {
+      background: transparent;
+      border: 0;
+      color: rgba(255,255,255,0.8);
+    }
+    .confirm .cancel:hover { background: rgba(255,255,255,0.08); }
+    .confirm .danger {
+      background: #c96442;
+      border: 1px solid rgba(0,0,0,0.15);
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(166,50,68,0.3), 0 2px 6px rgba(166,50,68,0.18);
+    }
+    .confirm .danger:hover { background: #b5563a; }
+
+    /* ── Print: one page per slide, no chrome ────────────────────────────
+       The screen layout stacks every slide at inset:0 inside a scaled
+       canvas; for print we want them in document flow at the authored
+       design size so the browser paginates one slide per sheet. The
+       @page size is set from the width/height attributes via the inline
+       <style id="deck-stage-print-page"> that connectedCallback injects
+       into <head> (the @page at-rule has no effect inside shadow DOM). */
+    @media print {
+      :host {
+        position: static;
+        inset: auto;
+        background: none;
+        overflow: visible;
+        color: inherit;
+      }
+      .stage { position: static; display: block; }
+      .canvas {
+        transform: none !important;
+        width: auto !important;
+        height: auto !important;
+        background: none;
+        will-change: auto;
+      }
+      ::slotted(*) {
+        position: relative !important;
+        inset: auto !important;
+        width: var(--deck-design-w) !important;
+        height: var(--deck-design-h) !important;
+        box-sizing: border-box !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto;
+        break-after: page;
+        page-break-after: always;
+        break-inside: avoid;
+        overflow: hidden;
+      }
+      /* :last-child alone isn't enough once data-deck-skip hides the
+         trailing slide(s) — the last *visible* slide still carries
+         break-after:page and prints a blank sheet. _markLastVisible()
+         maintains data-deck-last-visible on the last non-skipped slide. */
+      ::slotted(*:last-child),
+      ::slotted([data-deck-last-visible]) {
+        break-after: auto;
+        page-break-after: auto;
+      }
+      ::slotted([data-deck-skip]) { display: none !important; }
+      .overlay, .rail, .rail-resize, .ctxmenu, .confirm-backdrop { display: none !important; }
+    }
+  </style><div class="rail export-hidden" data-omelette-chrome="" style="--deck-aspect: 1920/1080;"><div class="thumb" tabindex="0" draggable="true"><div class="num">1</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--dark" data-label="표지" data-screen-label="01 표지" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="0" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="gridlines"></div>
+    <!-- orb -->
+    <div style="position:absolute;right:80px;top:236px;width:648px;height:648px;border-radius:50%;background:radial-gradient(circle,rgba(243,115,33,.18),transparent 64%);filter:blur(8px)"></div>
+    <div style="position:absolute;right:110px;top:280px;width:560px;height:560px;border-radius:50%;background:#120D0B;border:2px solid #2A211D"></div>
+    <div style="position:absolute;right:190px;top:360px;width:400px;height:400px;border-radius:50%;background:#181210;border:3px solid rgba(243,115,33,.55);box-shadow:inset 0 0 90px rgba(243,115,33,.22)"></div>
+    <div style="position:absolute;right:290px;top:460px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#FBB584,#F37321 60%,#9c4410);box-shadow:0 0 120px rgba(243,115,33,.55)"></div>
+    <!-- top bar -->
+    <div class="logoslot tr-slot" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">로고 자리</div>
+    <div class="kicker" style="color:var(--muted)" data-atlas-text="true" contenteditable="true" spellcheck="false">VIBE CODING COMPETITION 2026</div>
+
+    <div style="margin-top:232px">
+      <div class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">AI INVESTMENT DESK OS</div>
+      <div class="disp" style="position:relative;z-index:3;font-size:268px;margin:6px 0 0;background:linear-gradient(180deg,#FFF6ED,#F4DEC4);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 60px rgba(26,19,16,.55)" data-atlas-text="true" contenteditable="true" spellcheck="false">ATLAS</div>
+      <div class="accent-bar" style="position:relative;z-index:3;margin:10px 0 18px" data-atlas-component="true"></div>
+      <div class="s-lead" style="position:relative;z-index:3;font-family:var(--font-head);font-weight:700;font-size:54px;line-height:1.12;color:var(--beige);margin-top:0;max-width:1180px;letter-spacing:-.02em" data-atlas-text="true" contenteditable="true" spellcheck="false">Multi Agent를 활용한 주식 운용 플랫폼</div>
+      <div class="s-lead" style="position:relative;z-index:3;font-size:23px;line-height:1.35;max-width:1420px;color:var(--greige);margin-top:18px;white-space:nowrap" data-atlas-text="true" contenteditable="true" spellcheck="false">보험사 주식운용역의 하루를 시장 및 손익 모니터링, 시황 분석, 신규 투자아이디어까지 <b style="color:var(--beige);font-weight:700">하나의 플랫폼</b>으로 압축</div>
+      <div class="cover-bubbles" style="display:flex;gap:14px;margin-top:34px;align-items:center;flex-wrap:wrap">
+        <span class="cover-bubble" style="--bubble-bg:var(--orange);--bubble-fg:#1A1310">AGENTIC</span>
+        <span class="cover-bubble" style="--bubble-bg:var(--blue);--bubble-fg:#1A1310">TRADING</span>
+        <span class="cover-bubble" style="--bubble-bg:var(--orange-3);--bubble-fg:#1A1310">LIVE</span>
+        <span class="cover-bubble" style="--bubble-bg:#7FB77E;--bubble-fg:#1A1310">ANALYTICS</span>
+        <span class="cover-bubble" style="--bubble-bg:var(--purple);--bubble-fg:#1A1310">SYSTEM</span>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)" data-atlas-text="true" contenteditable="true" spellcheck="false">VIBE CODING COMPETITION 2026 · 한화손해보험</span><span class="brandmark" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true"><span class="dot"></span>ATLAS</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true" data-current=""><div class="num">2</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--dark" data-label="문제 제기" data-screen-label="02 문제 제기" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="1" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="gridlines"></div>
+    <div class="kicker anim" data-atlas-text="true" contenteditable="true" spellcheck="false">01 — THE PROBLEM</div>
+    <div style="margin-top:auto;max-width:1500px">
+      <div class="s-title anim" style="font-size:104px" data-atlas-text="true" contenteditable="true" spellcheck="false">제 책상 위에는 오늘도<br><span style="color:var(--orange)">7개의 모니터</span>가 켜져 있습니다.</div>
+      <div class="s-lead anim" style="margin-top:40px;font-size:34px;max-width:1360px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">시장 데이터, 종목 차트, 리서치 리포트, 손익 현황.<br>주식 운용 관련 업무는 여러 대의 모니터 사이를 오가며 진행됩니다.</div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)" data-atlas-text="true" contenteditable="true" spellcheck="false">흩어진 화면, 느려지는 판단</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">02</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">3</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--light" data-label="화면 지도" data-screen-label="03 화면 지도" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="2" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="eyebrow-row anim"><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">01 — THE PROBLEM</span></div>
+    <div class="s-title sm anim" style="margin-top:14px" data-atlas-text="true" contenteditable="true" spellcheck="false">하나의 판단을 위해 필요한 정보는<br>여러 화면에 흩어져 있습니다</div>
+    <div class="screen-map anim">
+      <div class="map-line map-line-1 hot"></div>
+      <div class="map-line map-line-2 broken"></div>
+      <div class="map-line map-line-3"></div>
+      <div class="map-line map-line-4 broken"></div>
+      <div class="map-line map-line-5"></div>
+      <div class="map-line map-line-6 broken"></div>
+      <div class="map-line map-line-7 hot"></div>
+
+      <div class="map-node card n1" data-atlas-component="true"><small>MARKET</small>시장 데이터</div>
+      <div class="map-node card n2" data-atlas-component="true"><small>CHART</small>종목 차트</div>
+      <div class="map-node card n3" data-atlas-component="true"><small>P&amp;L</small>손익 현황</div>
+      <div class="map-node card n4" data-atlas-component="true"><small>RESEARCH</small>리서치 리포트</div>
+      <div class="map-node card n5" data-atlas-component="true"><small>DISCLOSURE</small>뉴스·공시</div>
+      <div class="map-node card n6" data-atlas-component="true"><small>REPORT</small>보고서 작성</div>
+      <div class="map-node card n7" data-atlas-component="true"><small>IDEA</small>아이디어·AI</div>
+
+      <div class="map-center">
+        <div class="map-question">?</div>
+        <div class="map-center-text">오늘의<br>운용 판단</div>
+      </div>
+    </div>
+<div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)" data-atlas-text="true" contenteditable="true" spellcheck="false">흩어진 화면, 느려지는 판단</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">03</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">4</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--dark" data-label="솔루션" data-screen-label="04 솔루션" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="3" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="gridlines"></div>
+    <div class="kicker anim" data-atlas-text="true" contenteditable="true" spellcheck="false">02 — THE SOLUTION</div>
+    <div class="s-title sm anim" style="margin-top:14px" data-atlas-text="true" contenteditable="true" spellcheck="false">ATLAS — 에이전트로 굴러가는 운용 데스크</div>
+    <div class="s-lead anim" style="margin-top:18px;font-size:30px" data-atlas-text="true" contenteditable="true" spellcheck="false">여러 AI 에이전트가(Agentic) · 주식운용을(Trading) · 실시간 데이터 위에서(Live) · 분석으로(Analytics) · 하나의 데스크로(System) 묶는다.</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:22px;margin-top:auto;margin-bottom:30px">
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--orange)" data-atlas-text="true" contenteditable="true" spellcheck="false">A</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Agentic</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">에이전트가 운용역을 보좌</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--blue)" data-atlas-text="true" contenteditable="true" spellcheck="false">T</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Trading</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">보유·손익·BM 성과</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--orange-3)" data-atlas-text="true" contenteditable="true" spellcheck="false">L</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Live</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">실시간 시세·거시 KPI</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:#7FB77E" data-atlas-text="true" contenteditable="true" spellcheck="false">A</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Analytics</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">위험지표·백테스트·근거</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--purple)" data-atlas-text="true" contenteditable="true" spellcheck="false">S</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">System</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">5탭을 하나의 루프로</div>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">04</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">5</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--dark" data-label="섹션 · 제품" data-screen-label="05 섹션 · 제품" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="4" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="gridlines"></div>
+    <div style="position:absolute;right:132px;top:50%;transform:translateY(-50%);font-family:var(--font-display);font-size:520px;color:transparent;line-height:.8" class="bignum" data-atlas-component="true">05</div>
+    <div style="margin-top:auto">
+      <div class="kicker anim" data-atlas-text="true" contenteditable="true" spellcheck="false">PRODUCT</div>
+      <div class="s-title anim" style="font-size:120px;margin-top:10px" data-atlas-text="true" contenteditable="true" spellcheck="false">하나의 화면,<br>다섯 개의 탭</div>
+      <div class="s-lead anim" style="margin-top:30px" data-atlas-text="true" contenteditable="true" spellcheck="false">시장현황 · 손익현황 · 시황에이전트 · AI 아이디어랩 · AI투자위원회</div>
+    </div>
+    <div class="s-foot"><span class="brandmark" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true"><span class="dot"></span>ATLAS</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">05</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">6</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--light" data-label="5탭 개요" data-screen-label="06 5탭 개요" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="5" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">02</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">PRODUCT — OVERVIEW</span></div>
+    <div class="s-title sm anim" style="margin-top:14px" data-atlas-text="true" contenteditable="true" spellcheck="false">5탭, 끊김 없는 한 동선</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:22px;margin-top:46px">
+      <div class="card hot anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-market.png" alt="시장현황 아이콘" loading="lazy" decoding="async"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">01</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">시장현황</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">실시간 시세·KPI·캔들</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-pnl.png" alt="손익현황 아이콘" loading="lazy" decoding="async"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:var(--blue);font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">02</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">손익현황</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">보유·손익·위험지표</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-briefing.png" alt="시황에이전트 아이콘" loading="lazy" decoding="async"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">03</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">시황에이전트</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">장전/장중/장마감 9섹션</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-idea.png" alt="AI 아이디어랩 아이콘" loading="lazy" decoding="async"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:#4F9E4A;font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">04</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">AI 아이디어랩</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">투자 아이디어 발굴</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-committee.png" alt="AI Committee 아이콘" loading="lazy" decoding="async"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:var(--purple);font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">05</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">AI투자위원회</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">개별종목 심층리서치</div>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span class="brandmark" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true"><span class="dot"></span>ATLAS</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">06</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">7</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--light" data-label="시장현황" data-screen-label="07 시장현황" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="6" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">01</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">TAB 01 — <span class="kicker-ko">시장현황</span></span></div>
+    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:56px;margin-top:24px;flex:1;align-items:center">
+      <div class="shot anim" style="aspect-ratio:16/10" data-atlas-component="true">
+        <div class="" style="background: rgba(0, 0, 0, 0.06); border: 1px dashed rgba(0, 0, 0, 0.15);"></div>
+        <span class="cap" data-atlas-text="true" contenteditable="true" spellcheck="false">시장현황 · Live / Sector / Chart</span>
+      </div>
+      <div class="anim">
+        <div class="s-title sm" style="font-size:58px" data-atlas-text="true" contenteditable="true" spellcheck="false">끊기지 않는 KR 시세,<br>한 줄에 모인 거시 KPI</div>
+        <div class="rows" style="margin-top:24px">
+          <div class="row" style="padding:18px 0" data-atlas-component="true"><span style="font-size:23px;color:var(--espresso-2);line-height:1.5" data-atlas-text="true" contenteditable="true" spellcheck="false"><b style="color:var(--espresso)">실시간 시세 테이프</b> — 네이버 금융 1차 + pykrx 폴백으로 휴장·차단에도 자동 복구</span></div>
+          <div class="row" style="padding:18px 0" data-atlas-component="true"><span style="font-size:23px;color:var(--espresso-2);line-height:1.5" data-atlas-text="true" contenteditable="true" spellcheck="false"><b style="color:var(--espresso)">거시 KPI 한 줄</b> — KOSPI·KOSDAQ·USD/KRW·VIX·WTI·금</span></div>
+          <div class="row" style="padding:18px 0" data-atlas-component="true"><span style="font-size:23px;color:var(--espresso-2);line-height:1.5" data-atlas-text="true" contenteditable="true" spellcheck="false"><b style="color:var(--espresso)">섹터 등락 · 멀티에셋 · 캔들</b> — 시세 기준일과 수집 시각을 분리 표기</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">07</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">8</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--light" data-label="손익현황" data-screen-label="08 손익현황" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="7" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">02</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">TAB 02 — <span class="kicker-ko">손익현황</span></span></div>
+    <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:56px;margin-top:24px;flex:1;align-items:center">
+      <div class="anim">
+        <div class="s-title sm" style="font-size:58px" data-atlas-text="true" contenteditable="true" spellcheck="false">투자 포트폴리오의<br>다차원 성과 진단</div>
+        <div class="s-lead" style="font-size:26px;margin-top:18px;color:var(--espresso-2)" data-atlas-text="true" contenteditable="true" spellcheck="false">실시간 시장 데이터와 보유 종목 현황을 유기적으로 연계하여 포트폴리오 가치를 다각도로 평가하고, 벤치마크(BM) 대비 위험조정 성과 지표를 명확한 산식 및 근거 데이터와 함께 체계적으로 제시합니다.</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:26px">
+          <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">초과수익</span>
+          <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">추적오차 TE</span>
+          <span class="tag" style="color:var(--purple);background:rgba(167,87,136,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">MDD</span>
+          <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">베타</span>
+          <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">정보비율 IR</span>
+          <span class="tag" style="color:var(--purple);background:rgba(167,87,136,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">연율변동성</span>
+        </div>
+        <div style="display:flex;gap:40px;margin-top:34px">
+          <div><div class="metric" style="font-size:64px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">1,000<span class="u" style="color:#C2570F">억원</span></div><div style="font-size:20px;color:var(--espresso-2);margin-top:6px">평가 포트폴리오 규모 (예시)</div></div>
+          <div><div class="metric" style="font-size:64px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">vs <span style="color:#C2570F">BM</span></div><div style="font-size:20px;color:var(--espresso-2);margin-top:6px">초과수익·IR·TE 리베이스 곡선</div></div>
+        </div>
+      </div>
+      <div class="shot anim" style="aspect-ratio:16/11" data-atlas-component="true">
+        <div class="" style="background: rgba(0, 0, 0, 0.06); border: 1px dashed rgba(0, 0, 0, 0.15);"></div>
+        <span class="cap" data-atlas-text="true" contenteditable="true" spellcheck="false">손익현황 · P&amp;L / Holdings / Risk</span>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">08</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">9</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--light" data-label="시황에이전트" data-screen-label="09 시황에이전트" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="8" style="position: absolute; top: 0px; left: 0px; transform-origin: 0px 0px; pointer-events: none; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; visibility: visible; opacity: 1; transform: scale(0.0692708);">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">03</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">TAB 03 — <span class="kicker-ko">시황에이전트</span></span></div>
+    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:56px;margin-top:24px;flex:1;align-items:center">
+      <div class="shot anim" style="aspect-ratio:16/10" data-atlas-component="true">
+        <div class="" style="background: rgba(0, 0, 0, 0.06); border: 1px dashed rgba(0, 0, 0, 0.15);"></div>
+        <span class="cap" data-atlas-text="true" contenteditable="true" spellcheck="false">시황 · 장전 / 장중 / 장마감</span>
+      </div>
+      <div class="anim">
+        <div class="s-title sm" style="font-size:58px" data-atlas-text="true" contenteditable="true" spellcheck="false">장전·장중·장마감,<br>9섹션 자동 브리핑</div>
+        <div class="s-lead" style="font-size:26px;margin-top:18px;color:var(--espresso-2)" data-atlas-text="true" contenteditable="true" spellcheck="false">슬롯을 고르면 LLM이 시황 리포트를 생성. 핵심이슈·Bull/Bear·글로벌매크로·국내전망·전략·뉴스를 인터랙티브 카드로.</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:24px">
+          <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">RS 4분면</span>
+          <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">ADR 추이</span>
+          <span class="tag" style="color:var(--purple);background:rgba(167,87,136,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">발송 이력</span>
+          <span class="tag" style="color:#4F9E4A;background:rgba(79,158,74,.12)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">자동 카운트다운</span>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">09</span></div>
+  </section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">10</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--light" data-label="AI 아이디어랩" data-screen-label="14 AI 아이디어랩 (Top-Down)">
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 04 — <span class="kicker-ko">AI 아이디어랩 (Top-Down)</span></span></div>
+    <div class="s-title sm anim" style="margin-top:14px">AI 에이전트 리서치팀이<br>지금 시장 국면에 맞는 섹터와 종목을 찾는다</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:36px;flex:1">
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-research-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="조사 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700">01</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">뉴스·매크로 조사</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">뉴스 큐레이터, Macro PM이 금리·지수 환경과 테마 스캔</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-debate-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="토론 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:var(--blue);font-weight:700">02</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">섹터 토론</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">Bull/Bear 리서처 에이전트 간의 팽팽한 논리 대립 및 강약세 검증</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-risk-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="심의 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:var(--purple);font-weight:700">03</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">리스크 심의</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">리스크 매니저가 유망 종목의 하방 리스크 및 변동성 정량 분석</div>
+        </div>
+      </div>
+      <div class="card hot anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-decision-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="선정 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700">04</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">PM 의장 합의·제안</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">검증된 종합 지표를 취합하여 PM 의장 주도 하에 최종 포트 편입 후보군 합의 및 제안</div>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">14</span></div>
+</section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">11</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section
+  <section class="s s--light" data-label="아이디어랩 아웃풋" data-screen-label="15 AI 아이디어랩 실행 결과">
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 04 — <span class="kicker-ko">AI 아이디어랩 실행 결과</span></span></div>
+    <div class="s-title sm anim" style="margin-top:14px">AI 아이디어랩 실제 운용 화면 (예시)</div>
+    
+    <div class="card anim" style="margin-top:28px; flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--paper-line); box-shadow:0 12px 32px rgba(0,0,0,0.06); padding:0; background:#fcfbfa; border-radius:16px; min-height:540px">
+      <img src="../illustrations/output/idealab-screenshot.png" style="width:100%; height:100%; object-fit:cover" alt="AI 아이디어랩 실제 아웃풋 캡쳐" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+      <div style="display:none; flex-direction:column; align-items:center; justify-content:center; color:var(--espresso-2); font-size:22px; gap:12px" class="fallback-placeholder">
+        <span style="font-size:48px">💻</span>
+        <div>이곳에 [idealab-screenshot.png] 캡쳐 파일을 넣어주세요.</div>
+        <div style="font-size:16px; color:#8a5a3a">경로: public/illustrations/output/idealab-screenshot.png</div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">15</span></div>
+  </section>
+<section class="s s--dark atlas-committee" data-label="AI투자위원회" data-screen-label="16 AI투자위원회 (Bottom-Up)">
+    <div class="gridlines"></div>
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 05 — <span class="kicker-ko">AI투자위원회 (Bottom-Up)</span></span></div>
+    <div class="committee-hero-wrap">
+      <div class="committee-copy anim">
+        <div class="committee-big-number">14</div>
+        <div class="s-title" style="font-size:72px;margin-top:8px;word-break:keep-all;line-height:1.2">개 전문 에이전트의<br>개별 종목 분석</div>
+        <div class="s-lead" style="font-size:24px;margin-top:20px;max-width:850px;word-break:keep-all;line-height:1.45">바텀업 관점에서 개별 종목에 대해 강세(Bull) · 약세(Bear) · 리스크 관점을 분리해 다각도로 심층 검증하고 합의 의견을 도출합니다.</div>
+      </div>
+      <div class="committee-orbit anim" aria-hidden="true">
+        <div class="committee-core">BUY<br><span>SELL · HOLD</span></div>
+        <span class="agent-node n1">Technical</span>
+        <span class="agent-node n2">Fundamental</span>
+        <span class="agent-node n3">News</span>
+        <span class="agent-node n4">Sentiment</span>
+        <span class="agent-node n5">Bull</span>
+        <span class="agent-node n6">Bear</span>
+        <span class="agent-node n7">Risk</span>
+        <span class="agent-node n8">PM</span>
+      </div>
+    </div>
+    
+    <div class="committee-stages" style="display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:28px">
+      <!-- Card 1 -->
+      <div class="card anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-research-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="조사">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">01</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">조사</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">기술·재무·뉴스·심리 데이터 수집 및 다각도 기초 리서치</div>
+        </div>
+      </div>
+      
+      <!-- Card 2 -->
+      <div class="card anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-debate-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="토론">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">02</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">토론</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">상반된 Bull/Bear 리서처 간의 논리 충돌 및 교차 토론</div>
+        </div>
+      </div>
+      
+      <!-- Card 3 -->
+      <div class="card anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-risk-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="심의">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">03</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">심의</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">다차원 하방 리스크 시뮬레이션 및 변동성 정밀 심의</div>
+        </div>
+      </div>
+      
+      <!-- Card 4 -->
+      <div class="card hot anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-decision-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="결정">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">04</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">최종 합의</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">참여 위원 합의 기반의 포트폴리오 편입 및 최종 제안</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">16</span></div>
+</section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">12</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">13</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section
+  <section class="s s--dark atlas-committee" data-label="투자위원회 아웃풋" data-screen-label="17 AI투자위원회 최종 보고서">
+    <div class="gridlines"></div>
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 05 — <span class="kicker-ko">AI투자위원회 최종 보고서</span></span></div>
+    <div class="s-title sm anim" style="margin-top:14px; color:#fff">AI투자위원회 최종 심의 결과 (예시)</div>
+    
+    <div class="card anim" style="margin-top:28px; flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; border:none; box-shadow:0 16px 40px rgba(0,0,0,0.4); padding:0; background:rgba(255,255,255,0.02); border-radius:16px; min-height:540px">
+      <img src="../illustrations/output/committee-screenshot.png" style="width:100%; height:100%; object-fit:cover" alt="AI투자위원회 실제 아웃풋 캡쳐" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+      <div style="display:none; flex-direction:column; align-items:center; justify-content:center; color:var(--greige); font-size:22px; gap:12px" class="fallback-placeholder">
+        <span style="font-size:48px">📊</span>
+        <div>이곳에 [committee-screenshot.png] 캡쳐 파일을 넣어주세요.</div>
+        <div style="font-size:16px; color:var(--orange)">경로: public/illustrations/output/committee-screenshot.png</div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">17</span></div>
+  </section>
+<section class="s s--light" data-label="아키텍처·신뢰성" data-screen-label="18 아키텍처·신뢰성">
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">SYSTEM &amp; DATA TRUST</span></div>
+    <div class="s-title sm anim" style="margin-top:14px">안정적인 의사결정 인프라와 신뢰할 수 있는 데이터 통합</div>
+    
+    <!-- 본문 내용 컨테이너 (세로 플렉스 구조) -->
+    <div style="display:flex;flex-direction:column;gap:36px;margin-top:58px;flex:1">
+      
+      <!-- 상단: 아키텍처와 데이터 소스 (좌우 배치) -->
+      <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:44px">
+        <!-- 좌측: 아키텍처 -->
+        <div class="anim" style="display:flex;flex-direction:column;gap:18px">
+          <div class="mono" style="font-size:22px;color:#C2570F;font-weight:700;letter-spacing:.1em;margin-bottom:4px">SYSTEM ARCHITECTURE</div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card" style="display:flex;flex-direction:row;align-items:center;gap:22px;padding:22px 26px;border:1.5px solid var(--paper-line);box-shadow:0 8px 24px rgba(0,0,0,0.03);border-radius:12px;transition:all 0.3s ease">
+              <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1);width:160px;text-align:center;flex-shrink:0;padding:6px 12px;font-weight:700;border-radius:6px">FRONTEND</span>
+              <div style="flex:1">
+                <div style="font-family:var(--font-head);font-weight:700;font-size:23px;color:var(--espresso);word-break:keep-all">React 19 · TypeScript · Vite</div>
+                <div style="font-size:16px;color:var(--espresso-2);margin-top:4px;line-height:1.45;word-break:keep-all">Tailwind CSS 기반의 고성능 사용자 인터페이스. REST API 호출 및 SSE(Server-Sent Events)를 활용한 실시간 데이터 스트리밍.</div>
+              </div>
+            </div>
+            <div class="card" style="display:flex;flex-direction:row;align-items:center;gap:22px;padding:22px 26px;border:1.5px solid var(--paper-line);box-shadow:0 8px 24px rgba(0,0,0,0.03);border-radius:12px;transition:all 0.3s ease">
+              <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1);width:160px;text-align:center;flex-shrink:0;padding:6px 12px;font-weight:700;border-radius:6px">BACKEND</span>
+              <div style="flex:1">
+                <div style="font-family:var(--font-head);font-weight:700;font-size:23px;color:var(--espresso);word-break:keep-all">FastAPI · Python 3.9</div>
+                <div style="font-size:16px;color:var(--espresso-2);margin-top:4px;line-height:1.45;word-break:keep-all">비동기 서버 기반의 실시간 포트폴리오 데이터 가공. 평가·손익 지표의 즉각적인 연동 및 과거 시세 통계 파이프라인.</div>
+              </div>
+            </div>
+            <div class="card hot" style="display:flex;flex-direction:row;align-items:center;gap:22px;padding:22px 26px;border:1.5px solid rgba(243,115,33,0.3);box-shadow:0 8px 24px rgba(243,115,33,0.06);border-radius:12px;transition:all 0.3s ease;background:rgba(243,115,33,0.02)">
+              <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.14);width:160px;text-align:center;flex-shrink:0;padding:6px 12px;font-weight:700;border-radius:6px">COMMITTEE ENGINE</span>
+              <div style="flex:1">
+                <div style="font-family:var(--font-head);font-weight:700;font-size:23px;color:var(--espresso);word-break:keep-all">다중 에이전트 합의 엔진 <span class="mono" style="font-size:16px;color:#8a5a3a;margin-left:8px">Multi-Agent System</span></div>
+                <div style="font-size:16px;color:var(--espresso-2);margin-top:4px;line-height:1.45;word-break:keep-all">Codex, Claude Code, Antigravity CLI를 사용하여 개발하고 내장 LLM 모델로 Mimo V2.5를 채택. 14개 전문 에이전트의 다차원 분석 결과 종합 및 실시간 토론·합의 알고리즘 구동.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 우측: 데이터 소스 -->
+        <div class="anim" style="display:flex;flex-direction:column;gap:18px">
+          <div class="mono" style="font-size:22px;color:#C2570F;font-weight:700;letter-spacing:.1em;margin-bottom:4px">DATA SOURCES</div>
+          <div style="display:grid;grid-template-columns:1fr;gap:14px">
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                네이버 금융 · pykrx API
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">국내 주식 시장의 실시간 호가 정보, 일별 OHLCV 가격 데이터 및 과거 시뮬레이션용 데이터 적재.</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                yfinance 글로벌 피드
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">주요 거시 경제 지표(환율, VIX 변동성 지수, WTI 유가, 금 가격 등) 및 해외 주식/지수 데이터 수집.</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                실시간 포트폴리오 데이터
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">보유 자산 현황의 실시간 평가 및 손익·위험 지표 연산을 위한 포트폴리오 시뮬레이션 데이터 피드.</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                Google News API · DART 공시 정보
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">실시간 언론 보도 텍스트 수집 및 기업 공시 정보 파싱. 감성 분석 에이전트의 시장 오피니언 분석 입력원.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 하단: 컴플라이언스 (가로로 길게 배치) -->
+      <div class="card anim" style="display:flex;flex-direction:row;align-items:center;background:var(--espresso);border:none;padding:22px 28px;gap:28px;width:100%;box-sizing:border-box;box-shadow:0 12px 32px rgba(0,0,0,0.15);border-radius:12px">
+        <div style="flex-shrink:0">
+          <div class="mono" style="font-size:16px;color:var(--orange-3);font-weight:700;letter-spacing:.1em">COMPLIANCE</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:22px;margin-top:4px;color:#fff;line-height:1.2;word-break:keep-all">내부 참고용 보조도구</div>
+        </div>
+        <div style="width:1.5px;height:50px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+        <div style="flex:1;font-size:16px;color:#E6D8CC;line-height:1.55;word-break:keep-all">
+          본 화면 및 자료에서 제공되는 AI 생성 결과는 실시간 데이터 상태 및 거대 언어 모델(LLM)의 비결정성적 특성에 따라 일부 오차가 발생할 수 있습니다. 과거 시뮬레이션 결과(백테스트)가 미래의 수익을 보장하지 않으므로, 최종적인 투자 의사결정과 이에 따른 모든 책임은 해당 업무를 담당하는 전문 운용역의 판단 하에 진행되어야 합니다.
+        </div>
+      </div>
+      
+    </div>
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">18</span></div>
+</section></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">14</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"></template></div></div></div><div class="thumb" tabindex="0" draggable="true"><div class="num">15</div><div class="frame"><div style="position: absolute; inset: 0px;" lang="ko"><template shadowrootmode="open"><section class="s s--dark" data-label="클로징" data-screen-label="15 클로징">
+    <div class="gridlines"></div>
+    <!-- 몽환적이고 웅장한 백그라운드 오라(Aura) 및 3D 입체형 오렌지 골드 구체(Orb) -->
+    <div style="position:absolute;right:100px;top:200px;width:540px;height:540px;border-radius:50%;background:radial-gradient(circle,rgba(243,115,33,.18),transparent 70%);filter:blur(24px);z-index:1"></div>
+    <div style="position:absolute;right:140px;top:240px;width:460px;height:460px;border-radius:50%;background:#140e0c;border:2px solid rgba(243,115,33,.45);box-shadow:0 0 100px rgba(243,115,33,.1);z-index:2"></div>
+    <div style="position:absolute;right:210px;top:310px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF2E6 0%,#FCB688 18%,#F37321 50%,#8c3605 85%,#3d1400 100%);box-shadow:0 0 90px rgba(243,115,33,.45), inset 0 -20px 40px rgba(0,0,0,0.85), inset 0 20px 45px rgba(255,255,255,0.45);z-index:3"></div>
+    
+    <div style="margin-top:auto;z-index:4;position:relative">
+      <div class="kicker anim" style="letter-spacing:0.15em">ONE SYSTEM FOR THE DESK</div>
+      <div class="s-title anim" style="font-size:90px;margin-top:18px;line-height:1.2;word-break:keep-all">시장 · 손익 · 시황 · 아이디어<br><span style="color:var(--orange)">하나의 통합 시스템</span>으로 완성하다.</div>
+      <div class="s-lead anim" style="margin-top:28px;font-size:32px;color:var(--espresso-3);word-break:keep-all">한화손해보험 주식운용을 위한 Agentic AI 통합 데스크, <b style="color:var(--beige);font-weight:700">ATLAS</b>.</div>
+      
+      <!-- 하단: 프리미엄 아티클 느낌의 메트릭 정보 추가 -->
+      <div class="anim" style="display:flex;gap:36px;margin-top:52px;border-top:1px solid rgba(255,255,255,0.12);padding-top:32px;max-width:850px">
+        <div style="flex:1">
+          <div class="mono" style="color:var(--orange-3);font-size:16px;font-weight:700;letter-spacing:0.08em">EFFICIENCY</div>
+          <div style="font-size:17px;color:#C9B8A8;margin-top:8px;line-height:1.5;word-break:keep-all">아침 루틴의 7개 개별 화면을 단일 통합 동선으로 최적화하여 운용 효율성 극대화.</div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+        <div style="flex:1">
+          <div class="mono" style="color:var(--blue);font-size:16px;font-weight:700;letter-spacing:0.08em">INTELLIGENCE</div>
+          <div style="font-size:17px;color:#C9B8A8;margin-top:8px;line-height:1.5;word-break:keep-all">Mimo V2.5 엔진 및 14개 전문 에이전트의 교차 검증으로 신뢰도 높은 최적의 투자 의사결정 지원.</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span></span></div>
+</section></template></div></div></div></div><div class="rail-resize export-hidden" data-omelette-chrome=""></div><div class="stage" style="left: 188px;"><div class="canvas" style="width: 1920px; height: 1080px; --deck-design-w: 1920px; --deck-design-h: 1080px; transform: scale(0.897917);"><slot></slot></div></div><div class="overlay export-hidden" role="toolbar" aria-label="Deck controls" data-omelette-chrome="" style="margin-left: 94px;" data-visible="">
+        <button class="btn prev" type="button" aria-label="Previous slide" title="Previous (←)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"></path></svg>
+        </button>
+        <span class="count" aria-live="polite"><span class="current">2</span><span class="sep">/</span><span class="total">15</span></span>
+        <button class="btn next" type="button" aria-label="Next slide" title="Next (→)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg>
+        </button>
+        <span class="divider"></span>
+        <button class="btn reset" type="button" aria-label="Reset to first slide" title="Reset (R)">Reset<span class="kbd">R</span></button>
+      </div><div class="ctxmenu export-hidden" data-omelette-chrome="">
+        <button type="button" data-act="skip">Skip slide</button>
+        <button type="button" data-act="up">Move up</button>
+        <button type="button" data-act="down">Move down</button>
+        <hr>
+        <button type="button" data-act="delete">Delete slide</button>
+      </div><div class="confirm-backdrop export-hidden" data-omelette-chrome="">
+        <div class="confirm" role="dialog" aria-modal="true">
+          <div class="body">
+            <div class="title">Delete slide?</div>
+            <div class="msg">This slide will be removed from the deck.</div>
+          </div>
+          <div class="footer">
+            <button type="button" class="cancel">Cancel</button>
+            <button type="button" class="danger">Delete</button>
+          </div>
+        </div>
+      </div></template>
+
+  <!-- ============ 01 · COVER (dark) ============ -->
+  <section class="s s--dark" data-label="표지" data-screen-label="01 표지" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="0">
+    <div class="gridlines"></div>
+    <!-- orb -->
+    <div style="position:absolute;right:80px;top:236px;width:648px;height:648px;border-radius:50%;background:radial-gradient(circle,rgba(243,115,33,.18),transparent 64%);filter:blur(8px)"></div>
+    <div style="position:absolute;right:110px;top:280px;width:560px;height:560px;border-radius:50%;background:#120D0B;border:2px solid #2A211D"></div>
+    <div style="position:absolute;right:190px;top:360px;width:400px;height:400px;border-radius:50%;background:#181210;border:3px solid rgba(243,115,33,.55);box-shadow:inset 0 0 90px rgba(243,115,33,.22)"></div>
+    <div style="position:absolute;right:290px;top:460px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#FBB584,#F37321 60%,#9c4410);box-shadow:0 0 120px rgba(243,115,33,.55)"></div>
+    <!-- top bar -->
+    <div class="logoslot tr-slot" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">로고 자리</div>
+    <div class="kicker" style="color:var(--muted)" data-atlas-text="true" contenteditable="true" spellcheck="false">VIBE CODING COMPETITION 2026</div>
+
+    <div style="margin-top:232px">
+      <div class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">AI INVESTMENT DESK OS</div>
+      <div class="disp" style="position:relative;z-index:3;font-size:268px;margin:6px 0 0;background:linear-gradient(180deg,#FFF6ED,#F4DEC4);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 60px rgba(26,19,16,.55)" data-atlas-text="true" contenteditable="true" spellcheck="false">ATLAS</div>
+      <div class="accent-bar" style="position:relative;z-index:3;margin:10px 0 18px" data-atlas-component="true"></div>
+      <div class="s-lead" style="position:relative;z-index:3;font-family:var(--font-head);font-weight:700;font-size:54px;line-height:1.12;color:var(--beige);margin-top:0;max-width:1180px;letter-spacing:-.02em" data-atlas-text="true" contenteditable="true" spellcheck="false">Multi Agent를 활용한 주식 운용 플랫폼</div>
+      <div class="s-lead" style="position:relative;z-index:3;font-size:23px;line-height:1.35;max-width:1420px;color:var(--greige);margin-top:18px;white-space:nowrap" data-atlas-text="true" contenteditable="true" spellcheck="false">보험사 주식운용역의 하루를 시장 및 손익 모니터링, 시황 분석, 신규 투자아이디어까지 <b style="color:var(--beige);font-weight:700">하나의 플랫폼</b>으로 압축</div>
+      <div class="cover-bubbles" style="display:flex;gap:14px;margin-top:34px;align-items:center;flex-wrap:wrap">
+        <span class="cover-bubble" style="--bubble-bg:var(--orange);--bubble-fg:#1A1310">AGENTIC</span>
+        <span class="cover-bubble" style="--bubble-bg:var(--blue);--bubble-fg:#1A1310">TRADING</span>
+        <span class="cover-bubble" style="--bubble-bg:var(--orange-3);--bubble-fg:#1A1310">LIVE</span>
+        <span class="cover-bubble" style="--bubble-bg:#7FB77E;--bubble-fg:#1A1310">ANALYTICS</span>
+        <span class="cover-bubble" style="--bubble-bg:var(--purple);--bubble-fg:#1A1310">SYSTEM</span>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)" data-atlas-text="true" contenteditable="true" spellcheck="false">VIBE CODING COMPETITION 2026 · 한화손해보험</span><span class="brandmark" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true"><span class="dot"></span>ATLAS</span></div>
+  </section>
+
+  <!-- ============ 02 · PROBLEM HOOK (dark impact) ============ -->
+  <section class="s s--dark" data-label="문제 제기" data-screen-label="02 문제 제기" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="1" data-deck-active="">
+    <div class="gridlines"></div>
+    <div class="kicker anim" data-atlas-text="true" contenteditable="true" spellcheck="false">01 — THE PROBLEM</div>
+    <div style="margin-top:auto;max-width:1500px">
+      <div class="s-title anim" style="font-size:104px" data-atlas-text="true" contenteditable="true" spellcheck="false">제 책상 위에는 오늘도<br><span style="color:var(--orange)">7개의 모니터</span>가 켜져 있습니다.</div>
+      <div class="s-lead anim" style="margin-top:40px;font-size:34px;max-width:1360px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">시장 데이터, 종목 차트, 리서치 리포트, 손익 현황.<br>주식 운용 관련 업무는 여러 대의 모니터 사이를 오가며 진행됩니다.</div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)" data-atlas-text="true" contenteditable="true" spellcheck="false">흩어진 화면, 느려지는 판단</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">02</span></div>
+  </section>
+
+  <!-- ============ 03 · SCREEN MAP (light) ============ -->
+  <section class="s s--light" data-label="화면 지도" data-screen-label="03 화면 지도" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="2">
+    <div class="eyebrow-row anim"><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">01 — THE PROBLEM</span></div>
+    <div class="s-title sm anim" style="margin-top:14px" data-atlas-text="true" contenteditable="true" spellcheck="false">하나의 판단을 위해 필요한 정보는<br>여러 화면에 흩어져 있습니다</div>
+    <div class="screen-map anim">
+      <div class="map-line map-line-1 hot"></div>
+      <div class="map-line map-line-2 broken"></div>
+      <div class="map-line map-line-3"></div>
+      <div class="map-line map-line-4 broken"></div>
+      <div class="map-line map-line-5"></div>
+      <div class="map-line map-line-6 broken"></div>
+      <div class="map-line map-line-7 hot"></div>
+
+      <div class="map-node card n1" data-atlas-component="true"><small>MARKET</small>시장 데이터</div>
+      <div class="map-node card n2" data-atlas-component="true"><small>CHART</small>종목 차트</div>
+      <div class="map-node card n3" data-atlas-component="true"><small>P&amp;L</small>손익 현황</div>
+      <div class="map-node card n4" data-atlas-component="true"><small>RESEARCH</small>리서치 리포트</div>
+      <div class="map-node card n5" data-atlas-component="true"><small>DISCLOSURE</small>뉴스·공시</div>
+      <div class="map-node card n6" data-atlas-component="true"><small>REPORT</small>보고서 작성</div>
+      <div class="map-node card n7" data-atlas-component="true"><small>IDEA</small>아이디어·AI</div>
+
+      <div class="map-center">
+        <div class="map-question">?</div>
+        <div class="map-center-text">오늘의<br>운용 판단</div>
+      </div>
+    </div>
+<div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)" data-atlas-text="true" contenteditable="true" spellcheck="false">흩어진 화면, 느려지는 판단</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">03</span></div>
+  </section>
+  <!-- ============ 04 · SOLUTION / ATLAS acronym (dark) ============ -->
+  <section class="s s--dark" data-label="솔루션" data-screen-label="04 솔루션" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="3">
+    <div class="gridlines"></div>
+    <div class="kicker anim" data-atlas-text="true" contenteditable="true" spellcheck="false">02 — THE SOLUTION</div>
+    <div class="s-title sm anim" style="margin-top:14px" data-atlas-text="true" contenteditable="true" spellcheck="false">ATLAS — 에이전트로 굴러가는 운용 데스크</div>
+    <div class="s-lead anim" style="margin-top:18px;font-size:30px" data-atlas-text="true" contenteditable="true" spellcheck="false">여러 AI 에이전트가(Agentic) · 주식운용을(Trading) · 실시간 데이터 위에서(Live) · 분석으로(Analytics) · 하나의 데스크로(System) 묶는다.</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:22px;margin-top:auto;margin-bottom:30px">
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--orange)" data-atlas-text="true" contenteditable="true" spellcheck="false">A</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Agentic</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">에이전트가 운용역을 보좌</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--blue)" data-atlas-text="true" contenteditable="true" spellcheck="false">T</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Trading</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">보유·손익·BM 성과</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--orange-3)" data-atlas-text="true" contenteditable="true" spellcheck="false">L</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Live</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">실시간 시세·거시 KPI</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:#7FB77E" data-atlas-text="true" contenteditable="true" spellcheck="false">A</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">Analytics</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">위험지표·백테스트·근거</div>
+      </div>
+      <div class="card anim" data-atlas-component="true">
+        <div class="disp" style="font-size:96px;color:var(--purple)" data-atlas-text="true" contenteditable="true" spellcheck="false">S</div>
+        <div style="font-family:var(--font-mono);font-size:20px;color:var(--greige);margin-top:6px" data-atlas-text="true" contenteditable="true" spellcheck="false">System</div>
+        <div style="font-size:21px;color:var(--beige);font-weight:600;margin-top:14px;font-family:var(--font-head)" data-atlas-text="true" contenteditable="true" spellcheck="false">5탭을 하나의 루프로</div>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">04</span></div>
+  </section>
+
+  <!-- ============ 05 · SECTION DIVIDER: PRODUCT (dark) ============ -->
+  <section class="s s--dark" data-label="섹션 · 제품" data-screen-label="05 섹션 · 제품" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="4">
+    <div class="gridlines"></div>
+    <div style="position:absolute;right:132px;top:50%;transform:translateY(-50%);font-family:var(--font-display);font-size:520px;color:transparent;line-height:.8" class="bignum" data-atlas-component="true">05</div>
+    <div style="margin-top:auto">
+      <div class="kicker anim" data-atlas-text="true" contenteditable="true" spellcheck="false">PRODUCT</div>
+      <div class="s-title anim" style="font-size:120px;margin-top:10px" data-atlas-text="true" contenteditable="true" spellcheck="false">하나의 화면,<br>다섯 개의 탭</div>
+      <div class="s-lead anim" style="margin-top:30px" data-atlas-text="true" contenteditable="true" spellcheck="false">시장현황 · 손익현황 · 시황에이전트 · AI 아이디어랩 · AI투자위원회</div>
+    </div>
+    <div class="s-foot"><span class="brandmark" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true"><span class="dot"></span>ATLAS</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">05</span></div>
+  </section>
+
+  <!-- ============ 06 · 5-TAB OVERVIEW (light) ============ -->
+  <section class="s s--light" data-label="5탭 개요" data-screen-label="06 5탭 개요" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="5">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">02</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">PRODUCT — OVERVIEW</span></div>
+    <div class="s-title sm anim" style="margin-top:14px" data-atlas-text="true" contenteditable="true" spellcheck="false">5탭, 끊김 없는 한 동선</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:22px;margin-top:46px">
+      <div class="card hot anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-market.png" alt="시장현황 아이콘"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">01</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">시장현황</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">실시간 시세·KPI·캔들</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-pnl.png" alt="손익현황 아이콘"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:var(--blue);font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">02</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">손익현황</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">보유·손익·위험지표</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-briefing.png" alt="시황에이전트 아이콘"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">03</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">시황에이전트</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">장전/장중/장마감 9섹션</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-idea.png" alt="AI 아이디어랩 아이콘"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:#4F9E4A;font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">04</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">AI 아이디어랩</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">투자 아이디어 발굴</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:520px" data-atlas-component="true">
+        <div class="atlas-tab-hero"><img src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/tab-committee.png" alt="AI Committee 아이콘"></div>
+        <div style="margin-top:auto" data-atlas-text="true" contenteditable="true" spellcheck="false">
+          <div class="mono" style="font-size:20px;color:var(--purple);font-weight:700" data-atlas-text="true" contenteditable="true" spellcheck="false">05</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:30px;margin-top:8px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false">AI투자위원회</div>
+          <div style="font-size:20px;color:var(--espresso-2);margin-top:10px;line-height:1.45" data-atlas-text="true" contenteditable="true" spellcheck="false">개별종목 심층리서치</div>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span class="brandmark" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true"><span class="dot"></span>ATLAS</span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">06</span></div>
+  </section>
+
+  <!-- ============ 07 · 시장현황 (light + shot) ============ -->
+  <section class="s s--light" data-label="시장현황" data-screen-label="07 시장현황" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="6">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">01</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">TAB 01 — <span class="kicker-ko">시장현황</span></span></div>
+    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:56px;margin-top:24px;flex:1;align-items:center">
+      <div class="shot anim" style="aspect-ratio:16/10" data-atlas-component="true">
+        <image-slot id="shot-market" placeholder="시장현황 탭 스크린샷을 드롭"><template shadowrootmode="open"><style>:host{display:inline-block;position:relative;vertical-align:top;  font:13px/1.3 system-ui,-apple-system,sans-serif;color:rgba(0,0,0,.55);width:240px;height:160px}.frame{position:absolute;inset:0;overflow:hidden;background:rgba(0,0,0,.04)}.frame img{position:absolute;max-width:none;transform:translate(-50%,-50%);  -webkit-user-drag:none;user-select:none;touch-action:none}.spill{position:absolute;transform:translate(-50%,-50%);display:none;z-index:1;  cursor:grab;touch-action:none}:host([data-panning]) .spill{cursor:grabbing}.spill .ghost{position:absolute;inset:0;width:100%;height:100%;opacity:.35;  pointer-events:none;-webkit-user-drag:none;user-select:none;  box-shadow:0 0 0 1px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.2)}.spill .handle{position:absolute;width:12px;height:12px;border-radius:50%;  background:#fff;box-shadow:0 0 0 1.5px #c96442,0 1px 3px rgba(0,0,0,.3);  transform:translate(-50%,-50%)}.spill .handle[data-c=nw]{left:0;top:0;cursor:nwse-resize}.spill .handle[data-c=ne]{left:100%;top:0;cursor:nesw-resize}.spill .handle[data-c=sw]{left:0;top:100%;cursor:nesw-resize}.spill .handle[data-c=se]{left:100%;top:100%;cursor:nwse-resize}:host([data-reframe]){z-index:10}:host([data-reframe]) .spill{display:block}:host([data-reframe]) .frame{box-shadow:0 0 0 2px #c96442}.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;  justify-content:center;gap:6px;text-align:center;padding:12px;box-sizing:border-box;  cursor:pointer;user-select:none}.empty svg{opacity:.45}.empty .cap{max-width:90%;font-weight:500;letter-spacing:.01em}.empty .sub{font-size:11px}.empty .sub u{text-underline-offset:2px;text-decoration-color:rgba(0,0,0,.25)}.empty:hover .sub u{color:rgba(0,0,0,.75);text-decoration-color:currentColor}:host([data-over]) .frame{outline:2px solid #c96442;outline-offset:-2px;  background:rgba(201,100,66,.10)}.ring{position:absolute;inset:0;pointer-events:none;border:1.5px dashed rgba(0,0,0,.25);  transition:border-color .12s}:host([data-over]) .ring{border-color:#c96442}:host([data-filled]) .ring{display:none}.ctl{position:absolute;top:100%;left:50%;transform:translateX(-50%);padding-top:8px;  display:flex;gap:6px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:2;  white-space:nowrap}:host([data-filled][data-editable]:hover) .ctl,:host([data-reframe]) .ctl  {opacity:1;pointer-events:auto}.ctl button{appearance:none;border:0;border-radius:6px;padding:5px 10px;cursor:pointer;  background:rgba(0,0,0,.65);color:#fff;font:11px/1 system-ui,-apple-system,sans-serif;  backdrop-filter:blur(6px)}.ctl button:hover{background:rgba(0,0,0,.8)}.err{position:absolute;left:8px;bottom:8px;right:8px;color:#b3261e;font-size:11px;  background:rgba(255,255,255,.85);padding:4px 6px;border-radius:5px;pointer-events:none}</style><div class="frame" part="frame" style="border-radius: 12px;">  <img part="image" alt="" draggable="false" style="display:none">  <div class="empty" part="empty" style="display: flex;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>    <div class="cap">시장현황 탭 스크린샷을 드롭</div>    <div class="sub" style="display: none;">or <u>browse files</u></div></div>  <div class="ring" part="ring" style="border-radius: 12px;"></div></div><div class="spill">  <img class="ghost" alt="" draggable="false">  <div class="handle" data-c="nw"></div><div class="handle" data-c="ne"></div>  <div class="handle" data-c="sw"></div><div class="handle" data-c="se"></div></div><div class="ctl"><button data-act="replace" title="Replace image">Replace</button>  <button data-act="clear" title="Remove image">Remove</button></div><input type="file" accept="image/png,image/jpeg,image/webp,image/avif" hidden=""></template></image-slot>
+        <span class="cap" data-atlas-text="true" contenteditable="true" spellcheck="false">시장현황 · Live / Sector / Chart</span>
+      </div>
+      <div class="anim">
+        <div class="s-title sm" style="font-size:58px" data-atlas-text="true" contenteditable="true" spellcheck="false">끊기지 않는 KR 시세,<br>한 줄에 모인 거시 KPI</div>
+        <div class="rows" style="margin-top:24px">
+          <div class="row" style="padding:18px 0" data-atlas-component="true"><span style="font-size:23px;color:var(--espresso-2);line-height:1.5" data-atlas-text="true" contenteditable="true" spellcheck="false"><b style="color:var(--espresso)">실시간 시세 테이프</b> — 네이버 금융 1차 + pykrx 폴백으로 휴장·차단에도 자동 복구</span></div>
+          <div class="row" style="padding:18px 0" data-atlas-component="true"><span style="font-size:23px;color:var(--espresso-2);line-height:1.5" data-atlas-text="true" contenteditable="true" spellcheck="false"><b style="color:var(--espresso)">거시 KPI 한 줄</b> — KOSPI·KOSDAQ·USD/KRW·VIX·WTI·금</span></div>
+          <div class="row" style="padding:18px 0" data-atlas-component="true"><span style="font-size:23px;color:var(--espresso-2);line-height:1.5" data-atlas-text="true" contenteditable="true" spellcheck="false"><b style="color:var(--espresso)">섹터 등락 · 멀티에셋 · 캔들</b> — 시세 기준일과 수집 시각을 분리 표기</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">07</span></div>
+  </section>
+
+  <!-- ============ 08 · 손익현황 (light + shot + metrics) ============ -->
+  <section class="s s--light" data-label="손익현황" data-screen-label="08 손익현황" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="7">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">02</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">TAB 02 — <span class="kicker-ko">손익현황</span></span></div>
+    <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:56px;margin-top:24px;flex:1;align-items:center">
+      <div class="anim">
+        <div class="s-title sm" style="font-size:58px" data-atlas-text="true" contenteditable="true" spellcheck="false">투자 포트폴리오의<br>다차원 성과 진단</div>
+        <div class="s-lead" style="font-size:26px;margin-top:18px;color:var(--espresso-2)" data-atlas-text="true" contenteditable="true" spellcheck="false">실시간 시장 데이터와 보유 종목 현황을 유기적으로 연계하여 포트폴리오 가치를 다각도로 평가하고, 벤치마크(BM) 대비 위험조정 성과 지표를 명확한 산식 및 근거 데이터와 함께 체계적으로 제시합니다.</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:26px">
+          <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">초과수익</span>
+          <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">추적오차 TE</span>
+          <span class="tag" style="color:var(--purple);background:rgba(167,87,136,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">MDD</span>
+          <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">베타</span>
+          <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">정보비율 IR</span>
+          <span class="tag" style="color:var(--purple);background:rgba(167,87,136,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">연율변동성</span>
+        </div>
+        <div style="display:flex;gap:40px;margin-top:34px">
+          <div><div class="metric" style="font-size:64px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">1,000<span class="u" style="color:#C2570F">억원</span></div><div style="font-size:20px;color:var(--espresso-2);margin-top:6px">평가 포트폴리오 규모 (예시)</div></div>
+          <div><div class="metric" style="font-size:64px;color:var(--espresso)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">vs <span style="color:#C2570F">BM</span></div><div style="font-size:20px;color:var(--espresso-2);margin-top:6px">초과수익·IR·TE 리베이스 곡선</div></div>
+        </div>
+      </div>
+      <div class="shot anim" style="aspect-ratio:16/11" data-atlas-component="true">
+        <image-slot id="shot-pnl" placeholder="손익현황 탭 스크린샷을 드롭"><template shadowrootmode="open"><style>:host{display:inline-block;position:relative;vertical-align:top;  font:13px/1.3 system-ui,-apple-system,sans-serif;color:rgba(0,0,0,.55);width:240px;height:160px}.frame{position:absolute;inset:0;overflow:hidden;background:rgba(0,0,0,.04)}.frame img{position:absolute;max-width:none;transform:translate(-50%,-50%);  -webkit-user-drag:none;user-select:none;touch-action:none}.spill{position:absolute;transform:translate(-50%,-50%);display:none;z-index:1;  cursor:grab;touch-action:none}:host([data-panning]) .spill{cursor:grabbing}.spill .ghost{position:absolute;inset:0;width:100%;height:100%;opacity:.35;  pointer-events:none;-webkit-user-drag:none;user-select:none;  box-shadow:0 0 0 1px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.2)}.spill .handle{position:absolute;width:12px;height:12px;border-radius:50%;  background:#fff;box-shadow:0 0 0 1.5px #c96442,0 1px 3px rgba(0,0,0,.3);  transform:translate(-50%,-50%)}.spill .handle[data-c=nw]{left:0;top:0;cursor:nwse-resize}.spill .handle[data-c=ne]{left:100%;top:0;cursor:nesw-resize}.spill .handle[data-c=sw]{left:0;top:100%;cursor:nesw-resize}.spill .handle[data-c=se]{left:100%;top:100%;cursor:nwse-resize}:host([data-reframe]){z-index:10}:host([data-reframe]) .spill{display:block}:host([data-reframe]) .frame{box-shadow:0 0 0 2px #c96442}.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;  justify-content:center;gap:6px;text-align:center;padding:12px;box-sizing:border-box;  cursor:pointer;user-select:none}.empty svg{opacity:.45}.empty .cap{max-width:90%;font-weight:500;letter-spacing:.01em}.empty .sub{font-size:11px}.empty .sub u{text-underline-offset:2px;text-decoration-color:rgba(0,0,0,.25)}.empty:hover .sub u{color:rgba(0,0,0,.75);text-decoration-color:currentColor}:host([data-over]) .frame{outline:2px solid #c96442;outline-offset:-2px;  background:rgba(201,100,66,.10)}.ring{position:absolute;inset:0;pointer-events:none;border:1.5px dashed rgba(0,0,0,.25);  transition:border-color .12s}:host([data-over]) .ring{border-color:#c96442}:host([data-filled]) .ring{display:none}.ctl{position:absolute;top:100%;left:50%;transform:translateX(-50%);padding-top:8px;  display:flex;gap:6px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:2;  white-space:nowrap}:host([data-filled][data-editable]:hover) .ctl,:host([data-reframe]) .ctl  {opacity:1;pointer-events:auto}.ctl button{appearance:none;border:0;border-radius:6px;padding:5px 10px;cursor:pointer;  background:rgba(0,0,0,.65);color:#fff;font:11px/1 system-ui,-apple-system,sans-serif;  backdrop-filter:blur(6px)}.ctl button:hover{background:rgba(0,0,0,.8)}.err{position:absolute;left:8px;bottom:8px;right:8px;color:#b3261e;font-size:11px;  background:rgba(255,255,255,.85);padding:4px 6px;border-radius:5px;pointer-events:none}</style><div class="frame" part="frame" style="border-radius: 12px;">  <img part="image" alt="" draggable="false" style="display:none">  <div class="empty" part="empty" style="display: flex;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>    <div class="cap">손익현황 탭 스크린샷을 드롭</div>    <div class="sub" style="display: none;">or <u>browse files</u></div></div>  <div class="ring" part="ring" style="border-radius: 12px;"></div></div><div class="spill">  <img class="ghost" alt="" draggable="false">  <div class="handle" data-c="nw"></div><div class="handle" data-c="ne"></div>  <div class="handle" data-c="sw"></div><div class="handle" data-c="se"></div></div><div class="ctl"><button data-act="replace" title="Replace image">Replace</button>  <button data-act="clear" title="Remove image">Remove</button></div><input type="file" accept="image/png,image/jpeg,image/webp,image/avif" hidden=""></template></image-slot>
+        <span class="cap" data-atlas-text="true" contenteditable="true" spellcheck="false">손익현황 · P&amp;L / Holdings / Risk</span>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">08</span></div>
+  </section>
+
+  <!-- ============ 09 · 시황에이전트 (light + shot) ============ -->
+  <section class="s s--light" data-label="시황에이전트" data-screen-label="09 시황에이전트" data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text" data-deck-slide="8">
+    <div class="eyebrow-row anim"><span class="num" data-atlas-text="true" contenteditable="true" spellcheck="false">03</span><span class="kicker" data-atlas-text="true" contenteditable="true" spellcheck="false">TAB 03 — <span class="kicker-ko">시황에이전트</span></span></div>
+    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:56px;margin-top:24px;flex:1;align-items:center">
+      <div class="shot anim" style="aspect-ratio:16/10" data-atlas-component="true">
+        <image-slot id="shot-briefing" placeholder="시황에이전트 탭 스크린샷을 드롭"><template shadowrootmode="open"><style>:host{display:inline-block;position:relative;vertical-align:top;  font:13px/1.3 system-ui,-apple-system,sans-serif;color:rgba(0,0,0,.55);width:240px;height:160px}.frame{position:absolute;inset:0;overflow:hidden;background:rgba(0,0,0,.04)}.frame img{position:absolute;max-width:none;transform:translate(-50%,-50%);  -webkit-user-drag:none;user-select:none;touch-action:none}.spill{position:absolute;transform:translate(-50%,-50%);display:none;z-index:1;  cursor:grab;touch-action:none}:host([data-panning]) .spill{cursor:grabbing}.spill .ghost{position:absolute;inset:0;width:100%;height:100%;opacity:.35;  pointer-events:none;-webkit-user-drag:none;user-select:none;  box-shadow:0 0 0 1px rgba(0,0,0,.2),0 12px 32px rgba(0,0,0,.2)}.spill .handle{position:absolute;width:12px;height:12px;border-radius:50%;  background:#fff;box-shadow:0 0 0 1.5px #c96442,0 1px 3px rgba(0,0,0,.3);  transform:translate(-50%,-50%)}.spill .handle[data-c=nw]{left:0;top:0;cursor:nwse-resize}.spill .handle[data-c=ne]{left:100%;top:0;cursor:nesw-resize}.spill .handle[data-c=sw]{left:0;top:100%;cursor:nesw-resize}.spill .handle[data-c=se]{left:100%;top:100%;cursor:nwse-resize}:host([data-reframe]){z-index:10}:host([data-reframe]) .spill{display:block}:host([data-reframe]) .frame{box-shadow:0 0 0 2px #c96442}.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;  justify-content:center;gap:6px;text-align:center;padding:12px;box-sizing:border-box;  cursor:pointer;user-select:none}.empty svg{opacity:.45}.empty .cap{max-width:90%;font-weight:500;letter-spacing:.01em}.empty .sub{font-size:11px}.empty .sub u{text-underline-offset:2px;text-decoration-color:rgba(0,0,0,.25)}.empty:hover .sub u{color:rgba(0,0,0,.75);text-decoration-color:currentColor}:host([data-over]) .frame{outline:2px solid #c96442;outline-offset:-2px;  background:rgba(201,100,66,.10)}.ring{position:absolute;inset:0;pointer-events:none;border:1.5px dashed rgba(0,0,0,.25);  transition:border-color .12s}:host([data-over]) .ring{border-color:#c96442}:host([data-filled]) .ring{display:none}.ctl{position:absolute;top:100%;left:50%;transform:translateX(-50%);padding-top:8px;  display:flex;gap:6px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:2;  white-space:nowrap}:host([data-filled][data-editable]:hover) .ctl,:host([data-reframe]) .ctl  {opacity:1;pointer-events:auto}.ctl button{appearance:none;border:0;border-radius:6px;padding:5px 10px;cursor:pointer;  background:rgba(0,0,0,.65);color:#fff;font:11px/1 system-ui,-apple-system,sans-serif;  backdrop-filter:blur(6px)}.ctl button:hover{background:rgba(0,0,0,.8)}.err{position:absolute;left:8px;bottom:8px;right:8px;color:#b3261e;font-size:11px;  background:rgba(255,255,255,.85);padding:4px 6px;border-radius:5px;pointer-events:none}</style><div class="frame" part="frame" style="border-radius: 12px;">  <img part="image" alt="" draggable="false" style="display:none">  <div class="empty" part="empty" style="display: flex;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>    <div class="cap">시황에이전트 탭 스크린샷을 드롭</div>    <div class="sub" style="display: none;">or <u>browse files</u></div></div>  <div class="ring" part="ring" style="border-radius: 12px;"></div></div><div class="spill">  <img class="ghost" alt="" draggable="false">  <div class="handle" data-c="nw"></div><div class="handle" data-c="ne"></div>  <div class="handle" data-c="sw"></div><div class="handle" data-c="se"></div></div><div class="ctl"><button data-act="replace" title="Replace image">Replace</button>  <button data-act="clear" title="Remove image">Remove</button></div><input type="file" accept="image/png,image/jpeg,image/webp,image/avif" hidden=""></template></image-slot>
+        <span class="cap" data-atlas-text="true" contenteditable="true" spellcheck="false">시황 · 장전 / 장중 / 장마감</span>
+      </div>
+      <div class="anim">
+        <div class="s-title sm" style="font-size:58px" data-atlas-text="true" contenteditable="true" spellcheck="false">장전·장중·장마감,<br>9섹션 자동 브리핑</div>
+        <div class="s-lead" style="font-size:26px;margin-top:18px;color:var(--espresso-2)" data-atlas-text="true" contenteditable="true" spellcheck="false">슬롯을 고르면 LLM이 시황 리포트를 생성. 핵심이슈·Bull/Bear·글로벌매크로·국내전망·전략·뉴스를 인터랙티브 카드로.</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:24px">
+          <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">RS 4분면</span>
+          <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">ADR 추이</span>
+          <span class="tag" style="color:var(--purple);background:rgba(167,87,136,.1)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">발송 이력</span>
+          <span class="tag" style="color:#4F9E4A;background:rgba(79,158,74,.12)" data-atlas-text="true" contenteditable="true" spellcheck="false" data-atlas-component="true">자동 카운트다운</span>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span style="font-family:var(--font-head);font-weight:400;letter-spacing:0;font-size:21px;color:var(--greige)"></span><span class="pageno" data-atlas-text="true" contenteditable="true" spellcheck="false">09</span></div>
+  </section>
+
+  <!-- ============ 10 · AI 아이디어랩 (light + shot) ============ -->
+  <section class="s s--light" data-label="AI 아이디어랩" data-screen-label="14 AI 아이디어랩 (Top-Down)">
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 04 — <span class="kicker-ko">AI 아이디어랩 (Top-Down)</span></span></div>
+    <div class="s-title sm anim" style="margin-top:14px">AI 에이전트 리서치팀이<br>지금 시장 국면에 맞는 섹터와 종목을 찾는다</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:36px;flex:1">
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-research-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="조사 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700">01</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">뉴스·매크로 조사</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">뉴스 큐레이터, Macro PM이 금리·지수 환경과 테마 스캔</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-debate-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="토론 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:var(--blue);font-weight:700">02</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">섹터 토론</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">Bull/Bear 리서처 에이전트 간의 팽팽한 논리 대립 및 강약세 검증</div>
+        </div>
+      </div>
+      <div class="card anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-risk-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="심의 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:var(--purple);font-weight:700">03</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">리스크 심의</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">리스크 매니저가 유망 종목의 하방 리스크 및 변동성 정량 분석</div>
+        </div>
+      </div>
+      <div class="card hot anim" style="display:flex;flex-direction:column;min-height:600px;padding:32px 28px">
+        <div style="width:100%;height:280px;overflow:hidden;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center">
+          <img src="../illustrations/process/committee-decision-agent.png" style="height:100%;width:100%;object-fit:cover;object-position:center;transform:scale(1.1);filter:drop-shadow(0 16px 32px rgba(0,0,0,0.18))" alt="선정 아이콘">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono" style="font-size:20px;color:#C2570F;font-weight:700">04</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:28px;margin-top:8px;color:var(--espresso)">PM 의장 합의·제안</div>
+          <div style="font-size:18px;color:var(--espresso-2);margin-top:10px;line-height:1.45">검증된 종합 지표를 취합하여 PM 의장 주도 하에 최종 포트 편입 후보군 합의 및 제안</div>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">14</span></div>
+</section>
+
+  <!-- ============ 11 · AI COMMITTEE (dark hero) ============ -->
+  <section
+  <section class="s s--light" data-label="아이디어랩 아웃풋" data-screen-label="15 AI 아이디어랩 실행 결과">
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 04 — <span class="kicker-ko">AI 아이디어랩 실행 결과</span></span></div>
+    <div class="s-title sm anim" style="margin-top:14px">AI 아이디어랩 실제 운용 화면 (예시)</div>
+    
+    <div class="card anim" style="margin-top:28px; flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--paper-line); box-shadow:0 12px 32px rgba(0,0,0,0.06); padding:0; background:#fcfbfa; border-radius:16px; min-height:540px">
+      <img src="../illustrations/output/idealab-screenshot.png" style="width:100%; height:100%; object-fit:cover" alt="AI 아이디어랩 실제 아웃풋 캡쳐" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+      <div style="display:none; flex-direction:column; align-items:center; justify-content:center; color:var(--espresso-2); font-size:22px; gap:12px" class="fallback-placeholder">
+        <span style="font-size:48px">💻</span>
+        <div>이곳에 [idealab-screenshot.png] 캡쳐 파일을 넣어주세요.</div>
+        <div style="font-size:16px; color:#8a5a3a">경로: public/illustrations/output/idealab-screenshot.png</div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">15</span></div>
+  </section>
+<section class="s s--dark atlas-committee" data-label="AI투자위원회" data-screen-label="16 AI투자위원회 (Bottom-Up)">
+    <div class="gridlines"></div>
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 05 — <span class="kicker-ko">AI투자위원회 (Bottom-Up)</span></span></div>
+    <div class="committee-hero-wrap">
+      <div class="committee-copy anim">
+        <div class="committee-big-number">14</div>
+        <div class="s-title" style="font-size:72px;margin-top:8px;word-break:keep-all;line-height:1.2">개 전문 에이전트의<br>개별 종목 분석</div>
+        <div class="s-lead" style="font-size:24px;margin-top:20px;max-width:850px;word-break:keep-all;line-height:1.45">바텀업 관점에서 개별 종목에 대해 강세(Bull) · 약세(Bear) · 리스크 관점을 분리해 다각도로 심층 검증하고 합의 의견을 도출합니다.</div>
+      </div>
+      <div class="committee-orbit anim" aria-hidden="true">
+        <div class="committee-core">BUY<br><span>SELL · HOLD</span></div>
+        <span class="agent-node n1">Technical</span>
+        <span class="agent-node n2">Fundamental</span>
+        <span class="agent-node n3">News</span>
+        <span class="agent-node n4">Sentiment</span>
+        <span class="agent-node n5">Bull</span>
+        <span class="agent-node n6">Bear</span>
+        <span class="agent-node n7">Risk</span>
+        <span class="agent-node n8">PM</span>
+      </div>
+    </div>
+    
+    <div class="committee-stages" style="display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:28px">
+      <!-- Card 1 -->
+      <div class="card anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-research-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="조사">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">01</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">조사</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">기술·재무·뉴스·심리 데이터 수집 및 다각도 기초 리서치</div>
+        </div>
+      </div>
+      
+      <!-- Card 2 -->
+      <div class="card anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-debate-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="토론">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">02</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">토론</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">상반된 Bull/Bear 리서처 간의 논리 충돌 및 교차 토론</div>
+        </div>
+      </div>
+      
+      <!-- Card 3 -->
+      <div class="card anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-risk-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="심의">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">03</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">심의</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">다차원 하방 리스크 시뮬레이션 및 변동성 정밀 심의</div>
+        </div>
+      </div>
+      
+      <!-- Card 4 -->
+      <div class="card hot anim" style="display:flex; flex-direction:column; min-height:500px; padding:24px 20px">
+        <div style="width:100%; height:180px; overflow:hidden; border-radius:12px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03)">
+          <img src="../illustrations/process/committee-decision-agent.png" style="height:100%; width:100%; object-fit:contain; transform:scale(0.75); filter:drop-shadow(0 8px 16px rgba(0,0,0,0.3))" alt="결정">
+        </div>
+        <div style="margin-top:auto">
+          <div class="mono stage-num" style="font-size:18px; color:var(--orange); font-weight:800">04</div>
+          <div class="stage-title" style="font-family:var(--font-head); font-weight:700; color:var(--beige); font-size:24px; margin-top:4px">최종 합의</div>
+          <div class="stage-desc" style="color:var(--greige); font-size:16px; line-height:1.45; margin-top:6px; word-break:keep-all">참여 위원 합의 기반의 포트폴리오 편입 및 최종 제안</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">16</span></div>
+</section>
+
+  <!-- ============ 12 · HERO FLOW 원클릭 (light) ============ -->
+  
+
+  <!-- ============ 13 · ARCHITECTURE (light) ============ -->
+  <section
+  <section class="s s--dark atlas-committee" data-label="투자위원회 아웃풋" data-screen-label="17 AI투자위원회 최종 보고서">
+    <div class="gridlines"></div>
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">TAB 05 — <span class="kicker-ko">AI투자위원회 최종 보고서</span></span></div>
+    <div class="s-title sm anim" style="margin-top:14px; color:#fff">AI투자위원회 최종 심의 결과 (예시)</div>
+    
+    <div class="card anim" style="margin-top:28px; flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; border:none; box-shadow:0 16px 40px rgba(0,0,0,0.4); padding:0; background:rgba(255,255,255,0.02); border-radius:16px; min-height:540px">
+      <img src="../illustrations/output/committee-screenshot.png" style="width:100%; height:100%; object-fit:cover" alt="AI투자위원회 실제 아웃풋 캡쳐" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+      <div style="display:none; flex-direction:column; align-items:center; justify-content:center; color:var(--greige); font-size:22px; gap:12px" class="fallback-placeholder">
+        <span style="font-size:48px">📊</span>
+        <div>이곳에 [committee-screenshot.png] 캡쳐 파일을 넣어주세요.</div>
+        <div style="font-size:16px; color:var(--orange)">경로: public/illustrations/output/committee-screenshot.png</div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">17</span></div>
+  </section>
+<section class="s s--light" data-label="아키텍처·신뢰성" data-screen-label="18 아키텍처·신뢰성">
+    <div class="eyebrow-row anim"><span class="num">ㅡ</span><span class="kicker">SYSTEM &amp; DATA TRUST</span></div>
+    <div class="s-title sm anim" style="margin-top:14px">안정적인 의사결정 인프라와 신뢰할 수 있는 데이터 통합</div>
+    
+    <!-- 본문 내용 컨테이너 (세로 플렉스 구조) -->
+    <div style="display:flex;flex-direction:column;gap:36px;margin-top:58px;flex:1">
+      
+      <!-- 상단: 아키텍처와 데이터 소스 (좌우 배치) -->
+      <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:44px">
+        <!-- 좌측: 아키텍처 -->
+        <div class="anim" style="display:flex;flex-direction:column;gap:18px">
+          <div class="mono" style="font-size:22px;color:#C2570F;font-weight:700;letter-spacing:.1em;margin-bottom:4px">SYSTEM ARCHITECTURE</div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card" style="display:flex;flex-direction:row;align-items:center;gap:22px;padding:22px 26px;border:1.5px solid var(--paper-line);box-shadow:0 8px 24px rgba(0,0,0,0.03);border-radius:12px;transition:all 0.3s ease">
+              <span class="tag" style="color:var(--blue);background:rgba(51,149,186,.1);width:160px;text-align:center;flex-shrink:0;padding:6px 12px;font-weight:700;border-radius:6px">FRONTEND</span>
+              <div style="flex:1">
+                <div style="font-family:var(--font-head);font-weight:700;font-size:23px;color:var(--espresso);word-break:keep-all">React 19 · TypeScript · Vite</div>
+                <div style="font-size:16px;color:var(--espresso-2);margin-top:4px;line-height:1.45;word-break:keep-all">Tailwind CSS 기반의 고성능 사용자 인터페이스. REST API 호출 및 SSE(Server-Sent Events)를 활용한 실시간 데이터 스트리밍.</div>
+              </div>
+            </div>
+            <div class="card" style="display:flex;flex-direction:row;align-items:center;gap:22px;padding:22px 26px;border:1.5px solid var(--paper-line);box-shadow:0 8px 24px rgba(0,0,0,0.03);border-radius:12px;transition:all 0.3s ease">
+              <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.1);width:160px;text-align:center;flex-shrink:0;padding:6px 12px;font-weight:700;border-radius:6px">BACKEND</span>
+              <div style="flex:1">
+                <div style="font-family:var(--font-head);font-weight:700;font-size:23px;color:var(--espresso);word-break:keep-all">FastAPI · Python 3.9</div>
+                <div style="font-size:16px;color:var(--espresso-2);margin-top:4px;line-height:1.45;word-break:keep-all">비동기 서버 기반의 실시간 포트폴리오 데이터 가공. 평가·손익 지표의 즉각적인 연동 및 과거 시세 통계 파이프라인.</div>
+              </div>
+            </div>
+            <div class="card hot" style="display:flex;flex-direction:row;align-items:center;gap:22px;padding:22px 26px;border:1.5px solid rgba(243,115,33,0.3);box-shadow:0 8px 24px rgba(243,115,33,0.06);border-radius:12px;transition:all 0.3s ease;background:rgba(243,115,33,0.02)">
+              <span class="tag" style="color:#C2570F;background:rgba(243,115,33,.14);width:160px;text-align:center;flex-shrink:0;padding:6px 12px;font-weight:700;border-radius:6px">COMMITTEE ENGINE</span>
+              <div style="flex:1">
+                <div style="font-family:var(--font-head);font-weight:700;font-size:23px;color:var(--espresso);word-break:keep-all">다중 에이전트 합의 엔진 <span class="mono" style="font-size:16px;color:#8a5a3a;margin-left:8px">Multi-Agent System</span></div>
+                <div style="font-size:16px;color:var(--espresso-2);margin-top:4px;line-height:1.45;word-break:keep-all">Codex, Claude Code, Antigravity CLI를 사용하여 개발하고 내장 LLM 모델로 Mimo V2.5를 채택. 14개 전문 에이전트의 다차원 분석 결과 종합 및 실시간 토론·합의 알고리즘 구동.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 우측: 데이터 소스 -->
+        <div class="anim" style="display:flex;flex-direction:column;gap:18px">
+          <div class="mono" style="font-size:22px;color:#C2570F;font-weight:700;letter-spacing:.1em;margin-bottom:4px">DATA SOURCES</div>
+          <div style="display:grid;grid-template-columns:1fr;gap:14px">
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                네이버 금융 · pykrx API
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">국내 주식 시장의 실시간 호가 정보, 일별 OHLCV 가격 데이터 및 과거 시뮬레이션용 데이터 적재.</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                yfinance 글로벌 피드
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">주요 거시 경제 지표(환율, VIX 변동성 지수, WTI 유가, 금 가격 등) 및 해외 주식/지수 데이터 수집.</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                실시간 포트폴리오 데이터
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">보유 자산 현황의 실시간 평가 및 손익·위험 지표 연산을 위한 포트폴리오 시뮬레이션 데이터 피드.</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--paper-line);border-radius:12px;padding:20px 24px;box-shadow:0 8px 24px rgba(0,0,0,0.02);display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--espresso);display:flex;align-items:center;gap:8px;word-break:keep-all">
+                <span style="display:inline-block;width:6px;height:6px;background-color:var(--blue);border-radius:50%"></span>
+                Google News API · DART 공시 정보
+              </div>
+              <div style="font-size:15px;color:var(--espresso-2);line-height:1.4;word-break:keep-all;padding-left:14px">실시간 언론 보도 텍스트 수집 및 기업 공시 정보 파싱. 감성 분석 에이전트의 시장 오피니언 분석 입력원.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 하단: 컴플라이언스 (가로로 길게 배치) -->
+      <div class="card anim" style="display:flex;flex-direction:row;align-items:center;background:var(--espresso);border:none;padding:22px 28px;gap:28px;width:100%;box-sizing:border-box;box-shadow:0 12px 32px rgba(0,0,0,0.15);border-radius:12px">
+        <div style="flex-shrink:0">
+          <div class="mono" style="font-size:16px;color:var(--orange-3);font-weight:700;letter-spacing:.1em">COMPLIANCE</div>
+          <div style="font-family:var(--font-head);font-weight:700;font-size:22px;margin-top:4px;color:#fff;line-height:1.2;word-break:keep-all">내부 참고용 보조도구</div>
+        </div>
+        <div style="width:1.5px;height:50px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+        <div style="flex:1;font-size:16px;color:#E6D8CC;line-height:1.55;word-break:keep-all">
+          본 화면 및 자료에서 제공되는 AI 생성 결과는 실시간 데이터 상태 및 거대 언어 모델(LLM)의 비결정성적 특성에 따라 일부 오차가 발생할 수 있습니다. 과거 시뮬레이션 결과(백테스트)가 미래의 수익을 보장하지 않으므로, 최종적인 투자 의사결정과 이에 따른 모든 책임은 해당 업무를 담당하는 전문 운용역의 판단 하에 진행되어야 합니다.
+        </div>
+      </div>
+      
+    </div>
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span class="pageno">18</span></div>
+</section>
+
+  <!-- ============ 14 · DATA SOURCES & COMPLIANCE (light) ============ -->
+  
+
+  <!-- ============ 15 · CLOSING (dark) ============ -->
+  <section class="s s--dark" data-label="클로징" data-screen-label="15 클로징">
+    <div class="gridlines"></div>
+    <!-- 몽환적이고 웅장한 백그라운드 오라(Aura) 및 3D 입체형 오렌지 골드 구체(Orb) -->
+    <div style="position:absolute;right:100px;top:200px;width:540px;height:540px;border-radius:50%;background:radial-gradient(circle,rgba(243,115,33,.18),transparent 70%);filter:blur(24px);z-index:1"></div>
+    <div style="position:absolute;right:140px;top:240px;width:460px;height:460px;border-radius:50%;background:#140e0c;border:2px solid rgba(243,115,33,.45);box-shadow:0 0 100px rgba(243,115,33,.1);z-index:2"></div>
+    <div style="position:absolute;right:210px;top:310px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF2E6 0%,#FCB688 18%,#F37321 50%,#8c3605 85%,#3d1400 100%);box-shadow:0 0 90px rgba(243,115,33,.45), inset 0 -20px 40px rgba(0,0,0,0.85), inset 0 20px 45px rgba(255,255,255,0.45);z-index:3"></div>
+    
+    <div style="margin-top:auto;z-index:4;position:relative">
+      <div class="kicker anim" style="letter-spacing:0.15em">ONE SYSTEM FOR THE DESK</div>
+      <div class="s-title anim" style="font-size:90px;margin-top:18px;line-height:1.2;word-break:keep-all">시장 · 손익 · 시황 · 아이디어<br><span style="color:var(--orange)">하나의 통합 시스템</span>으로 완성하다.</div>
+      <div class="s-lead anim" style="margin-top:28px;font-size:32px;color:var(--espresso-3);word-break:keep-all">한화손해보험 주식운용을 위한 Agentic AI 통합 데스크, <b style="color:var(--beige);font-weight:700">ATLAS</b>.</div>
+      
+      <!-- 하단: 프리미엄 아티클 느낌의 메트릭 정보 추가 -->
+      <div class="anim" style="display:flex;gap:36px;margin-top:52px;border-top:1px solid rgba(255,255,255,0.12);padding-top:32px;max-width:850px">
+        <div style="flex:1">
+          <div class="mono" style="color:var(--orange-3);font-size:16px;font-weight:700;letter-spacing:0.08em">EFFICIENCY</div>
+          <div style="font-size:17px;color:#C9B8A8;margin-top:8px;line-height:1.5;word-break:keep-all">아침 루틴의 7개 개별 화면을 단일 통합 동선으로 최적화하여 운용 효율성 극대화.</div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+        <div style="flex:1">
+          <div class="mono" style="color:var(--blue);font-size:16px;font-weight:700;letter-spacing:0.08em">INTELLIGENCE</div>
+          <div style="font-size:17px;color:#C9B8A8;margin-top:8px;line-height:1.5;word-break:keep-all">Mimo V2.5 엔진 및 14개 전문 에이전트의 교차 검증으로 신뢰도 높은 최적의 투자 의사결정 지원.</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="s-foot"><span class="brandmark"><span class="dot"></span>ATLAS</span><span></span></div>
+</section>
+
+</deck-stage>
+
+<script src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/image-slot.js"></script>
+<script src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/deck-stage.js"></script>
+<script src="./한화 ATLAS — Agentic Investment Desk · 발표 덱_files/atlas-editor.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="atlas-editor-hint">사용법: 텍스트를 클릭해 직접 수정하세요. 카드/슬롯/태그를 클릭하면 선택됩니다. 이동 모드를 켜고 드래그하면 위치를 옮길 수 있습니다. 변경사항은 자동 저장됩니다.</div></body></html>

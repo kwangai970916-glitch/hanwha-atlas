@@ -1,0 +1,72 @@
+/* ============================================================
+   PRISM Deck — Design System Foundation (new, brand-grounded)
+   Hanwha brand colors + Hanwha display type + Pretendard body
+   ============================================================ */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+@font-face{
+  font-family:"Hanwha Display";
+  src:url("fonts/HanwhaB.ttf") format("truetype");
+  font-weight:700;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:"Hanwha Gothic";
+  src:url("fonts/HanwhaGothicB.ttf") format("truetype");
+  font-weight:700;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:"Hanwha Gothic";
+  src:url("fonts/HanwhaGothicR.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:"Hanwha Gothic";
+  src:url("fonts/HanwhaGothicL.ttf") format("truetype");
+  font-weight:300;font-style:normal;font-display:swap;
+}
+
+:root{
+  /* ---- Brand core (from Hanwha CI sheet) ---- */
+  --orange:#F37321;        /* Hanwha Orange — primary signal */
+  --orange-2:#F89B6C;
+  --orange-3:#FBB584;
+  --orange-web:#FF6200;
+
+  /* ---- Warm dark surfaces ---- */
+  --ink:#1A1310;           /* deepest bg */
+  --ink-2:#241C19;         /* canvas */
+  --brown:#3A2F2C;         /* card */
+  --brown-2:#4A3D37;       /* raised */
+  --line:#5A4A43;          /* hairline */
+
+  /* ---- Warm light surfaces ---- */
+  --paper:#F7F1E9;         /* light beige bg */
+  --paper-2:#EFE6DA;
+  --paper-line:#E1D4C9;    /* earthy greige */
+
+  /* ---- Text ---- */
+  --beige:#F7F1E9;
+  --greige:#C9BBB0;
+  --muted:#A1948B;
+  --espresso:#2A211D;      /* text on light */
+  --espresso-2:#6B5B52;
+
+  /* ---- Data accents ---- */
+  --blue:#3395BA;
+  --purple:#A75788;
+  --up:#E5484D;            /* 상승/이익 = 레드 (KR) */
+  --down:#3395BA;          /* 하락/손실 = 블루 (KR) */
+
+  /* ---- Type ---- */
+  --font-display:"Hanwha Display","Hanwha Gothic","Pretendard",system-ui,sans-serif;
+  --font-head:"Hanwha Gothic","Pretendard",system-ui,sans-serif;
+  --font-body:"Pretendard","Hanwha Gothic","Noto Sans KR",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SFMono-Regular",ui-monospace,monospace;
+
+  /* ---- Radius / shadow ---- */
+  --r-card:18px;
+  --r-chip:11px;
+  --shadow-card:0 12px 32px rgba(0,0,0,.32);
+  --glow:0 0 0 1px rgba(243,115,33,.30),0 10px 30px rgba(243,115,33,.18);
+}

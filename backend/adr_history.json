@@ -1,0 +1,51 @@
+[
+  {
+    "date": "2026-05-28",
+    "kospi_adv": 118,
+    "kospi_dec": 791,
+    "kosdaq_adv": 239,
+    "kosdaq_dec": 1463
+  },
+  {
+    "date": "2026-05-29",
+    "kospi_adv": 210,
+    "kospi_dec": 688,
+    "kosdaq_adv": 313,
+    "kosdaq_dec": 1393
+  },
+  {
+    "date": "2026-06-01",
+    "kospi_adv": 183,
+    "kospi_dec": 732,
+    "kosdaq_adv": 230,
+    "kosdaq_dec": 1478
+  },
+  {
+    "date": "2026-06-02",
+    "kospi_adv": 147,
+    "kospi_dec": 764,
+    "kosdaq_adv": 280,
+    "kosdaq_dec": 1432
+  },
+  {
+    "date": "2026-06-05",
+    "kospi_adv": 226,
+    "kospi_dec": 672,
+    "kosdaq_adv": 393,
+    "kosdaq_dec": 1298
+  },
+  {
+    "date": "2026-06-08",
+    "kospi_adv": 35,
+    "kospi_dec": 883,
+    "kosdaq_adv": 73,
+    "kosdaq_dec": 1651
+  },
+  {
+    "date": "2026-06-09",
+    "kospi_adv": 775,
+    "kospi_dec": 134,
+    "kosdaq_adv": 1441,
+    "kosdaq_dec": 259
+  }
+]
