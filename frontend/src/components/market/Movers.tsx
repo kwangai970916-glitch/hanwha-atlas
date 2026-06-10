@@ -47,6 +47,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
 
 /* ── 이상치 캡 ── */
 const CHANGE_CAP = 31
+const VISIBLE_MOVER_COUNT = 10
 
 function filterOutliers(stocks: UniverseRow[]): UniverseRow[] {
   return stocks.filter(s => Math.abs(s.change ?? 0) <= CHANGE_CAP)
@@ -137,7 +138,7 @@ export function Movers({ apiBase }: { apiBase: string }) {
     (tab: TabId, silent = false) => {
       if (!silent) setStates(prev => ({ ...prev, [tab]: 'loading' }))
 
-      const params = new URLSearchParams({ limit: '10', sort: 'trade_value', order: 'desc' })
+      const params = new URLSearchParams({ limit: String(VISIBLE_MOVER_COUNT), sort: 'trade_value', order: 'desc' })
 
       if (tab === 'trade_value') {
         params.set('sort', 'trade_value')
@@ -188,6 +189,7 @@ export function Movers({ apiBase }: { apiBase: string }) {
 
   const currentState = states[activeTab]
   const currentData = data[activeTab]
+  const visibleData = currentData.slice(0, VISIBLE_MOVER_COUNT)
 
   return (
     <Card
@@ -233,7 +235,7 @@ export function Movers({ apiBase }: { apiBase: string }) {
       </div>
 
       {/* 콘텐츠 */}
-      <div className="px-4 py-3 min-h-[280px]">
+      <div className="px-4 py-3">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -274,7 +276,7 @@ export function Movers({ apiBase }: { apiBase: string }) {
 
             {currentState === 'ready' && (
               <div>
-                {currentData.map((s, i) => (
+                {visibleData.map((s, i) => (
                   <MoverRow key={s.symbol || i} stock={s} rank={i} tab={activeTab} />
                 ))}
               </div>

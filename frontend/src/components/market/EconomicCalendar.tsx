@@ -54,11 +54,11 @@ function ddayLabel(days: number): string {
 
 export function EconomicCalendar() {
   const today = new Date().toISOString().slice(0, 10)
-  const upcoming = EVENTS.filter(event => event.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6)
+  const upcoming = EVENTS.filter(event => event.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 7)
 
   return (
-    <Card className="h-full" eyebrow="Economic Calendar · US Focus" title="주요 경제 일정" action={<Badge tone="neutral">Investing.com형</Badge>}>
-      <div className="flex min-h-[280px] flex-col gap-2.5">
+    <Card eyebrow="Economic Calendar · US Focus" title="주요 경제 일정" action={<Badge tone="neutral">핵심 7건</Badge>}>
+      <div className="flex flex-col gap-2">
         {upcoming.map(event => {
           const meta = CATEGORY_META[event.category]
           const Icon = meta.icon
@@ -66,9 +66,9 @@ export function EconomicCalendar() {
           const imminent = days <= 3
 
           return (
-            <div key={`${event.date}-${event.title}`} className={cn('rounded-[14px] border p-3 transition-colors', imminent ? 'border-hanwha/35 bg-hanwha/[0.055]' : 'border-line/55 bg-card-2/25')}>
-              <div className="flex items-start gap-3">
-                <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border', meta.tone)}>
+            <div key={`${event.date}-${event.title}`} className={cn('rounded-[14px] border px-3 py-2.5 transition-colors', imminent ? 'border-hanwha/35 bg-hanwha/[0.055]' : 'border-line/55 bg-card-2/25')}>
+              <div className="flex items-start gap-2.5">
+                <span className={cn('grid h-7 w-7 shrink-0 place-items-center rounded-[10px] border', meta.tone)}>
                   <Icon size={15} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -79,8 +79,8 @@ export function EconomicCalendar() {
                       {IMPORTANCE_TEXT[event.importance]}
                     </span>
                   </div>
-                  <p className="mt-1 line-clamp-1 text-xs text-greige/80">{event.detail}</p>
-                  <div className="mt-2 flex items-center justify-between gap-2 font-mono text-[10px] text-muted">
+                  <p className="mt-0.5 line-clamp-1 text-xs text-greige/80">{event.detail}</p>
+                  <div className="mt-1.5 flex items-center justify-between gap-2 font-mono text-[10px] text-muted">
                     <span>{dateLabel(event.date)} · {event.timeKst} KST</span>
                     <span className={cn('font-bold', imminent ? 'text-hanwha' : 'text-muted')}>{ddayLabel(days)}</span>
                   </div>

@@ -459,7 +459,7 @@ export function MarketDashboard({ ticks, apiBase }: { ticks: Tick[]; apiBase: st
           <div className="h-full [&>*]:h-full">
             <Movers apiBase={apiBase} />
           </div>
-          <div className="h-full [&>*]:h-full">
+          <div className="min-w-0 self-start">
             <EconomicCalendar />
           </div>
           <div className="h-full [&>*]:h-full">
