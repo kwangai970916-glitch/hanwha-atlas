@@ -14,7 +14,7 @@ export function Spinner({ size = 18, className }: SpinnerProps) {
       viewBox="0 0 24 24"
       className={cn('animate-spin text-hanwha', className)}
       role="status"
-      aria-label="loading"
+      aria-label="로딩 중"
     >
       <circle
         cx="12"

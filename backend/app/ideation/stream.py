@@ -1,6 +1,8 @@
 from __future__ import annotations
 import datetime as dt
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any, Dict
 
@@ -41,21 +43,42 @@ class RunStream:
     def idx(self) -> int:
         return self._idx
 
-    def emit(self, agent: str, stage: str, text: str, icon: str = 'message') -> None:
+    def emit(self, agent: str, stage: str, text: str, icon: str = 'message',
+             source: str = 'rules') -> None:
         msg = {
             'idx': self._idx, 'ts': iso_now(), 'agent': agent, 'stage': stage,
-            'text': (text or '').strip()[:240], 'icon': icon,
+            'text': (text or '').strip()[:240], 'icon': icon, 'source': source,
         }
         with self._msg_path.open('a', encoding='utf-8') as f:
             f.write(json.dumps(msg, ensure_ascii=False) + '\n')
         self._idx += 1
 
+    def _atomic_write(self, path: Path, content: str) -> None:
+        """temp 파일로 쓴 뒤 os.replace로 원자적 교체.
+        Windows에서 대상 파일이 잠긴 경우 직접 write_text로 폴백."""
+        try:
+            fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), suffix='.tmp')
+            try:
+                os.write(fd, content.encode('utf-8'))
+            finally:
+                os.close(fd)
+            os.replace(tmp_path, str(path))
+        except OSError:
+            # Windows 잠금 등으로 replace 실패 시 직접 쓰기로 폴백
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+            path.write_text(content, encoding='utf-8')
+
     def set_stage(self, stage: str, **extra: Any) -> None:
         step, label = STAGE_META.get(stage, (0, stage))
         payload = {'stage': stage, 'stage_label': label, 'step': step, 'ts': iso_now()}
         payload.update(extra)
-        self._status_path.write_text(json.dumps(payload, ensure_ascii=False), encoding='utf-8')
+        self._atomic_write(self._status_path, json.dumps(payload, ensure_ascii=False))
 
     def write_decision(self, decision: Dict[str, Any]) -> None:
-        self._decision_path.write_text(
-            json.dumps(decision, ensure_ascii=False, indent=2), encoding='utf-8')
+        self._atomic_write(
+            self._decision_path,
+            json.dumps(decision, ensure_ascii=False, indent=2)
+        )

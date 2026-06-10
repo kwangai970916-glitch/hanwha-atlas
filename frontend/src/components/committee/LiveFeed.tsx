@@ -6,13 +6,13 @@ import {
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 
-export type AgentMessage = { idx: number; ts: string; agent: string; stage: string; text: string; icon: string }
+export type AgentMessage = { idx: number; ts: string; agent: string; stage: string; text: string; icon: string; source?: string }
 
 const AGENT_COLORS: Record<string, string> = {
   analysts: 'border-l-blue/60', research_debate: 'border-l-hanwha/70',
-  risk_debate: 'border-l-yellow-500/70', decision: 'border-l-up/60',
+  risk_debate: 'border-l-down/60', decision: 'border-l-up/60',
   discovery: 'border-l-blue/60', sector_debate: 'border-l-hanwha/70',
-  nomination: 'border-l-blue/60', risk_review: 'border-l-yellow-500/70',
+  nomination: 'border-l-blue/60', risk_review: 'border-l-down/60',
 }
 
 const AGENT_ICONS: Record<string, ReactNode> = {
@@ -27,8 +27,10 @@ const AGENT_ICONS: Record<string, ReactNode> = {
   'PM 의장': <Gavel size={13} />,
 }
 
-export function LiveFeed({ messages, feedBottomRef }: {
-  messages: AgentMessage[]; feedBottomRef: React.RefObject<HTMLDivElement | null>
+export function LiveFeed({ messages, feedBottomRef, emptyLabel }: {
+  messages: AgentMessage[]
+  feedBottomRef: React.RefObject<HTMLDivElement | null>
+  emptyLabel?: string
 }) {
   return (
     <div className="mt-5">
@@ -38,23 +40,36 @@ export function LiveFeed({ messages, feedBottomRef }: {
         <span className="font-mono text-[10px] text-muted">{messages.length}개 발언</span>
       </div>
       <div className="max-h-72 space-y-2 overflow-y-auto rounded-[12px] border border-line/60 bg-canvas/30 p-3">
-        <AnimatePresence initial={false}>
-          {messages.map(m => (
-            <motion.div key={m.idx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22 }}
-              className={cn('rounded-[9px] border border-line/50 bg-card-2/40 px-3 py-2.5 border-l-4',
-                AGENT_COLORS[m.stage] ?? 'border-l-line')}>
-              <div className="mb-1 flex items-center gap-1.5">
-                <span className="text-muted">{AGENT_ICONS[m.agent] ?? <MessagesSquare size={13} />}</span>
-                <span className="font-mono text-[11px] font-bold text-greige">{m.agent}</span>
-                <span className="ml-auto font-mono text-[9px] text-muted/60">
-                  {m.ts ? new Date(m.ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
-                </span>
-              </div>
-              <p className="text-[12px] leading-relaxed text-greige/90">{m.text}</p>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {messages.length === 0 && emptyLabel ? (
+          <div className="flex items-center gap-2 px-1 py-3 font-mono text-[12px] text-muted">
+            <MessagesSquare size={14} className="shrink-0 text-hanwha" />
+            {emptyLabel}
+          </div>
+        ) : (
+          <AnimatePresence initial={false}>
+            {messages.map(m => (
+              <motion.div key={m.idx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22 }}
+                className={cn('rounded-[9px] border border-line/50 bg-card-2/40 px-3 py-2.5 border-l-4',
+                  AGENT_COLORS[m.stage] ?? 'border-l-line')}>
+                <div className="mb-1 flex items-center gap-1.5">
+                  <span className="text-muted">{AGENT_ICONS[m.agent] ?? <MessagesSquare size={13} />}</span>
+                  <span className="font-mono text-[11px] font-bold text-greige">{m.agent}</span>
+                  {m.source === 'llm' && (
+                    <span className="rounded-pill border border-hanwha/30 bg-hanwha/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-hanwha">AI</span>
+                  )}
+                  {m.source === 'rules' && (
+                    <span className="rounded-pill border border-line bg-card-2/60 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-muted">규칙</span>
+                  )}
+                  <span className="ml-auto font-mono text-[9px] text-muted/60">
+                    {m.ts ? new Date(m.ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
+                  </span>
+                </div>
+                <p className="text-[12px] leading-relaxed text-greige/90">{m.text}</p>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
         <div ref={feedBottomRef} />
       </div>
     </div>

@@ -113,7 +113,7 @@ test('loads cached committee result instantly via 최근 결과 button', async (
   })
 
   render(<IdeaLab apiBase="http://127.0.0.1:8000" />)
-  fireEvent.click(screen.getByRole('button', { name: '최근 결과' }))
+  fireEvent.click(screen.getByRole('button', { name: /최근 결과/ }))
 
   // /latest 1회로 즉시 결과 렌더 (라이브 run/폴링 없음)
   expect(await screen.findByText('회의 결론: Macro → Sector → Stock')).toBeInTheDocument()

@@ -1,25 +1,34 @@
 from __future__ import annotations
 import json
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Tuple
 
+logger = logging.getLogger(__name__)
 
-def _speak_json(system: str, user: str, fallback: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+
+def _speak_json(system: str, user: str, fallback: Dict[str, Any],
+                _role: str = '') -> Tuple[Dict[str, Any], str]:
     """_call_llm(JSON 반환) 래퍼. 성공 시 (parsed, provider), 실패 시 (fallback, 'rules')."""
     try:
         from ..idea_engine import _call_llm
         parsed, provider, _errs = _call_llm(system, user)
         if isinstance(parsed, dict) and parsed:
             return parsed, (provider or 'llm')
-    except Exception:
-        pass
+        err = '; '.join(_errs) if _errs else 'empty response'
+        logging.warning("LLM fallback (%s): %s", _role or 'unknown', err)
+    except Exception as e:
+        logging.warning("LLM fallback (%s): %s", _role or 'unknown', e)
     return fallback, 'rules'
 
 
-def _speak_text(system: str, user: str, fallback_text: str) -> Tuple[str, str]:
+def _speak_text(system: str, user: str, fallback_text: str,
+                _role: str = '') -> Tuple[str, str]:
     """자유 서술용. _call_llm은 JSON을 기대하므로, system에 {"speech": ...} 한 줄 스키마를 강제하고
     speech 필드만 뽑아 원문처럼 쓴다. 실패 시 fallback_text."""
     schema_hint = system + ' 응답은 {"speech": "<한국어 2~3문장>"} JSON 하나만 출력한다.'
-    parsed, provider = _speak_json(schema_hint, user, fallback={'speech': fallback_text})
+    parsed, provider = _speak_json(schema_hint, user, fallback={'speech': fallback_text},
+                                   _role=_role)
     speech = str(parsed.get('speech') or fallback_text).strip()
     return (speech or fallback_text), provider
 
@@ -84,26 +93,51 @@ def research_manager(regime: Dict[str, Any], lanes: List[Dict[str, Any]], bull_h
 
 
 # ── 3단계: 종목 상정 ────────────────────────────────────────────
+def _build_one_nominee(c: Dict[str, Any], lane_sector: str) -> Dict[str, Any]:
+    """단일 후보에 대해 build_idea로 thesis/why_now를 보강한다. 실패해도 후보 자체는 반환."""
+    thesis = c.get('thesis') or ''
+    why_now = c.get('why_now') or ''
+    try:
+        from ..idea_engine import build_idea
+        res = build_idea(str(c.get('symbol')), horizon='3개월') or {}
+        if res.get('thesis'):
+            thesis = res['thesis']
+        drivers = [str(d) for d in (res.get('key_drivers') or []) if str(d).strip()]
+        if drivers:
+            why_now = ' '.join(drivers[:3])
+    except Exception:
+        pass
+    return {'symbol': c.get('symbol'), 'name': c.get('name'), 'sector': lane_sector,
+            'theme': c.get('theme'), 'score': c.get('score'),
+            'factor_scores': c.get('factor_scores') or {},
+            'thesis': thesis, 'why_now': why_now,
+            'timing_signal': c.get('timing_signal')}
+
+
 def stock_picker(lane_sector: str, candidates_in_lane: List[Dict[str, Any]]) -> Tuple[str, Dict[str, Any]]:
-    noms: List[Dict[str, Any]] = []
-    for c in candidates_in_lane[:3]:
-        thesis = c.get('thesis') or ''
-        why_now = c.get('why_now') or ''
-        try:  # build_idea로 thesis/why_now grounding (best-effort)
-            from ..idea_engine import build_idea
-            res = build_idea(str(c.get('symbol')), horizon='3개월') or {}
-            if res.get('thesis'):
-                thesis = res['thesis']
-            drivers = [str(d) for d in (res.get('key_drivers') or []) if str(d).strip()]
-            if drivers:
-                why_now = ' '.join(drivers[:3])
-        except Exception:
-            pass
-        noms.append({'symbol': c.get('symbol'), 'name': c.get('name'), 'sector': lane_sector,
-                     'theme': c.get('theme'), 'score': c.get('score'),
-                     'factor_scores': c.get('factor_scores') or {},
-                     'thesis': thesis, 'why_now': why_now,
-                     'timing_signal': c.get('timing_signal')})
+    pool_candidates = candidates_in_lane[:3]
+    # 후보별 build_idea를 병렬 실행 (입력 순서 유지)
+    noms: List[Dict[str, Any]] = [None] * len(pool_candidates)  # type: ignore[list-item]
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_idx = {
+            executor.submit(_build_one_nominee, c, lane_sector): i
+            for i, c in enumerate(pool_candidates)
+        }
+        for future in as_completed(future_to_idx):
+            idx = future_to_idx[future]
+            try:
+                noms[idx] = future.result()
+            except Exception:
+                # 실패한 후보는 원본 데이터 그대로 사용
+                c = pool_candidates[idx]
+                noms[idx] = {'symbol': c.get('symbol'), 'name': c.get('name'),
+                             'sector': lane_sector, 'theme': c.get('theme'),
+                             'score': c.get('score'),
+                             'factor_scores': c.get('factor_scores') or {},
+                             'thesis': c.get('thesis') or '', 'why_now': c.get('why_now') or '',
+                             'timing_signal': c.get('timing_signal')}
+    # None 슬롯 제거 (이론상 발생하지 않지만 방어)
+    noms = [n for n in noms if n is not None]
     names = ', '.join(n['name'] for n in noms if n.get('name')) or '후보'
     return f"{lane_sector} 레인에서 {names}을(를) 상정합니다.", {'nominations': noms}
 

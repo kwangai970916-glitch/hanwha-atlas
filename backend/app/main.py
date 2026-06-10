@@ -49,10 +49,14 @@ def _load_env_file() -> dict:
     - 이미 os.environ 에 존재(비어있지 않음)하면 보존.
     반환: {주입된키: 값길이} (디버그/검증용. 값은 노출하지 않음)
     """
-    env_path = Path(
-        "C:/Users/infomax/Desktop/Jinkwang/03.AI/바이브코딩_경진대회_주식운용아이디어/"
-        "ai-investment-desk-os/committee_engine/TradingAgents/.env"
-    )
+    # backend/.env 또는 프로젝트 루트의 committee_engine/.env 를 순서대로 시도
+    _base = Path(__file__).resolve().parent
+    _candidates = [
+        _base / '.env',                                                    # backend/.env
+        _base.parent / '.env',                                             # 프로젝트루트/.env
+        _base.parent / 'committee_engine' / 'TradingAgents' / '.env',     # 원래 위치
+    ]
+    env_path = next((p for p in _candidates if p.exists()), _candidates[-1])
     injected: dict = {}
     try:
         if not env_path.exists():
@@ -1201,7 +1205,9 @@ def committee_latest():
 @app.post("/api/idea/committee/run")
 def idea_committee_run(keywords: str = "", horizon_months: int = 3):
     from .ideation.runner import start_run
-    return start_run(keywords.strip(), horizon_months)
+    horizon_months = max(1, min(24, horizon_months))
+    kw = keywords.strip()[:200]
+    return start_run(kw, horizon_months)
 
 
 @app.get("/api/idea/committee/status")

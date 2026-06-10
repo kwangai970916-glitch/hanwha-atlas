@@ -688,9 +688,9 @@ export function PnlDashboard({
                     />
                     <th className="px-3 py-2.5 text-right font-semibold">수익률</th>
                     {/* 작업2: 일간손익 컬럼 */}
-                    <th className="px-3 py-2.5 text-right font-semibold">당일</th>
+                    <th className="hidden px-3 py-2.5 text-right font-semibold xl:table-cell">당일</th>
                     {/* 작업4: vs BM 컬럼 */}
-                    <th className="px-3 py-2.5 text-right font-semibold">vs BM</th>
+                    <th className="hidden px-3 py-2.5 text-right font-semibold xl:table-cell">vs BM</th>
                     <th className="w-8 px-2 py-2.5" />
                   </tr>
                 </thead>
@@ -797,7 +797,7 @@ export function PnlDashboard({
                           </div>
                         </td>
                         {/* 작업2: 당일 손익 컬럼 */}
-                        <td className="px-3 py-3 text-right">
+                        <td className="hidden px-3 py-3 text-right xl:table-cell">
                           {hasDailyPnl ? (
                             <ChangePill value={h.daily_pnl_pct!} size="sm" />
                           ) : (
@@ -805,7 +805,7 @@ export function PnlDashboard({
                           )}
                         </td>
                         {/* 작업4: vs BM 컬럼 */}
-                        <td className="px-3 py-3 text-right">
+                        <td className="hidden px-3 py-3 text-right xl:table-cell">
                           {hasBmCol ? (
                             <div className="flex flex-col items-end gap-0.5">
                               <ChangePill value={h.excess_vs_bm_pct!} size="sm" />

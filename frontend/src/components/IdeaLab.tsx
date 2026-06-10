@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   Activity,
   ArrowDownToDot,
   CheckCircle2,
+  Clock,
   Gavel,
   GitBranch,
   MessagesSquare,
@@ -187,6 +188,7 @@ export function IdeaLab({ apiBase }: { apiBase: string; holdings?: Holding[] }) 
   const [activePhase, setActivePhase] = useState(0)
   const [selectedCandidate, setSelectedCandidate] = useState<StockCandidate | RadarPick | null>(null)
   const [messages, setMessages] = useState<AgentMessage[]>([])
+  const [autoLoadFailed, setAutoLoadFailed] = useState(false)
   const pollRef = useRef<number | null>(null)
   const msgRef = useRef<number | null>(null)
   const sinceRef = useRef(0)
@@ -298,7 +300,7 @@ export function IdeaLab({ apiBase }: { apiBase: string; holdings?: Holding[] }) 
     }
   }, [apiBase, stopTimers])
 
-  // 마운트 시 최근 위원회 결과 자동 로드 (데모 지속성). 사용자가 실행을 시작하면 건너뛰고, 조용히 실패한다.
+  // 마운트 시 최근 위원회 결과 자동 로드 (데모 지속성). 사용자가 실행을 시작하면 건너뛰고, 실패 시 안내 플래그를 세운다.
   useEffect(() => {
     if (typeof fetch !== 'function') return
     let cancelled = false
@@ -307,13 +309,16 @@ export function IdeaLab({ apiBase }: { apiBase: string; holdings?: Holding[] }) 
       .then((d: RadarResponse & { available?: boolean }) => {
         if (cancelled || autoloadedRef.current) return
         const next = d?.stock_candidates?.length ? d.stock_candidates : d?.top_picks ?? []
-        if (d?.available === false || !next.length) return
+        if (d?.available === false || !next.length) {
+          if (!cancelled) setAutoLoadFailed(true)
+          return
+        }
         setRadar(d)
         setSelectedCandidate(next[0] ?? null)
         setRadarState('done')
         setActivePhase(IDEATION_PIPELINE.length - 1)
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setAutoLoadFailed(true) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiBase])
@@ -340,20 +345,31 @@ export function IdeaLab({ apiBase }: { apiBase: string; holdings?: Holding[] }) 
           </label>
           <div className="flex gap-2">
             <PrimaryButton onClick={runRadar} disabled={radarState === 'loading'} loading={radarState === 'loading'} icon={<Users size={15} />}>{radarState === 'loading' ? 'AI 실행 중' : '회의 시작'}</PrimaryButton>
-            <button type="button" onClick={loadLatest} disabled={radarState === 'loading'} className={cn(buttonBase, 'border border-line bg-card-2/40 text-greige hover:border-hanwha/40 hover:text-beige')}>최근 결과</button>
+            <button type="button" onClick={loadLatest} disabled={radarState === 'loading'} className={cn(buttonBase, 'border border-hanwha/35 bg-hanwha/[0.06] text-greige hover:border-hanwha/55 hover:text-beige')}>
+              <Clock size={14} />
+              최근 결과
+              <span className="font-mono text-[10px] text-muted">즉시 보기</span>
+            </button>
           </div>
         </div>
         {radarState === 'error' && <div className="mt-5"><ErrorState title="아이디에이션 회의 실패" message={radarError} onRetry={runRadar} /></div>}
-        <p className="mt-3 text-xs text-muted">
-          자동 시작은 꺼져 있습니다. 회의 시작을 누르면 AI 기반 서브에이전트 회의가 뉴스·매크로·섹터·리스크·종목 후보를 압축합니다.
-        </p>
+        {autoLoadFailed && radarState === 'idle' && (
+          <p className="mt-3 text-xs text-muted">
+            이전 회의 결과가 없습니다. <span className="text-hanwha">[회의 시작]</span>을 눌러 바로 실행해 보세요.
+          </p>
+        )}
+        {!autoLoadFailed && (
+          <p className="mt-3 text-xs text-muted">
+            자동 시작은 꺼져 있습니다. 회의 시작을 누르면 AI 기반 서브에이전트 회의가 뉴스·매크로·섹터·리스크·종목 후보를 압축합니다.
+          </p>
+        )}
       </Card>
 
       <IdeationWorkflow state={radarState} activePhase={activePhase} radar={radar} />
 
-      {radarState === 'loading' && messages.length > 0 && (
+      {radarState === 'loading' && (
         <Card eyebrow="Live Feed" title="에이전트 실시간 발언" action={<Badge tone="hanwha" dot>LIVE</Badge>}>
-          <LiveFeed messages={messages} feedBottomRef={feedBottomRef} />
+          <LiveFeed messages={messages} feedBottomRef={feedBottomRef} emptyLabel="에이전트 소집 중 — 첫 발언을 기다리는 중입니다…" />
         </Card>
       )}
 
@@ -399,10 +415,11 @@ function IdeationWorkflow({ state, activePhase, radar }: { state: AsyncState; ac
 }
 
 function IdeationPhaseCard({ phase, index, active, done }: { phase: CommitteePhase; index: number; active: boolean; done: boolean }) {
+  const reduce = useReducedMotion()
   return (
     <motion.article
-      animate={active ? { y: [0, -3, 0] } : { y: 0 }}
-      transition={active ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
+      animate={active && !reduce ? { y: [0, -3, 0] } : { y: 0 }}
+      transition={active && !reduce ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
       className={cn(
         'relative overflow-hidden rounded-card border p-4 transition-colors',
         active ? 'border-hanwha/55 bg-hanwha/[0.06] shadow-glow' : done ? 'border-hanwha/30 bg-card-2/40' : 'border-line bg-canvas/40',
@@ -411,9 +428,8 @@ function IdeationPhaseCard({ phase, index, active, done }: { phase: CommitteePha
       {active && (
         <motion.span
           className="absolute inset-x-0 top-0 h-0.5 bg-hanwha"
-          initial={{ scaleX: 0, originX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 9, ease: 'linear' }}
+          animate={reduce ? { scaleX: 1, originX: 0 } : { scaleX: [0, 1, 0], originX: [0, 0, 1] }}
+          transition={reduce ? {} : { duration: 2.2, ease: 'easeInOut', repeat: Infinity }}
         />
       )}
       <div className="mb-2.5 flex items-center justify-between">
@@ -433,8 +449,8 @@ function IdeationPhaseCard({ phase, index, active, done }: { phase: CommitteePha
         {active && (
           <motion.span
             className="absolute inset-x-5 bottom-2 h-px rounded-full bg-hanwha/80"
-            animate={{ scaleX: [0.15, 1, 0.15], opacity: [0.35, 1, 0.35] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+            animate={reduce ? { scaleX: 1, opacity: 1 } : { scaleX: [0.15, 1, 0.15], opacity: [0.35, 1, 0.35] }}
+            transition={reduce ? {} : { repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
           />
         )}
         <motion.img
@@ -447,8 +463,8 @@ function IdeationPhaseCard({ phase, index, active, done }: { phase: CommitteePha
             'h-[150px] w-full object-contain object-center transition-opacity',
             !done && !active && 'opacity-35 grayscale',
           )}
-          animate={active ? { scale: [1, 1.045, 1] } : { scale: 1 }}
-          transition={active ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
+          animate={active && !reduce ? { scale: [1, 1.045, 1] } : { scale: 1 }}
+          transition={active && !reduce ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
         />
       </div>
       <div className={cn('font-display text-sm font-bold', active ? 'text-beige' : done ? 'text-greige' : 'text-muted')}>
@@ -591,7 +607,7 @@ function SectorFlowBoard({ sectors }: { sectors: SectorFlow[] }) {
 function CandidateBoard({ candidates, selectedSymbol, onSelect }: { candidates: Array<StockCandidate | RadarPick>; selectedSymbol?: string; onSelect: (pick: StockCandidate | RadarPick) => void }) {
   if (!candidates.length) return <EmptyState icon={<Target size={20} />} title="후보 없음" description="다른 뉴스/테마 키워드로 다시 회의를 열어 보세요." />
   return (
-    <Card eyebrow="Stock Candidates" title="투자 아이디어 후보" action={<Badge tone="hanwha" dot>Click to open minutes</Badge>} noPadding>
+    <Card eyebrow="Stock Candidates" title="투자 아이디어 후보" action={<Badge tone="hanwha" dot>행 클릭 → 회의록 열기</Badge>} noPadding>
       <div className="divide-y divide-line/60">
         {candidates.map((p, i) => (
           <CandidateRow key={`${p.symbol}-${i}`} pick={p} rank={i + 1} selected={p.symbol === selectedSymbol} onSelect={() => onSelect(p)} />

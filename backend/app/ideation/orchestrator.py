@@ -18,7 +18,7 @@ def run_committee(keywords: str, horizon_months: int, stream: RunStream) -> Dict
     minutes: List[Dict[str, Any]] = []
 
     def say(agent: str, stage: str, text: str, source: str = 'rules'):
-        stream.emit(agent, stage, text, icon=_ICON.get(stage, 'message'))
+        stream.emit(agent, stage, text, icon=_ICON.get(stage, 'message'), source=source)
         minutes.append({'agent': agent, 'stage': stage, 'text': text, 'source': source,
                         'icon': _ICON.get(stage, 'message')})
 

@@ -173,7 +173,9 @@ export function Header({ ticks, loading = false, error = null, onRetry, asOf }: 
         ) : (
           // 정상: 마퀴 테이프
           <div className="flex w-max">
+            <span className="sr-only">실시간 시세 마퀴</span>
             <motion.div
+              aria-hidden
               className="flex shrink-0 items-center gap-6 pr-6"
               animate={reduce ? undefined : { x: ['0%', '-100%'] }}
               transition={

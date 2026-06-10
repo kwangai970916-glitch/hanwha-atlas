@@ -1,10 +1,11 @@
-﻿import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+﻿import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowDownRight,
   ArrowUpRight,
   Briefcase,
   CheckCircle2,
+  Clock,
   Gavel,
   HeartPulse,
   Landmark,
@@ -75,6 +76,7 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
   const [activeReport, setActiveReport] = useState('final_trade_decision')
   const [messages, setMessages] = useState<AgentMessage[]>([])
   const [jobId, setJobId] = useState<string | null>(null)
+  const [autoLoadFailed, setAutoLoadFailed] = useState(false)
   const pollRef = useRef<number | null>(null)
   const msgPollRef = useRef<number | null>(null)
   const msgSinceRef = useRef(0)
@@ -83,16 +85,16 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
   const lastPresetRef = useRef<string | null>(null)
   const autoloadedRef = useRef(false)
 
-  const stopTimers = () => {
+  const stopTimers = useCallback(() => {
     if (pollRef.current) window.clearInterval(pollRef.current)
     if (msgPollRef.current) window.clearInterval(msgPollRef.current)
     pollRef.current = null
     msgPollRef.current = null
-  }
+  }, [])
 
-  useEffect(() => () => stopTimers(), [])
+  useEffect(() => () => stopTimers(), [stopTimers])
 
-  // 마운트 시 최근 위원회 결과 자동 로드(데모 지속성). 사용자가 소집을 시작하면 건너뛰고, 조용히 실패한다.
+  // 마운트 시 최근 위원회 결과 자동 로드(데모 지속성). 사용자가 소집을 시작하면 건너뛰고, 실패 시 안내 플래그를 세운다.
   useEffect(() => {
     if (typeof fetch !== 'function') return
     let cancelled = false
@@ -105,12 +107,37 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
           setResult(d as Result)
           setActiveReport(d.reports.final_trade_decision ? 'final_trade_decision' : (REPORT_TABS.find(t => d.reports[t.id])?.id ?? 'final_trade_decision'))
           setStage('done')
+        } else {
+          if (!cancelled) setAutoLoadFailed(true)
         }
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setAutoLoadFailed(true) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiBase])
+
+  const loadLatest = useCallback(async () => {
+    autoloadedRef.current = true
+    stopTimers()
+    setStage('idle')
+    setResult(null)
+    setMessages([])
+    setStderrMsg('')
+    try {
+      const d = await fetch(`${apiBase}/api/committee/latest`).then(x => x.json())
+      if (d && d.reports && Object.keys(d.reports).length) {
+        setResult(d as Result)
+        setActiveReport(d.reports.final_trade_decision ? 'final_trade_decision' : (REPORT_TABS.find(t => d.reports[t.id])?.id ?? 'final_trade_decision'))
+        setStage('done')
+      } else {
+        setStageMsg('저장된 최근 심의 결과가 없습니다. [위원회 소집]으로 새로 실행하세요.')
+        setStage('error')
+      }
+    } catch {
+      setStageMsg('최근 결과 로드 실패')
+      setStage('error')
+    }
+  }, [apiBase, stopTimers])
 
   const run = async (override?: string) => {
     const target = (typeof override === 'string' ? override : ticker).trim()
@@ -202,12 +229,26 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
             <FieldLabel>종목</FieldLabel>
             <input value={ticker} onChange={e => setTicker(e.target.value)} onKeyDown={e => e.key === 'Enter' && stage !== 'running' && run()} className={inputBase} placeholder="종목 입력 (삼성전자 / 005930 / NVDA)" disabled={stage === 'running'} />
           </label>
-          <motion.button onClick={() => run()} disabled={stage === 'running' || !ticker.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-chip bg-hanwha px-5 py-2.5 text-sm font-semibold text-canvas shadow-glow transition-all hover:bg-hanwha-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none')}>
-            {stage === 'running' ? <Spinner size={15} className="text-canvas" /> : <Gavel size={15} />}
-            {stage === 'running' ? '심의 중' : '위원회 소집'}
-          </motion.button>
+          <div className="flex gap-2">
+            <motion.button onClick={() => run()} disabled={stage === 'running' || !ticker.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-chip bg-hanwha px-5 py-2.5 text-sm font-semibold text-canvas shadow-glow transition-all hover:bg-hanwha-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none')}>
+              {stage === 'running' ? <Spinner size={15} className="text-canvas" /> : <Gavel size={15} />}
+              {stage === 'running' ? '심의 중' : '위원회 소집'}
+            </motion.button>
+            <button type="button" onClick={loadLatest} disabled={stage === 'running'} className={cn('inline-flex items-center justify-center gap-2 rounded-chip border border-hanwha/35 bg-hanwha/[0.06] px-4 py-2.5 text-sm font-semibold text-greige transition-all hover:border-hanwha/55 hover:text-beige disabled:cursor-not-allowed disabled:opacity-50')}>
+              <Clock size={14} />
+              최근 결과
+              <span className="font-mono text-[10px] text-muted">즉시 보기</span>
+            </button>
+          </div>
         </div>
-        <p className="mt-3 text-xs text-muted">분석가 · Bull/Bear 토론 · 리스크 매니저 등 14개 에이전트가 멀티라운드로 심의합니다.</p>
+        {autoLoadFailed && stage === 'idle' && (
+          <p className="mt-3 text-xs text-muted">
+            이전 회의 결과가 없습니다. <span className="text-hanwha">[위원회 소집]</span>을 눌러 바로 실행해 보세요.
+          </p>
+        )}
+        {!autoLoadFailed && (
+          <p className="mt-3 text-xs text-muted">분석가 · Bull/Bear 토론 · 리스크 매니저 등 14개 에이전트가 멀티라운드로 심의합니다.</p>
+        )}
       </Card>
 
       <Card eyebrow={stage === 'running' ? 'In Session' : 'Committee Workflow'} title="위원회 심의 진행" action={<Badge tone={stage === 'running' ? 'hanwha' : stage === 'done' ? 'up' : 'neutral'} dot>{stage === 'running' ? <span className="animate-pulse-soft">LIVE</span> : stage === 'done' ? 'Complete' : 'Ready'}</Badge>}>
@@ -215,13 +256,17 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
         {stage === 'running' && (
           <>
             <div className="mt-4 flex items-center gap-2 rounded-chip border border-line bg-canvas/50 px-3 py-2 font-mono text-[11px] text-muted"><Spinner size={13} /><span className="truncate">상태 · {stageMsg || '진행 중'}</span></div>
-            {messages.length > 0 && <LiveFeed messages={messages} feedBottomRef={feedBottomRef} />}
+            <LiveFeed messages={messages} feedBottomRef={feedBottomRef} emptyLabel="에이전트 소집 중 — 첫 발언을 기다리는 중입니다…" />
           </>
         )}
       </Card>
 
       {stage === 'error' && <ErrorState title="위원회 실행 실패" message={stageMsg || '위원회 심의 중 문제가 발생했습니다.'} onRetry={() => run()} />}
-      {stderrMsg && <pre className="max-h-48 overflow-auto rounded-card border border-line bg-canvas/60 p-3 text-xs text-greige">{stderrMsg}</pre>}
+      {stderrMsg && (
+        import.meta.env.DEV
+          ? <details className="mt-2 rounded-card border border-line bg-canvas/60 p-3 text-xs text-greige"><summary className="cursor-pointer font-mono text-[11px] text-muted">개발용 오류 상세</summary><pre className="mt-2 max-h-48 overflow-auto">{stderrMsg}</pre></details>
+          : null
+      )}
 
       {stage === 'done' && result && (
         <div className="space-y-6">
@@ -240,6 +285,7 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
 }
 
 function PipelineProgress({ activePhase }: { activePhase: number }) {
+  const reduce = useReducedMotion()
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {PIPELINE.map((phase, idx) => {
@@ -248,13 +294,20 @@ function PipelineProgress({ activePhase }: { activePhase: number }) {
         return (
           <motion.div
             key={phase.key}
-            animate={isActive ? { y: [0, -3, 0] } : { y: 0 }}
-            transition={isActive ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
+            animate={isActive && !reduce ? { y: [0, -3, 0] } : { y: 0 }}
+            transition={isActive && !reduce ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
             className={cn(
               'relative overflow-hidden rounded-card border p-4 transition-colors',
               isActive ? 'border-hanwha/55 bg-hanwha/[0.06] shadow-glow' : isDone ? 'border-hanwha/30 bg-card-2/40' : 'border-line bg-canvas/40',
             )}
           >
+            {isActive && (
+              <motion.span
+                className="absolute inset-x-0 top-0 h-0.5 bg-hanwha"
+                animate={reduce ? { scaleX: 1, originX: 0 } : { scaleX: [0, 1, 0], originX: [0, 0, 1] }}
+                transition={reduce ? {} : { duration: 2.2, ease: 'easeInOut', repeat: Infinity }}
+              />
+            )}
             <div className="mb-2.5 flex items-center justify-between">
               <span className={cn('grid h-8 w-8 place-items-center rounded-pill', isActive ? 'bg-hanwha/15 text-hanwha' : isDone ? 'bg-up/12 text-up' : 'bg-card-2 text-muted')}>
                 {isDone ? <CheckCircle2 size={15} /> : isActive ? <Spinner size={15} /> : phase.icon}
@@ -272,8 +325,8 @@ function PipelineProgress({ activePhase }: { activePhase: number }) {
                   'h-[150px] w-full object-contain object-center transition-opacity',
                   !isDone && !isActive && 'opacity-35 grayscale',
                 )}
-                animate={isActive ? { scale: [1, 1.045, 1] } : { scale: 1 }}
-                transition={isActive ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
+                animate={isActive && !reduce ? { scale: [1, 1.045, 1] } : { scale: 1 }}
+                transition={isActive && !reduce ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' } : {}}
               />
             </div>
             <div className={cn('font-display text-sm font-bold', isActive ? 'text-beige' : isDone ? 'text-greige' : 'text-muted')}>{phase.label}</div>

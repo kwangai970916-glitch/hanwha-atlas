@@ -12,8 +12,10 @@ from .stream import RunStream
 OUT_ROOT = Path(__file__).resolve().parents[2] / 'data' / 'idea_committee_runs'
 SEED_DIR = OUT_ROOT / 'seed'
 WATCHDOG_SEC = 600
+MAX_DONE_JOBS = 50
 
 _jobs: Dict[str, Dict[str, Any]] = {}
+_jobs_lock = threading.Lock()
 
 
 def _job_id(keywords: str) -> str:
@@ -21,12 +23,35 @@ def _job_id(keywords: str) -> str:
     return f"{slug}_{dt.datetime.now():%Y%m%d_%H%M%S}"
 
 
+def _evict_old_jobs() -> None:
+    """완료된 잡이 MAX_DONE_JOBS를 넘으면 오래된 것부터 dict에서 제거 (디스크 파일은 남김)."""
+    with _jobs_lock:
+        done_ids = []
+        for jid, job in list(_jobs.items()):
+            sp = Path(job['out_dir']) / 'status.json'
+            try:
+                if sp.exists():
+                    stage = json.loads(sp.read_text(encoding='utf-8')).get('stage')
+                    if stage in ('done', 'error'):
+                        done_ids.append(jid)
+            except Exception:
+                pass
+        if len(done_ids) > MAX_DONE_JOBS:
+            # mtime 기준 오래된 순 정렬
+            done_ids.sort(key=lambda jid: Path(_jobs[jid]['out_dir']).stat().st_mtime
+                          if Path(_jobs[jid]['out_dir']).exists() else 0)
+            to_remove = done_ids[:len(done_ids) - MAX_DONE_JOBS]
+            for jid in to_remove:
+                _jobs.pop(jid, None)
+
+
 def start_run(keywords: str, horizon_months: int = 3) -> Dict[str, Any]:
     jid = _job_id(keywords)
     out_dir = OUT_ROOT / jid
     stream = RunStream(out_dir)
     stream.set_stage('starting', keywords=keywords)
-    _jobs[jid] = {'keywords': keywords, 'out_dir': str(out_dir)}
+    with _jobs_lock:
+        _jobs[jid] = {'keywords': keywords, 'out_dir': str(out_dir)}
 
     def _run():
         try:
@@ -34,6 +59,8 @@ def start_run(keywords: str, horizon_months: int = 3) -> Dict[str, Any]:
         except Exception as e:
             stream.set_stage('error', keywords=keywords, error=str(e),
                              trace=traceback.format_exc()[-2000:])
+        finally:
+            _evict_old_jobs()
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
@@ -48,7 +75,8 @@ def start_run(keywords: str, horizon_months: int = 3) -> Dict[str, Any]:
 
 
 def get_status(job_id: str) -> Dict[str, Any]:
-    job = _jobs.get(job_id)
+    with _jobs_lock:
+        job = _jobs.get(job_id)
     if not job:
         return {'stage': 'unknown', 'job_id': job_id}
     sp = Path(job['out_dir']) / 'status.json'
@@ -61,7 +89,8 @@ def get_status(job_id: str) -> Dict[str, Any]:
 
 
 def get_messages(job_id: str, since: int = 0) -> Dict[str, Any]:
-    job = _jobs.get(job_id)
+    with _jobs_lock:
+        job = _jobs.get(job_id)
     if not job:
         return {'messages': [], 'total': 0}
     mp = Path(job['out_dir']) / 'messages.jsonl'
@@ -73,16 +102,20 @@ def get_messages(job_id: str, since: int = 0) -> Dict[str, Any]:
             line = line.strip()
             if not line:
                 continue
-            m = json.loads(line)
-            if int(m.get('idx', 0)) >= since:
-                out.append(m)
+            try:
+                m = json.loads(line)
+                if int(m.get('idx', 0)) >= since:
+                    out.append(m)
+            except Exception:
+                pass
     except Exception:
         pass
     return {'messages': out, 'total': len(out) + since}
 
 
 def get_result(job_id: str) -> Dict[str, Any]:
-    job = _jobs.get(job_id)
+    with _jobs_lock:
+        job = _jobs.get(job_id)
     if not job:
         return {'error': 'unknown job'}
     dp = Path(job['out_dir']) / 'decision.json'
@@ -95,16 +128,24 @@ def get_latest_result() -> Dict[str, Any]:
     """최근 done job → 없으면 seed 폴백(데모 빈화면 방지)."""
     try:
         done = []
-        for job in _jobs.values():
+        with _jobs_lock:
+            jobs_snapshot = list(_jobs.values())
+        for job in jobs_snapshot:
             d = Path(job['out_dir'])
             sp, dp = d / 'status.json', d / 'decision.json'
             if sp.exists() and dp.exists():
-                stg = json.loads(sp.read_text(encoding='utf-8')).get('stage')
-                if stg == 'done':
-                    done.append(d)
+                try:
+                    stg = json.loads(sp.read_text(encoding='utf-8')).get('stage')
+                    if stg == 'done':
+                        done.append(d)
+                except Exception:
+                    pass
         done.sort(key=lambda p: p.stat().st_mtime, reverse=True)
         for d in done:
-            return json.loads((d / 'decision.json').read_text(encoding='utf-8'))
+            try:
+                return json.loads((d / 'decision.json').read_text(encoding='utf-8'))
+            except Exception:
+                continue
     except Exception:
         pass
     seeds = sorted(SEED_DIR.glob('*.json')) if SEED_DIR.exists() else []

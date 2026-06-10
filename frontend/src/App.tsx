@@ -74,7 +74,7 @@ function TabFallback({ label }: { label: string }) {
     <div className="rounded-card border border-line bg-card p-8 shadow-card">
       <div className="mb-3 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-hanwha">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-hanwha" />
-        Loading Module
+        모듈 로드 중
       </div>
       <div className="font-display text-xl font-bold tracking-tight text-beige">{label}</div>
       <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -202,12 +202,15 @@ export default function App() {
       </motion.header>
 
       {/* 탭 네비 (액티브 = 오렌지 인디케이터) */}
-      <nav className="sticky top-[92px] z-40 flex gap-1 overflow-x-auto border-b border-line bg-bg/85 px-6 backdrop-blur-xl">
+      <nav role="tablist" aria-label="주요 메뉴" className="sticky top-[92px] z-40 flex gap-1 overflow-x-auto border-b border-line bg-bg/85 px-6 backdrop-blur-xl">
         {TABS.map((t) => {
           const active = tab === t.id
           return (
             <button
               key={t.id}
+              role="tab"
+              aria-selected={active}
+              aria-controls={`tabpanel-${t.id}`}
               onClick={() => switchTab(t.id)}
               onMouseEnter={() => MODULE_LOADERS[t.id]().catch(() => undefined)}
               onFocus={() => MODULE_LOADERS[t.id]().catch(() => undefined)}
@@ -237,6 +240,8 @@ export default function App() {
         <Suspense fallback={<TabFallback label={TABS.find((t) => t.id === tab)?.label ?? '모듈'} />}>
           <motion.div
             key={contentTab}
+            role="tabpanel"
+            id={`tabpanel-${contentTab}`}
             initial={{ opacity: 0.92 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.08 }}
@@ -253,7 +258,7 @@ export default function App() {
       {import.meta.env.VITE_OFFLINE === '1' && (
         <div className="fixed right-3 top-3 z-[9999] flex items-center gap-1.5 rounded-full border border-hanwha/40 bg-canvas/90 px-3 py-1 font-mono text-[11px] font-semibold text-hanwha shadow-glow backdrop-blur">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-hanwha" />
-          제출용 · 오프라인 모드
+          제출용 · 오프라인 모드 · 데이터 기준 2026-06-09
         </div>
       )}
     </div>

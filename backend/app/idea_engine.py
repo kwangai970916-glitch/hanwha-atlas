@@ -560,7 +560,7 @@ def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], Li
         try:
             from openai import OpenAI
 
-            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL)
+            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=30, max_retries=1)
             resp = client.chat.completions.create(
                 model=MIMO_MODEL,
                 max_tokens=1600,
@@ -583,7 +583,7 @@ def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], Li
         try:
             from openai import OpenAI
 
-            client = OpenAI(api_key=openai_key)
+            client = OpenAI(api_key=openai_key, timeout=30, max_retries=1)
             resp = client.chat.completions.create(
                 model="gpt-4o-mini",
                 max_tokens=1600,
@@ -606,7 +606,7 @@ def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], Li
         try:
             import anthropic
 
-            client = anthropic.Anthropic(api_key=anthropic_key)
+            client = anthropic.Anthropic(api_key=anthropic_key, timeout=30, max_retries=1)
             msg = client.messages.create(
                 model="claude-sonnet-4-6",
                 max_tokens=1600,
