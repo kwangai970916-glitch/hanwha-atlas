@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect, useCallback, type ComponentType } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
+import { WifiOff } from 'lucide-react'
 import { Header } from './components/Header'
 import { cn } from './lib/utils'
 
@@ -87,6 +88,7 @@ function TabFallback({ label }: { label: string }) {
 }
 
 export default function App() {
+  const reduceMotion = useReducedMotion()
   const [tab, setTab] = useState<TabId>('market')
   const [contentTab, setContentTab] = useState<TabId>('market')
   const [committeeTicker, setCommitteeTicker] = useState<string>('')
@@ -256,10 +258,19 @@ export default function App() {
       </main>
 
       {import.meta.env.VITE_OFFLINE === '1' && (
-        <div className="fixed right-3 top-3 z-[9999] flex items-center gap-1.5 rounded-full border border-hanwha/40 bg-canvas/90 px-3 py-1 font-mono text-[11px] font-semibold text-hanwha shadow-glow backdrop-blur">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-hanwha" />
+        <motion.div
+          role="status"
+          className="fixed right-3 top-3 z-[9999] flex items-center gap-2 rounded-full border-2 border-hanwha bg-hanwha px-4 py-2 font-mono text-[12px] font-extrabold tracking-wide text-canvas shadow-[0_8px_28px_rgba(243,115,33,0.55)]"
+          animate={
+            reduceMotion
+              ? undefined
+              : { boxShadow: ['0 0 0 0 rgba(243,115,33,0.55)', '0 0 0 10px rgba(243,115,33,0)', '0 0 0 0 rgba(243,115,33,0)'] }
+          }
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+        >
+          <WifiOff className="h-4 w-4 shrink-0" />
           제출용 · 오프라인 모드 · 데이터 기준 2026-06-09
-        </div>
+        </motion.div>
       )}
     </div>
   )
