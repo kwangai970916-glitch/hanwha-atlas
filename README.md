@@ -44,7 +44,18 @@ cd frontend && npm install && npm run dev   # http://127.0.0.1:5173
 ```
 11 역할 · 실행당 ~14-18 LLM 호출 · 실시간 발언 스트리밍(LiveFeed) · 전 단계 규칙 폴백.
 
-> ⚠️ AICommittee가 쓰는 벤더드 **TradingAgents(`committee_engine/`)** 는 자체 라이선스·대용량·키 포함이라 본 저장소에서 **제외**했습니다. 라이브 AICommittee 실행 시 별도 셋업이 필요하며, **오프라인 데모(`index.html`)에는 위원회 결과가 이미 내장**되어 있습니다.
+> ⚠️ AICommittee가 쓰는 벤더드 **TradingAgents(`committee_engine/`)** 는 자체 라이선스·대용량·키 포함이라 본 저장소에서 **제외**했습니다. 대신 벤더드 엔진이 없는 환경(서버 배포 등)에서는 **네이티브 위원회 엔진(`backend/app/committee_native.py`)** 이 동일한 산출물 계약(status/messages/decision)으로 in-process 구동되어 AICommittee 탭이 그대로 동작합니다. **오프라인 데모(`index.html`)에는 위원회 결과가 이미 내장**되어 있습니다.
+
+## ☁️ 라이브 배포 (Vercel 프론트 + Railway 백엔드)
+
+```
+Vercel  ← frontend (빌드 환경변수 VITE_API_BASE=https://<railway-app>.up.railway.app)
+Railway ← backend  (railway.toml 자동 인식, 환경변수 MIMO_API_KEY 필수)
+```
+
+1. **Railway**: 이 repo 연결 → `railway.toml`/루트 `requirements.txt`로 자동 빌드 → Variables에 `MIMO_API_KEY`(필수), `DART_API_KEY`(선택) 입력
+2. **Vercel**: 이 repo 연결(`vercel.json`이 frontend 빌드) → Environment Variables에 `VITE_API_BASE=<Railway 공개 URL>` 입력
+3. 배포 환경 동작: 손익현황은 mock 포트폴리오(`ATLAS_PNL_MOCK` 기본 ON), AI위원회는 네이티브 엔진, 나머지 탭은 로컬과 동일하게 실데이터로 동작합니다.
 
 ---
 

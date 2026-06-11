@@ -9,6 +9,8 @@
 !/index.html
 !/vercel.json
 !/railway.toml
+!/requirements.txt
+!/.python-version
 !/한화ATLAS_오프라인_제출본.html
 !/backend/
 !/frontend/
@@ -43,7 +45,11 @@
 **/tsconfig.tsbuildinfo
 
 # --- 런타임 / 대용량 데이터 ---
-backend/data/
+# backend/data 는 통째로 제외하되, 위원회 seed(라이브 배포의 latest 폴백)만 포함한다.
+backend/data/**
+!backend/data/committee_runs
+!backend/data/committee_runs/seed
+!backend/data/committee_runs/seed/**
 backend/sitele/
 **/logs/
 **/tmp/

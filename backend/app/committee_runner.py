@@ -27,21 +27,27 @@ def start_run(ticker: str, date: str | None = None) -> dict:
         _jobs[jid]["status"] = "running"
         sp = out_dir / "status.json"
         try:
-            proc = subprocess.run(
-                [str(TA_PY), "run_committee.py", ticker, date, str(out_dir)],
-                cwd=str(TA_DIR), capture_output=True, text=True, timeout=900,
-            )
-            # 서브프로세스가 status.json(done/error)을 못 남기고 죽은 경우 방어
-            wrote_terminal = False
-            if sp.exists():
-                try:
-                    wrote_terminal = json.loads(sp.read_text(encoding="utf-8")).get("stage") in ("done", "error")
-                except Exception:
-                    wrote_terminal = False
-            if not wrote_terminal and proc.returncode != 0:
-                sp.write_text(json.dumps(
-                    {"stage": "error", "error": f"exit {proc.returncode}",
-                     "stderr": (proc.stderr or "")[-1500:]}, ensure_ascii=False), encoding="utf-8")
+            if TA_PY.exists():
+                # 로컬: 벤더드 TradingAgents 격리 venv 를 subprocess 로 구동
+                proc = subprocess.run(
+                    [str(TA_PY), "run_committee.py", ticker, date, str(out_dir)],
+                    cwd=str(TA_DIR), capture_output=True, text=True, timeout=900,
+                )
+                # 서브프로세스가 status.json(done/error)을 못 남기고 죽은 경우 방어
+                wrote_terminal = False
+                if sp.exists():
+                    try:
+                        wrote_terminal = json.loads(sp.read_text(encoding="utf-8")).get("stage") in ("done", "error")
+                    except Exception:
+                        wrote_terminal = False
+                if not wrote_terminal and proc.returncode != 0:
+                    sp.write_text(json.dumps(
+                        {"stage": "error", "error": f"exit {proc.returncode}",
+                         "stderr": (proc.stderr or "")[-1500:]}, ensure_ascii=False), encoding="utf-8")
+            else:
+                # 배포 서버: 벤더드 엔진이 없으므로 네이티브 위원회(in-process) 구동
+                from .committee_native import run_native_committee
+                run_native_committee(ticker, date, str(out_dir))
         except Exception as e:
             sp.write_text(json.dumps({"stage": "error", "error": str(e)},
                                      ensure_ascii=False), encoding="utf-8")

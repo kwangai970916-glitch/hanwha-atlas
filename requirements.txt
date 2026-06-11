@@ -1,0 +1,2 @@
+# Railway(nixpacks) 루트 감지용 — 실제 의존성은 backend/requirements.txt 단일 출처.
+-r backend/requirements.txt

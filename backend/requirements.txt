@@ -8,4 +8,6 @@ pykrx
 openpyxl
 requests
 anthropic
+openai
 yfinance
+feedparser
