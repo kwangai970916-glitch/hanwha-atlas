@@ -144,6 +144,14 @@ def _collect_premarket_data() -> dict:
     except Exception as e:
         print(f"[WARN] Fear&Greed 수집 실패: {e}")
 
+    # 4) 시장 내부 — 업종 로테이션(최근 5/20일 시총가중 수익률). 깊이 보강(키맞추기·순환매 근거).
+    try:
+        from app.market_internals import sector_rotation
+        data["sector_rotation"] = sector_rotation(windows=(5, 20))
+        print(f"[장전] 업종 로테이션 수집 완료 ({len(data['sector_rotation'].get('20d', []))}개 섹터)")
+    except Exception as e:
+        print(f"[WARN] 업종 로테이션 수집 실패: {e}")
+
     return data
 
 

@@ -282,6 +282,21 @@ def _build_premarket_prompt(data: dict) -> str:
     us_narr = (data.get("us_narrative") or "").strip()
     narr_section = (f"## 간밤 시장 내러티브(참고 — 핵심 스토리 단서)\n{us_narr}\n\n" if us_narr else "")
 
+    rot = data.get("sector_rotation", {}) or {}
+
+    def _rot_line(lst, n=6):
+        top = " · ".join(f"{x['sector']} {x['return']:+.1f}%" for x in lst[:n])
+        bot = " · ".join(f"{x['sector']} {x['return']:+.1f}%" for x in lst[-3:])
+        return f"- 주도: {top}\n- 부진: {bot}"
+    rot_section = ""
+    if rot.get("20d") or rot.get("5d"):
+        rot_section = "## 업종 로테이션 (KOSPI 상세업종 시총가중 수익률)\n"
+        if rot.get("20d"):
+            rot_section += "### 최근 20거래일\n" + _rot_line(rot["20d"]) + "\n"
+        if rot.get("5d"):
+            rot_section += "### 최근 5거래일\n" + _rot_line(rot["5d"]) + "\n"
+        rot_section += "\n"
+
     evt_lines = "\n".join(f"- {e}" for e in events[:5]) if events else "- 없음"
 
     # 국내 지수 직전 종가 — grounding 의 핵심. 이게 없으면 LLM 이 학습된 통념(예: 3,100선)으로
@@ -323,7 +338,7 @@ def _build_premarket_prompt(data: dict) -> str:
 - VIX: {sent.get('vix', 'N/A')}
 - Fear & Greed Index: {sent.get('fear_greed', 'N/A')} / 100 ({sent.get('fear_greed_label', 'N/A')})
 
-{kr_section}{narr_section}## 오늘 주요 이벤트
+{kr_section}{narr_section}{rot_section}## 오늘 주요 이벤트
 {evt_lines}
 {ground_rule}
 ---
@@ -333,7 +348,9 @@ def _build_premarket_prompt(data: dict) -> str:
    움직였고 그게 오늘 국내장에 어떤 의미인가"를 인과로 풀 것.
 2. 미국 개별주 무버는 단순 등락이 아니라 그 **배경/테마**(IPO 흥행, 메모리/AI 수요, 휴전 등)와 연결해
    국내 연관 업종(반도체·메모리·방산·에너지 등)으로 착지시킬 것.
-3. 지수·종목·매크로는 위 제공 수치만 사용(임의 생성·학습통념 금지).
+3. **업종 로테이션** 데이터가 있으면 sector_strategy 에서 "최근 어느 업종이 이끌고 어디로 순환매가
+   도는가(키맞추기)"를 실제 수치(20일/5일 상위·하위 업종 %)로 규정하고, 대응 전략을 제시할 것.
+4. 지수·종목·매크로·업종수익률은 위 제공 수치만 사용(임의 생성·학습통념 금지).
 JSON 형식으로만 출력해 주세요."""
 
 
