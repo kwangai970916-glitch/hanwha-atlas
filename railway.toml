@@ -1,9 +1,12 @@
+# 단일 서비스 배포: Dockerfile 이 프론트 빌드 + FastAPI 서빙을 모두 처리한다.
+# (CMD 가 $PORT 바인딩까지 담당하므로 startCommand 는 비워 둔다.)
 [build]
-builder = "nixpacks"
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/api/health"
 restartPolicyType = "on_failure"
 
 [deploy.envVars]
-PYTHONPATH = "/app/backend"
+ATLAS_PNL_MOCK = "1"

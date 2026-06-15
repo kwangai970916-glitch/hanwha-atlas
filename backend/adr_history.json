@@ -54,5 +54,12 @@
     "kospi_dec": 477,
     "kosdaq_adv": 638,
     "kosdaq_dec": 989
+  },
+  {
+    "date": "2026-06-11",
+    "kospi_adv": 510,
+    "kospi_dec": 378,
+    "kosdaq_adv": 1086,
+    "kosdaq_dec": 577
   }
 ]

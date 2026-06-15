@@ -1,0 +1,1627 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국내 증시 장중 시황</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── DESIGN SYSTEM VARIABLES (matches hanwha_report_template.html) ── */
+        :root {
+            --ink:    #111827;
+            --body:   #374151;
+            --muted:  #6b7280;
+            --subtle: #9ca3af;
+            --hair:   #e5e7eb;
+            --paper:  #ffffff;
+            --bg:     #d1d5db;
+            --orange: #F37321;
+            --up:     #dc2626;
+            --up-lt:  rgba(220,38,38,.08);
+            --dn:     #1d4ed8;
+            --dn-lt:  rgba(29,78,216,.08);
+        }
+
+        * {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── PAGE BACKGROUND ── */
+        body {
+            background: var(--bg);
+        }
+
+        /* A4 Page — white surface (820×1160, same as hanwha_report_template.html) */
+        .a4-page {
+            width: 820px;
+            height: 1160px;
+            background: var(--paper);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 60px rgba(0,0,0,.18);
+        }
+
+        /* ── HEADER BAND (matches .hdr from hanwha_report_template.html) ── */
+        .hdr-band {
+            background: linear-gradient(135deg,#F37321 0%,#F5894A 42%,#FDDCB5 78%,#FFF8F3 100%);
+            padding: 12px 28px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .hdr-band::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 70% at 0% -20%, rgba(255,255,255,.30), transparent),
+                radial-gradient(ellipse 50% 60% at 100% 120%, rgba(243,115,33,.20), transparent);
+            pointer-events: none;
+        }
+        .hdr-brand {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: -.02em;
+            color: #fff;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+        .hdr-brand .dim {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,.65);
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+        .hdr-sub {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+            position: relative;
+            z-index: 1;
+        }
+        .slot-tag {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.8);
+        }
+        .hdr-right {
+            text-align: right;
+            position: relative;
+            z-index: 1;
+        }
+        .hdr-date {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,.9);
+        }
+        .hdr-sub-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.75);
+            margin-bottom: 4px;
+        }
+        /* ── accent line below header ── */
+        .accent-line {
+            height: 3px;
+            background: linear-gradient(90deg,
+                rgba(255,255,255,0.9) 0%,
+                rgba(255,255,255,0.4) 60%,
+                rgba(243,115,33,0.3) 100%
+            );
+            border-radius: 9999px;
+            margin-top: 10px;
+        }
+
+        /* ── INDEX KPI CHIP (header strip) ── */
+        .index-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.35rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.30);
+            background: rgba(255,255,255,.18);
+            backdrop-filter: blur(4px);
+            min-width: 110px;
+        }
+        .index-chip-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: rgba(255,255,255,.80);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .index-chip-value {
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.1;
+            margin-top: 0.05rem;
+        }
+        .index-chip-change {
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums;
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-top: 0.05rem;
+        }
+        .chip-up   { color: #fca5a5; }
+        .chip-down { color: #93c5fd; }
+        .chip-flat { color: rgba(255,255,255,.60); }
+
+        /* ── CARD ── white with design-system border + shadow ── */
+        .card {
+            background: var(--paper);
+            border-radius: 8px;
+            border: 1px solid var(--hair);
+            box-shadow:
+                0 1px 2px rgba(0,0,0,.04),
+                0 3px 10px rgba(0,0,0,.06);
+        }
+
+        .card-header {
+            padding: 0.7rem 1.1rem 0.45rem;
+        }
+
+        .card-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .card-description {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+            font-weight: 400;
+        }
+
+        .card-content {
+            padding: 0 1.1rem 0.9rem;
+            overflow: visible;
+        }
+
+        #sector-bar-chart, #kosdaq-sector-bar-chart {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+
+        /* ── MARKET STAT ── */
+        .market-stat {
+            text-align: center;
+            padding: 1rem 0.5rem;
+        }
+        .market-stat-value {
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--ink);
+        }
+        .market-stat-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--body);
+            margin-top: 0.375rem;
+        }
+        .market-stat-sub {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--subtle);
+            margin-top: 0.125rem;
+        }
+
+        /* ── ANALYSIS TEXT ── */
+        .analysis-section {
+            font-size: 1.0rem;
+            line-height: 1.75;
+            color: var(--body);
+            letter-spacing: -0.01em;
+        }
+
+        /* 첫 번째 블록 강조 */
+        .analysis-section .analysis-block:first-child {
+            padding: 0.72rem 1.0rem;
+            background: linear-gradient(135deg, rgba(243,115,33,.07) 0%, rgba(243,115,33,.02) 100%);
+            border-radius: 8px;
+            border: 1px solid rgba(243,115,33,.25);
+            border-left: none;
+            margin-bottom: 0.45rem;
+            box-shadow: 0 2px 8px rgba(243,115,33,.06);
+        }
+
+        .analysis-section .analysis-block:first-child h3 {
+            font-size: 1.06rem;
+            color: var(--ink);
+            border-left: 4px solid var(--orange);
+        }
+
+        .analysis-section .analysis-block:first-child .analysis-bullet {
+            font-size: 0.98rem;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        /* 일반 섹터 블록 */
+        .analysis-section .analysis-block {
+            padding: 0.62rem 1.0rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid var(--hair);
+            border-left: none;
+            margin-bottom: 0.55rem;
+        }
+
+        .analysis-section h3 {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.42rem;
+            letter-spacing: 0.005em;
+            border-left: 4px solid var(--orange);
+            padding-left: 0.5rem;
+        }
+
+        .analysis-section p {
+            margin-bottom: 0.22rem;
+            color: var(--body);
+        }
+
+        .analysis-section .analysis-bullet {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.4rem;
+            font-size: 0.95rem;
+            color: var(--body);
+            line-height: 1.75;
+        }
+
+        .analysis-section .analysis-bullet::before {
+            content: '–';
+            display: inline-block;
+            width: auto;
+            height: auto;
+            margin-top: 0;
+            border-radius: 0;
+            background: none;
+            box-shadow: none;
+            flex: 0 0 auto;
+            color: var(--orange);
+            font-weight: 700;
+        }
+
+        /* ── CONTRIBUTOR ITEMS ── */
+        .contributor-item {
+            display: flex;
+            align-items: center;
+            padding: 0.2rem 0;
+            border-bottom: 1px solid var(--hair);
+        }
+
+        .contributor-item:last-child {
+            border-bottom: none;
+        }
+
+        .contributor-rank {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border-radius: 4px;
+            margin-right: 0.45rem;
+            flex-shrink: 0;
+        }
+
+        .rank-top {
+            background: linear-gradient(145deg, #FEF3C7 0%, #F37321 100%);
+            color: #FFFFFF;
+            box-shadow: 0 2px 4px rgba(243,115,33,.3);
+        }
+
+        .rank-normal {
+            background: #f3f4f6;
+            color: var(--muted);
+        }
+
+        .contributor-name {
+            flex: 1;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contributor-value {
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: 'tnum';
+            font-size: 0.82rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Korean convention: up=red(#dc2626), down=blue(#1d4ed8) */
+        .value-up   { color: var(--up); }
+        .value-down { color: var(--dn); }
+
+        /* ── PAGE BACKGROUND PATTERN (very subtle on white) ── */
+        .dot-pattern {
+            background-image: radial-gradient(rgba(17,24,39,.02) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* ── THEME TILE ── */
+        .theme-tile {
+            border-radius: 6px;
+            padding: 0.35rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 52px;
+            border: 1px solid rgba(0,0,0,.05);
+        }
+        .theme-tile-name {
+            font-size: 0.72rem;
+            font-weight: 600;
+            line-height: 1.2;
+            word-break: keep-all;
+        }
+        .theme-tile-change {
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-top: 0.15rem;
+        }
+
+        /* ── INVESTOR BAR ── */
+        .investor-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .investor-label {
+            width: 52px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--body);
+            flex-shrink: 0;
+        }
+        .investor-bar-track {
+            flex: 1;
+            position: relative;
+            height: 18px;
+            border-radius: 4px;
+            background: #f3f4f6;
+            overflow: hidden;
+        }
+        .investor-bar-center {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 1.5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--hair);
+            z-index: 1;
+        }
+        .investor-bar-fill {
+            position: absolute;
+            top: 0; bottom: 0;
+            border-radius: 3px;
+        }
+        .investor-value-label {
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums;
+            width: 70px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: right;
+            flex-shrink: 0;
+            padding-left: 0.4rem;
+        }
+
+        /* ── BREADTH GAUGE ── */
+        .breadth-bar {
+            display: flex;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--hair);
+        }
+
+        /* ── SECTION LABEL (orange accent prefix bar) ── */
+        .section-label-bar {
+            width: 3px;
+            height: 15px;
+            background: var(--orange);
+            border-radius: 2px;
+            display: inline-block;
+        }
+        .section-label-text {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .section-label-unit {
+            font-size: 0.7rem;
+            color: var(--subtle);
+            margin-left: auto;
+            font-weight: 400;
+        }
+
+        /* ── grid/layout helpers (replacing Tailwind) ── */
+        .grid-2   { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        /* At 820px, 4-col is too narrow — collapse to 2+1+1 via col-2 spanning */
+        .grid-4   { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+        .col-2    { grid-column: span 2; }
+        .flex-row { display: flex; align-items: center; }
+        .gap-2    { gap: 6px; }
+        .mb-2     { margin-bottom: 6px; }
+        .px-6     { padding-left: 18px; padding-right: 18px; }
+        .px-10    { padding-left: 28px; padding-right: 28px; }
+        .px-12    { padding-left: 36px; padding-right: 36px; }
+        .py-2     { padding-top: 6px; padding-bottom: 6px; }
+        .py-4     { padding-top: 12px; padding-bottom: 12px; }
+        .py-5     { padding-top: 14px; padding-bottom: 14px; }
+        .py-7     { padding-top: 20px; padding-bottom: 20px; }
+        .pb-0     { padding-bottom: 0; }
+        .pb-1     { padding-bottom: 4px; }
+        .pt-0     { padding-top: 0; }
+        .pt-2     { padding-top: 8px; }
+        .w-full   { width: 100%; }
+        .mt-3     { margin-top: 12px; }
+        .mt-4     { margin-top: 16px; }
+        .w-4      { width: 16px; }
+        .h-4      { height: 16px; }
+        .w-5      { width: 20px; }
+        .h-5      { height: 20px; }
+        .w-2      { width: 8px; }
+        .h-2      { height: 8px; }
+        .text-sm  { font-size: 0.875rem; }
+        .text-xs  { font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- PAGE 1: 분석 본문                                   -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="page1" class="a4-page" style="height:auto; min-height:1160px; overflow:visible;">
+
+        <!-- Header Band -->
+        <div class="hdr-band">
+            <div style="position:relative;z-index:1;">
+                <div class="hdr-brand">ATLAS<span class="dim">운용본부</span></div>
+                <div class="hdr-sub">
+                    <span class="slot-tag">장중 브리핑</span>
+                </div>
+                <!-- Index KPI strip (filled by JS) -->
+                <div id="index-kpi-strip" style="display:flex;gap:10px;margin-top:10px;"></div>
+            </div>
+            <div class="hdr-right">
+                <div class="hdr-date" id="report-date">2026.01.13</div>
+                <div style="font-family:'Pretendard','Noto Sans KR',sans-serif;font-size:10px;color:rgba(255,255,255,.6);margin-top:3px;">장중 시황 · ATLAS</div>
+                <div class="accent-line" style="width:180px;margin-left:auto;margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <!-- Content: 시장 분석 본문 (원본 아침시황 page1 — 섹터당 3~4줄, 내용에 맞춰 가변 높이) -->
+        <div class="px-10 py-5 dot-pattern" style="display:flex; flex-direction:column; gap:0.5rem; padding-bottom:1.2rem;">
+
+            <!-- 분석 본문 카드 (내용에 맞춰 확장) -->
+            <div class="card" style="overflow:visible; display:flex; flex-direction:column;">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg class="w-5 h-5" style="color:#F37321;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        시장 분석
+                    </h2>
+                    <p class="card-description">오늘의 KOSPI·KOSDAQ 시장 동향 및 주요 섹터 분석</p>
+                </div>
+                <div class="card-content" style="overflow:visible;">
+                    <div class="analysis-section" id="analysis-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- PAGE 2: KOSPI 차트                                  -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="page2" class="a4-page" style="margin-top: 40px;">
+
+        <!-- Header Band -->
+        <div class="hdr-band">
+            <div style="position:relative;z-index:1;">
+                <div class="hdr-brand">ATLAS<span class="dim">운용본부</span></div>
+                <div class="hdr-sub">
+                    <span class="slot-tag">장중 브리핑 · KOSPI 시황</span>
+                </div>
+            </div>
+            <div class="hdr-right">
+                <div class="hdr-date" id="report-date-2">2026.01.13</div>
+                <div style="font-family:'Pretendard','Noto Sans KR',sans-serif;font-size:10px;color:rgba(255,255,255,.6);margin-top:3px;">KOSPI · ATLAS</div>
+                <div class="accent-line" style="width:160px;margin-left:auto;margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="px-6 py-2 dot-pattern">
+
+            <!-- Row 1: 캔들 (left) + RS scatter (right) -->
+            <div class="grid-2 mb-2">
+                <div class="card">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#F37321;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            KOSPI 캔들차트
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="kospi-candle-container">
+                        <img id="kospi-candle-img" style="width:100%; border-radius:0.4rem;" />
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#7C3AED;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            KOSPI 섹터 상대강도 (RS)
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="rs-chart"></div>
+                </div>
+            </div>
+
+            <!-- Row 2: ADR (left) + 섹터별등락률 (right) -->
+            <div class="grid-2 mb-2">
+                <div class="card">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#D97706;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                            KOSPI 등락비율 (ADR)
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="adr-chart"></div>
+                </div>
+
+                <div class="card" style="overflow:visible;">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#059669;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            KOSPI 섹터별 등락률
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="sector-bar-chart"></div>
+                </div>
+            </div>
+
+            <!-- Row 3: 뉴스(2cols) + 상승TOP + 하락TOP -->
+            <div class="grid-4 mb-2">
+                <div class="card col-2">
+                    <div class="card-header pb-0">
+                        <h3 class="card-title text-xs">
+                            <span style="display:flex;align-items:center;justify-content:center;width:1.1rem;height:1.1rem;border-radius:50%;background:linear-gradient(135deg,#F37321,#E8621A);">
+                                <svg class="w-2 h-2" style="color:#fff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 4a2 2 0 012 2v6a2 2 0 01-2 2h-2m-4-16a2 2 0 012 2v3m-6 8h4m-4 4h4m-4-8h4M4 8h8"/>
+                                </svg>
+                            </span>
+                            오늘의 주요 헤드라인
+                        </h3>
+                    </div>
+                    <div class="card-content pt-2" id="news-headlines" style="height:250px;overflow-y:hidden;"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <h3 class="card-title text-xs">
+                            <span style="display:flex;align-items:center;justify-content:center;width:1.1rem;height:1.1rem;border-radius:50%;background:#dc2626;">
+                                <svg class="w-2 h-2" style="color:#fff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                </svg>
+                            </span>
+                            지수 기여도 상위
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="top-gainers"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <h3 class="card-title text-xs">
+                            <span style="display:flex;align-items:center;justify-content:center;width:1.1rem;height:1.1rem;border-radius:50%;background:#1d4ed8;">
+                                <svg class="w-2 h-2" style="color:#fff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"/>
+                                </svg>
+                            </span>
+                            지수 기여도 하위
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="top-losers"></div>
+                </div>
+            </div>
+
+            <!-- Row 4: KOSPI 등락 게이지 (breadth) -->
+            <div class="mb-2">
+                <div class="card" style="padding: 0.55rem 0.95rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.45rem;">
+                        <span style="width:3px; height:13px; background:#F37321; border-radius:2px; display:inline-block;"></span>
+                        <span style="font-size:0.80rem; font-weight:700; color:#111827;">KOSPI 등락 현황</span>
+                    </div>
+                    <div id="kospi-breadth-gauge"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- PAGE 3: KOSDAQ 차트                                 -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="page3" class="a4-page" style="margin-top: 40px;">
+
+        <!-- Header Band -->
+        <div class="hdr-band">
+            <div style="position:relative;z-index:1;">
+                <div class="hdr-brand">ATLAS<span class="dim">운용본부</span></div>
+                <div class="hdr-sub">
+                    <span class="slot-tag">장중 브리핑 · KOSDAQ 시황</span>
+                </div>
+            </div>
+            <div class="hdr-right">
+                <div class="hdr-date" id="report-date-3">2026.01.13</div>
+                <div style="font-family:'Pretendard','Noto Sans KR',sans-serif;font-size:10px;color:rgba(255,255,255,.6);margin-top:3px;">KOSDAQ · ATLAS</div>
+                <div class="accent-line" style="width:160px;margin-left:auto;margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <!-- KOSDAQ Content -->
+        <div class="px-6 py-2 dot-pattern">
+
+            <!-- Row 1: KOSDAQ 캔들 + RS -->
+            <div class="grid-2 mb-2">
+                <div class="card">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#0D9488;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            KOSDAQ 캔들차트
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="kosdaq-candle-container">
+                        <img id="kosdaq-candle-img" style="width:100%; border-radius:0.4rem;" />
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#7C3AED;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            KOSDAQ 섹터 상대강도 (RS)
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="kosdaq-rs-chart"></div>
+                </div>
+            </div>
+
+            <!-- Row 2: KOSDAQ ADR + 섹터별등락률 -->
+            <div class="grid-2 mb-2">
+                <div class="card">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#D97706;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                            KOSDAQ 등락비율 (ADR)
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="kosdaq-adr-chart"></div>
+                </div>
+
+                <div class="card" style="overflow:visible;">
+                    <div class="card-header pb-1">
+                        <h3 class="card-title text-sm">
+                            <svg class="w-4 h-4" style="color:#0D9488;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            KOSDAQ 섹터별 등락률
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="kosdaq-sector-bar-chart"></div>
+                </div>
+            </div>
+
+            <!-- Row 3: 뉴스(2cols) + 상승TOP + 하락TOP -->
+            <div class="grid-4 mb-2">
+                <div class="card col-2">
+                    <div class="card-header pb-0">
+                        <h3 class="card-title text-xs">
+                            <span style="display:flex;align-items:center;justify-content:center;width:1.1rem;height:1.1rem;border-radius:50%;background:linear-gradient(135deg,#F37321,#E8621A);">
+                                <svg class="w-2 h-2" style="color:#fff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 4a2 2 0 012 2v6a2 2 0 01-2 2h-2m-4-16a2 2 0 012 2v3m-6 8h4m-4 4h4m-4-8h4M4 8h8"/>
+                                </svg>
+                            </span>
+                            오늘의 주요 헤드라인
+                        </h3>
+                    </div>
+                    <div class="card-content pt-2" id="kosdaq-news-headlines" style="height:145px;overflow-y:hidden;"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <h3 class="card-title text-xs">
+                            <span style="display:flex;align-items:center;justify-content:center;width:1.1rem;height:1.1rem;border-radius:50%;background:#dc2626;">
+                                <svg class="w-2 h-2" style="color:#fff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                </svg>
+                            </span>
+                            상승률 TOP
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="kosdaq-top-gainers"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <h3 class="card-title text-xs">
+                            <span style="display:flex;align-items:center;justify-content:center;width:1.1rem;height:1.1rem;border-radius:50%;background:#1d4ed8;">
+                                <svg class="w-2 h-2" style="color:#fff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"/>
+                                </svg>
+                            </span>
+                            하락률 TOP
+                        </h3>
+                    </div>
+                    <div class="card-content pt-0" id="kosdaq-top-losers"></div>
+                </div>
+            </div>
+
+            <!-- Row 4: KOSDAQ 등락 게이지 + KOSDAQ 테마 히트맵 -->
+            <div class="grid-2">
+                <div class="card" style="padding:0.55rem 0.85rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.45rem;">
+                        <span style="width:3px; height:13px; background:#F37321; border-radius:2px; display:inline-block;"></span>
+                        <span style="font-size:0.80rem; font-weight:700; color:#111827;">KOSDAQ 등락 현황</span>
+                    </div>
+                    <div id="kosdaq-breadth-gauge"></div>
+                </div>
+
+                <div class="card" style="padding:0.55rem 0.85rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.45rem;">
+                        <span style="width:3px; height:13px; background:#F37321; border-radius:2px; display:inline-block;"></span>
+                        <span style="font-size:0.80rem; font-weight:700; color:#111827;">주도 테마 히트맵 (KOSDAQ)</span>
+                    </div>
+                    <div id="kosdaq-theme-heatmap">
+                        <div style="text-align:center; color:#9ca3af; font-size:0.85rem; padding:1rem 0;">테마 데이터 로딩 중...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- JAVASCRIPT                                          -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <script>
+        // 데이터는 Python에서 주입됨
+        window.reportData = window.reportData || {
+            date: '2026.01.13',
+            reportTitle: '',
+            analysisText: '',
+            newsHeadlines: [],
+            rsData: [],
+            topContributors: [],
+            bottomContributors: [],
+            topGainers: [],
+            topLosers: [],
+            sectorReturns: [],
+            adrData: [],
+            topSectors: [],
+            bottomSectors: [],
+            kosdaqSectors: [],
+            kosdaqRsData: [],
+            kosdaqTopContributors: [],
+            kosdaqBottomContributors: [],
+            kosdaqTopGainers: [],
+            kosdaqTopLosers: [],
+            kosdaqAdvance: 0,
+            kosdaqDecline: 0,
+            kosdaqUnchanged: 0,
+            kosdaqTotal: 0,
+            kospiAdvance: 0,
+            kospiDecline: 0,
+            kospiUnchanged: 0,
+            kospiTotal: 0,
+            // NEW fields
+            themeReturns: [],
+            kosdaqThemeReturns: [],
+            investor: null,
+            indices: null,
+        };
+
+        /* ── helpers ─────────────────────────────────────── */
+        function truncateName(name, maxLen) {
+            maxLen = maxLen || 8;
+            if (!name) return '';
+            return name.length > maxLen ? name.slice(0, maxLen) : name;
+        }
+
+        function fmtChange(v) {
+            if (v === null || v === undefined || isNaN(v)) return '0.00%';
+            var n = parseFloat(v);
+            return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+        }
+
+        /* ── 1. INDEX KPI STRIP ───────────────────────────── */
+        function renderIndexKpiStrip(indices) {
+            var container = document.getElementById('index-kpi-strip');
+            if (!container) return;
+            if (!indices || (typeof indices !== 'object')) {
+                container.style.display = 'none';
+                return;
+            }
+            var items = [];
+            var kp = indices.kospi;
+            var kq = indices.kosdaq;
+            if (kp) items.push({ label: 'KOSPI', value: kp.index, change: kp.change });
+            if (kq) items.push({ label: 'KOSDAQ', value: kq.index, change: kq.change });
+
+            if (items.length === 0) { container.style.display = 'none'; return; }
+
+            var html = '';
+            items.forEach(function(it) {
+                var chg = parseFloat(it.change) || 0;
+                var cls = chg > 0 ? 'chip-up' : (chg < 0 ? 'chip-down' : 'chip-flat');
+                var valFmt = it.value ? parseFloat(it.value).toLocaleString('ko-KR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+                var chgFmt = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+                html += '<div class="index-chip">'
+                    + '<span class="index-chip-label">' + it.label + '</span>'
+                    + '<span class="index-chip-value">' + valFmt + '</span>'
+                    + '<span class="index-chip-change ' + cls + '">' + chgFmt + '</span>'
+                    + '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        /* ── 2. INVESTOR DIVERGING BAR ────────────────────── */
+        function renderInvestorBar(investor) {
+            var container = document.getElementById('investor-bar-chart');
+            if (!container) return;
+
+            if (!investor) {
+                container.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:0.82rem;padding:0.75rem 0;">수급 데이터 없음</div>';
+                return;
+            }
+
+            var ind = parseInt(investor.individual) || 0;
+            var for_ = parseInt(investor.foreign) || 0;
+            var ins = parseInt(investor.institution) || 0;
+
+            if (ind === 0 && for_ === 0 && ins === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:0.82rem;padding:0.75rem 0;">장중 수급 집계 전</div>';
+                return;
+            }
+
+            var rows = [
+                { label: '개인', value: ind },
+                { label: '외국인', value: for_ },
+                { label: '기관', value: ins },
+            ];
+            var maxAbs = Math.max(1, Math.abs(ind), Math.abs(for_), Math.abs(ins));
+
+            var html = '';
+            rows.forEach(function(row) {
+                var pct = Math.abs(row.value) / maxAbs * 47; // max 47% each side
+                var isPos = row.value >= 0;
+                var barColor = isPos ? '#dc2626' : '#1d4ed8';
+                var valColor = isPos ? '#dc2626' : '#1d4ed8';
+                var barLeft = isPos ? '50%' : (50 - pct) + '%';
+                var barWidth = pct + '%';
+                var valFmt = (isPos ? '+' : '') + row.value.toLocaleString() + '억';
+
+                html += '<div class="investor-row">'
+                    + '<span class="investor-label">' + row.label + '</span>'
+                    + '<div class="investor-bar-track">'
+                    +   '<div class="investor-bar-center"></div>'
+                    +   '<div class="investor-bar-fill" style="left:' + barLeft + ';width:' + barWidth + ';background:' + barColor + ';opacity:0.75;"></div>'
+                    + '</div>'
+                    + '<span class="investor-value-label" style="color:' + valColor + ';">' + valFmt + '</span>'
+                    + '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        /* ── 3. THEME HEATMAP (treemap-style, count-sized tiles) ─── */
+        function renderThemeHeatmap(themes, containerId) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+
+            if (!themes || themes.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:0.82rem;padding:0.75rem 0;">테마 데이터 없음</div>';
+                return;
+            }
+
+            // sort by abs change desc, take top 20
+            var sorted = themes.slice().sort(function(a, b) {
+                return Math.abs(parseFloat(b.change) || 0) - Math.abs(parseFloat(a.change) || 0);
+            }).slice(0, 20);
+
+            var maxAbs = Math.max(0.01, Math.max.apply(null, sorted.map(function(t) { return Math.abs(parseFloat(t.change) || 0); })));
+            var maxCount = Math.max(1, Math.max.apply(null, sorted.map(function(t) { return parseInt(t.count) || 1; })));
+
+            function tileColor(chg) {
+                var v = parseFloat(chg) || 0;
+                var intensity = Math.min(1, Math.abs(v) / maxAbs);
+                if (v > 0) {
+                    // red: #FFEEEE → #dc2626
+                    var r = Math.round(255 - (255 - 225) * intensity);
+                    var g = Math.round(238 - (238 - 29) * intensity);
+                    var b = Math.round(238 - (238 - 72) * intensity);
+                    return 'rgb(' + r + ',' + g + ',' + b + ')';
+                } else if (v < 0) {
+                    // blue: #EEF2FF → #1d4ed8
+                    var r2 = Math.round(238 - (238 - 37) * intensity);
+                    var g2 = Math.round(242 - (242 - 99) * intensity);
+                    var b2 = Math.round(255 - (255 - 235) * intensity);
+                    return 'rgb(' + r2 + ',' + g2 + ',' + b2 + ')';
+                } else {
+                    return '#F1F5F9';
+                }
+            }
+
+            function textColor(chg) {
+                var v = parseFloat(chg) || 0;
+                var intensity = Math.min(1, Math.abs(v) / maxAbs);
+                return intensity > 0.55 ? '#FFFFFF' : '#0F172A';
+            }
+
+            // size tiles by count: min 44px, max 72px
+            function tileHeight(count) {
+                var c = parseInt(count) || 1;
+                return Math.round(44 + (c / maxCount) * 28);
+            }
+
+            var html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">';
+            sorted.forEach(function(t) {
+                var chg = parseFloat(t.change) || 0;
+                var cnt = parseInt(t.count) || 1;
+                var chgStr = (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%';
+                var bg = tileColor(chg);
+                var txtCol = textColor(chg);
+                var name = t.theme || t.sector || '';
+                if (name.length > 7) name = name.slice(0, 6) + '..';
+                var h = tileHeight(cnt);
+                html += '<div class="theme-tile" style="background:' + bg + ';border-color:rgba(0,0,0,0.06);min-height:' + h + 'px;">'
+                    + '<span class="theme-tile-name" style="color:' + txtCol + ';">' + name + '</span>'
+                    + '<span class="theme-tile-change" style="color:' + txtCol + ';">' + chgStr + '</span>'
+                    + (cnt > 1 ? '<span style="font-size:0.62rem;color:' + txtCol + ';opacity:0.7;margin-top:1px;">' + cnt + '종목</span>' : '')
+                    + '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        /* ── 4. BREADTH GAUGE ─────────────────────────────── */
+        function renderBreadthGauge(advance, decline, containerId) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+
+            var adv = parseInt(advance) || 0;
+            var dec = parseInt(decline) || 0;
+            var total = adv + dec;
+
+            if (total === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:0.82rem;padding:0.4rem 0;">집계 전</div>';
+                return;
+            }
+
+            var advPct = (adv / total * 100).toFixed(1);
+            var decPct = (dec / total * 100).toFixed(1);
+            var advW = (adv / total * 100).toFixed(2);
+            var decW = (dec / total * 100).toFixed(2);
+            var ratio = total > 0 ? (adv / total).toFixed(2) : '0.50';
+
+            var html = '<div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.45rem;">'
+                + '<span style="font-size:0.95rem;font-weight:800;color:#dc2626;">▲ ' + adv.toLocaleString() + '</span>'
+                + '<span style="font-size:0.75rem;color:#9ca3af;">(' + advPct + '%)</span>'
+                + '<div style="flex:1;"></div>'
+                + '<span style="font-size:0.75rem;color:#9ca3af;">(' + decPct + '%)</span>'
+                + '<span style="font-size:0.95rem;font-weight:800;color:#1d4ed8;">' + dec.toLocaleString() + ' ▼</span>'
+                + '</div>'
+                + '<div class="breadth-bar">'
+                + '<div style="width:' + advW + '%;background:linear-gradient(90deg,#dc2626,#FB7185);"></div>'
+                + '<div style="width:' + decW + '%;background:linear-gradient(90deg,#60A5FA,#1d4ed8);"></div>'
+                + '</div>'
+                + '<div style="display:flex;justify-content:space-between;margin-top:0.3rem;">'
+                + '<span style="font-size:0.72rem;color:#9ca3af;">상승</span>'
+                + '<span style="font-size:0.72rem;font-weight:700;color:#374151;">상승비율 ' + (parseFloat(ratio)*100).toFixed(1) + '%</span>'
+                + '<span style="font-size:0.72rem;color:#9ca3af;">하락</span>'
+                + '</div>';
+            container.innerHTML = html;
+        }
+
+        /* ── 5. NEWS HEADLINES ────────────────────────────── */
+        function renderNewsHeadlines(headlines, containerId) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            if (!headlines || headlines.length === 0) {
+                container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:0.875rem;">오늘의 주요 뉴스가 없습니다.</div>';
+                return;
+            }
+            var html = '<div style="display:flex;flex-direction:column;gap:0.32rem;height:100%;padding-top:0.2rem;">';
+            headlines.slice(0, 7).forEach(function(news, i) {
+                var titleText = typeof news === 'string' ? news : (news.title || '');
+                html += '<div style="display:flex;align-items:flex-start;gap:0.5rem;padding-bottom:0.3rem;border-bottom:1px solid #F1F5F9;overflow:hidden;">'
+                    + '<span style="display:flex;align-items:center;justify-content:center;width:1.15rem;height:1.15rem;border-radius:0.25rem;background:#FFF4EE;color:#F37321;font-weight:700;font-size:0.7rem;margin-top:0.08rem;flex-shrink:0;">' + (i+1) + '</span>'
+                    + '<p style="flex:1;min-width:0;font-size:0.86rem;font-weight:600;color:#111827;line-height:1.32;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;">' + titleText + '</p>'
+                    + '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        /* ── 6. ANALYSIS TEXT ────────────────────────────── */
+        function renderAnalysis(text) {
+            var container = document.getElementById('analysis-content');
+            if (!text) {
+                container.innerHTML = '<p style="color:#9ca3af;">분석 텍스트가 없습니다.</p>';
+                return;
+            }
+            var lines = text.split('\n');
+            var html = '';
+            var inSection = false;
+            var headingRe = /^(?:📌|■|◎|◆)\s*/;
+
+            lines.forEach(function(line) {
+                var trimmed = line.trim();
+                if (!trimmed) {
+                    if (inSection) html += '</div>';
+                    inSection = false;
+                    return;
+                }
+                if (trimmed === '---') {
+                    if (inSection) html += '</div>';
+                    inSection = false;
+                    return;
+                }
+                if (/^#{1,6}\s+/.test(trimmed)) return;
+
+                if (headingRe.test(trimmed)) {
+                    if (inSection) html += '</div>';
+                    var heading = trimmed.replace(headingRe, '').trim();
+                    html += '<div class="analysis-block"><h3>' + heading + '</h3>';
+                    inSection = true;
+                } else if (trimmed.startsWith('-')) {
+                    html += '<p class="analysis-bullet">' + trimmed.substring(1).trim() + '</p>';
+                } else {
+                    html += '<p class="analysis-bullet">' + trimmed + '</p>';
+                }
+            });
+            if (inSection) html += '</div>';
+            container.innerHTML = html;
+        }
+
+        /* ── 7. RS SCATTER ───────────────────────────────── */
+        function renderRsChart(data) {
+            var container = document.getElementById('rs-chart');
+            var width = 370, height = 340;
+            var margin = { top: 28, right: 14, bottom: 30, left: 14 };
+            var innerWidth = width - margin.left - margin.right;
+            var innerHeight = height - margin.top - margin.bottom;
+
+            var filteredData = data.filter(function(d) {
+                return d.sector !== 'KOSPI' && d.sector !== '미편입종목' && d.sector !== '은행';
+            });
+
+            var xValues = filteredData.map(function(d) { return d.rs_5d; });
+            var yValues = filteredData.map(function(d) { return d.rs_1d; });
+            var xMaxAbs = Math.max(1, Math.max.apply(null, xValues.map(Math.abs))) * 1.2;
+            var yMaxAbs = Math.max(1, Math.max.apply(null, yValues.map(Math.abs))) * 1.2;
+
+            function xScale(v) { return (v / xMaxAbs) * (innerWidth / 2) + innerWidth / 2; }
+            function yScale(v) { return (-v / yMaxAbs) * (innerHeight / 2) + innerHeight / 2; }
+
+            var quadrantColors = { '리더':'#dc2626','단기 반등':'#7c3aed','단기반등':'#7c3aed','숨고르기':'#ca8a04','약세 지속':'#475569','약세지속':'#475569' };
+
+            var points = filteredData.map(function(d, i) {
+                return Object.assign({}, d, { x: xScale(d.rs_5d), y: yScale(d.rs_1d), index: i });
+            });
+
+            var usedPositions = [];
+            var offsets = [
+                {dx:0,dy:-20,anchor:'middle'},{dx:0,dy:24,anchor:'middle'},
+                {dx:22,dy:-12,anchor:'start'},{dx:-22,dy:-12,anchor:'end'},
+                {dx:22,dy:12,anchor:'start'},{dx:-22,dy:12,anchor:'end'},
+                {dx:26,dy:0,anchor:'start'},{dx:-26,dy:0,anchor:'end'},
+                {dx:0,dy:-36,anchor:'middle'},{dx:0,dy:38,anchor:'middle'},
+                {dx:36,dy:-18,anchor:'start'},{dx:-36,dy:-18,anchor:'end'},
+                {dx:36,dy:18,anchor:'start'},{dx:-36,dy:18,anchor:'end'},
+                {dx:40,dy:0,anchor:'start'},{dx:-40,dy:0,anchor:'end'},
+            ];
+
+            var labelData = points.map(function(p) {
+                var color = quadrantColors[p.quadrant] || '#475569';
+                var shortName = p.sector.length > 7 ? p.sector.substring(0,6)+'..' : p.sector;
+                var bestPos = null, bestScore = -Infinity;
+                offsets.forEach(function(off) {
+                    var lx = p.x + off.dx, ly = p.y + off.dy;
+                    if (lx < 8 || lx > innerWidth-8 || ly < 14 || ly > innerHeight-8) return;
+                    var minDist = Infinity;
+                    usedPositions.forEach(function(pos) {
+                        var d = Math.sqrt((lx-pos.x)**2+(ly-pos.y)**2);
+                        minDist = Math.min(minDist, d);
+                    });
+                    points.forEach(function(other) {
+                        if (other.index === p.index) return;
+                        var d = Math.sqrt((lx-other.x)**2+(ly-other.y)**2);
+                        minDist = Math.min(minDist, d*0.6);
+                    });
+                    var distFromPoint = Math.sqrt(off.dx**2+off.dy**2);
+                    var score = minDist - distFromPoint*0.2;
+                    if (score > bestScore) { bestScore = score; bestPos = {x:lx,y:ly,anchor:off.anchor}; }
+                });
+                if (!bestPos) bestPos = {x:p.x,y:p.y-28,anchor:'middle'};
+                usedPositions.push({x:bestPos.x,y:bestPos.y});
+                return Object.assign({},p,{labelX:bestPos.x,labelY:bestPos.y,anchor:bestPos.anchor,shortName,color});
+            });
+
+            var svg = '<svg width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'">'
+                + '<defs>'
+                + '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+                + '<filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="white" flood-opacity="0.9"/></filter>'
+                + '<linearGradient id="q1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#fef3c7;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#fef9c3;stop-opacity:0.65"/></linearGradient>'
+                + '<linearGradient id="q2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#fee2e2;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#fecaca;stop-opacity:0.65"/></linearGradient>'
+                + '<linearGradient id="q3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:0.65"/></linearGradient>'
+                + '<linearGradient id="q4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#ede9fe;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#f3e8ff;stop-opacity:0.65"/></linearGradient>'
+                + '</defs>'
+                + '<g transform="translate('+margin.left+','+margin.top+')">'
+                + '<rect x="0" y="0" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#q1)"/>'
+                + '<rect x="'+innerWidth/2+'" y="0" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#q2)"/>'
+                + '<rect x="0" y="'+innerHeight/2+'" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#q3)"/>'
+                + '<rect x="'+innerWidth/2+'" y="'+innerHeight/2+'" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#q4)"/>'
+                + '<line x1="0" y1="'+innerHeight/2+'" x2="'+innerWidth+'" y2="'+innerHeight/2+'" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>'
+                + '<line x1="'+innerWidth/2+'" y1="0" x2="'+innerWidth/2+'" y2="'+innerHeight+'" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>'
+                + '<text x="'+innerWidth+'" y="'+(innerHeight/2+16)+'" text-anchor="end" font-size="10px" font-weight="600" fill="#6b7280">5D 수익률 →</text>'
+                + '<text x="'+(innerWidth/2-8)+'" y="10" text-anchor="end" font-size="10px" font-weight="600" fill="#6b7280">↑ 1D 수익률</text>'
+                + '<text x="'+(innerWidth-8)+'" y="22" text-anchor="end" font-size="13px" font-weight="800" fill="#dc2626">리더</text>'
+                + '<text x="8" y="22" text-anchor="start" font-size="13px" font-weight="800" fill="#ca8a04">단기반등</text>'
+                + '<text x="'+(innerWidth-8)+'" y="'+(innerHeight-10)+'" text-anchor="end" font-size="13px" font-weight="800" fill="#7c3aed">숨고르기</text>'
+                + '<text x="8" y="'+(innerHeight-10)+'" text-anchor="start" font-size="13px" font-weight="800" fill="#475569">약세지속</text>';
+
+            labelData.forEach(function(p) {
+                var needsLine = Math.abs(p.labelY-p.y)>14 || Math.abs(p.labelX-p.x)>18;
+                svg += '<g>' + (needsLine?'<line x1="'+p.x+'" y1="'+p.y+'" x2="'+p.labelX+'" y2="'+(p.labelY+4)+'" stroke="#94a3b8" stroke-width="1" opacity="0.4"/>':'')
+                    + '<text x="'+p.labelX+'" y="'+p.labelY+'" text-anchor="'+p.anchor+'" font-size="11px" font-weight="700" fill="'+p.color+'" filter="url(#textShadow)">'+p.shortName+'</text>'
+                    + '</g>';
+            });
+            points.forEach(function(p) {
+                var color = quadrantColors[p.quadrant] || '#475569';
+                svg += '<circle cx="'+p.x+'" cy="'+p.y+'" r="8" fill="'+color+'" stroke="white" stroke-width="2" filter="url(#glow)"/>';
+            });
+            svg += '</g></svg>';
+            container.innerHTML = svg;
+        }
+
+        /* ── 8. ADR CHART ────────────────────────────────── */
+        function renderAdrChart(data) {
+            var container = document.getElementById('adr-chart');
+            // ADR 정상 범위(0~200) 밖 쓰레기값 제거 + 최근 30영업일만
+            data = (data||[]).filter(function(d){ var v=Number(d.kospi); return isFinite(v) && v>0 && v<=200; }).slice(-30);
+            if (!data || data.length < 2) {
+                container.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:2rem 0;">ADR 데이터 없음</p>';
+                return;
+            }
+            var width = 350, height = 270;
+            var margin = {top:28,right:18,bottom:20,left:38};
+            var innerWidth = width-margin.left-margin.right;
+            var innerHeight = height-margin.top-margin.bottom;
+            var values = data.map(function(d){return d.kospi;});
+            // y축을 실제 데이터 범위에 맞춰 자동 스케일(여유 패딩), 80/100/120 기준선 포함
+            var dMin=Math.min.apply(null,values), dMax=Math.max.apply(null,values);
+            var minVal=Math.min(70, Math.floor((dMin-8)/10)*10), maxVal=Math.max(130, Math.ceil((dMax+8)/10)*10);
+            var range=maxVal-minVal;
+            var xStep = innerWidth/(data.length-1);
+            function yScale(v){return innerHeight-((v-minVal)/range)*innerHeight;}
+            var pathData = data.map(function(d,i){
+                var x=i*xStep, y=Math.max(0,Math.min(innerHeight,yScale(d.kospi)));
+                return (i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+            }).join(' ');
+            var latestVal=values[values.length-1].toFixed(1);
+            var y80=yScale(80),y100=yScale(100),y120=yScale(120);
+            var areaPath=pathData+' L'+innerWidth+','+innerHeight+' L0,'+innerHeight+' Z';
+            var svg='<svg width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'">'
+                +'<defs><linearGradient id="adr-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:#dc2626;stop-opacity:0.12"/><stop offset="100%" style="stop-color:#dc2626;stop-opacity:0.01"/></linearGradient></defs>'
+                +'<g transform="translate('+margin.left+','+margin.top+')">'
+                +'<text x="0" y="-12" font-size="11px" font-weight="700" fill="#0F172A">KOSPI ADR</text>'
+                +'<text x="'+innerWidth+'" y="-12" text-anchor="end" font-size="11px" font-weight="700" fill="#dc2626">'+latestVal+'</text>'
+                +'<line x1="0" y1="'+y120+'" x2="'+innerWidth+'" y2="'+y120+'" stroke="#22c55e" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>'
+                +'<line x1="0" y1="'+y100+'" x2="'+innerWidth+'" y2="'+y100+'" stroke="#94A3B8" stroke-width="1"/>'
+                +'<line x1="0" y1="'+y80+'" x2="'+innerWidth+'" y2="'+y80+'" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>'
+                +'<text x="-4" y="'+(y120+4)+'" text-anchor="end" font-size="9px" fill="#22c55e" font-weight="700">120</text>'
+                +'<text x="-4" y="'+(y100+4)+'" text-anchor="end" font-size="9px" fill="#6b7280" font-weight="700">100</text>'
+                +'<text x="-4" y="'+(y80+4)+'" text-anchor="end" font-size="9px" fill="#ef4444" font-weight="700">80</text>'
+                +'<path d="'+areaPath+'" fill="url(#adr-fill)"/>'
+                +'<path d="'+pathData+'" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+                +'<circle cx="'+innerWidth+'" cy="'+yScale(values[values.length-1])+'" r="6" fill="#dc2626" stroke="white" stroke-width="2"/>'
+                +'</g></svg>';
+            container.innerHTML = svg;
+        }
+
+        /* ── 9. SECTOR BAR CHART (KOSPI) ─────────────────── */
+        function renderSectorBarChart(data) {
+            var container = document.getElementById('sector-bar-chart');
+            if (!container) return;
+            // '기타'(ETF 등) 제외, 등락률 내림차순
+            var sorted = data.slice().filter(function(d){return d.sector && d.sector!=='기타';})
+                              .sort(function(a,b){return b.change-a.change;});
+            var n = sorted.length || 1;
+            var labelW=76, valueW=46, width=340, gap=3, avail=268;
+            // 섹터 수에 맞춰 바 높이 자동 계산(꽉 채우기)
+            var barH=Math.max(12, Math.min(24, Math.floor((avail-8)/n)-gap));
+            var height=n*(barH+gap)+8;
+            var chartW=width-labelW-valueW-8;
+            var maxVal=Math.max.apply(null,sorted.map(function(d){return Math.abs(d.change);}));
+            maxVal=Math.max(maxVal,1);
+            var x0=labelW;
+
+            var svg='<svg width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'">'
+                +'<defs>'
+                +'<linearGradient id="barUp" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#fb7185"/><stop offset="100%" style="stop-color:#dc2626"/></linearGradient>'
+                +'<linearGradient id="barDown" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#1d4ed8"/><stop offset="100%" style="stop-color:#60a5fa"/></linearGradient>'
+                +'</defs>'
+                +'<line x1="'+x0+'" y1="0" x2="'+x0+'" y2="'+height+'" stroke="#E5E7EB" stroke-width="1"/>';
+
+            sorted.forEach(function(d,i){
+                var y=i*(barH+gap)+4;
+                var up=d.change>=0;
+                var bw=Math.max((Math.abs(d.change)/maxVal)*chartW,3);
+                var fill=up?'url(#barUp)':'url(#barDown)';
+                var valColor=up?'#dc2626':'#1d4ed8';
+                svg+='<text x="'+(labelW-6)+'" y="'+(y+barH/2)+'" text-anchor="end" dominant-baseline="middle" font-size="11px" fill="#374151" font-weight="600">'+d.sector+'</text>';
+                svg+='<rect x="'+x0+'" y="'+y+'" width="'+bw+'" height="'+barH+'" fill="'+fill+'" rx="3"/>';
+                svg+='<text x="'+(x0+bw+5)+'" y="'+(y+barH/2)+'" text-anchor="start" dominant-baseline="middle" font-size="10px" fill="'+valColor+'" font-weight="700">'+(up?'+':'')+d.change.toFixed(1)+'%</text>';
+            });
+            svg+='</svg>';
+            container.innerHTML=svg;
+        }
+
+        /* ── 10. GAINERS / LOSERS ────────────────────────── */
+        function renderGainersLosers(data, containerId, isGainers) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            var valueClass = isGainers ? 'value-up' : 'value-down';
+            var html = data.slice(0,10).map(function(item,i){
+                return '<div class="contributor-item">'
+                    +'<div class="contributor-rank '+(i<3?'rank-top':'rank-normal')+'">'+(i+1)+'</div>'
+                    +'<span class="contributor-name">'+truncateName(item.name)+'</span>'
+                    +'<span class="contributor-value '+valueClass+'">'+(item.change>0?'+':'')+item.change.toFixed(2)+'%</span>'
+                    +'</div>';
+            }).join('');
+            container.innerHTML = html;
+        }
+
+        /* ── 11. CONTRIBUTORS ────────────────────────────── */
+        function renderContributors(data, containerId, isPositive) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            var valueClass = isPositive ? 'value-up' : 'value-down';
+            var html = data.slice(0,10).map(function(item,i){
+                return '<div class="contributor-item">'
+                    +'<div class="contributor-rank '+(i<3?'rank-top':'rank-normal')+'">'+(i+1)+'</div>'
+                    +'<span class="contributor-name">'+truncateName(item.name)+'</span>'
+                    +'<span class="contributor-value '+valueClass+'">'+(item.contribution>0?'+':'')+item.contribution.toFixed(3)+'p</span>'
+                    +'</div>';
+            }).join('');
+            container.innerHTML = html;
+        }
+
+        /* ── 12. KOSDAQ RS SCATTER ───────────────────────── */
+        function renderKosdaqRsChart(data) {
+            var container = document.getElementById('kosdaq-rs-chart');
+            var filteredData = data.filter(function(d){
+                return d.sector !== 'KOSDAQ' && d.sector !== '미편입종목';
+            });
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:2rem 0;">KOSDAQ RS 데이터 없음</p>';
+                return;
+            }
+            var width=370,height=340;
+            var margin={top:28,right:14,bottom:30,left:14};
+            var innerWidth=width-margin.left-margin.right;
+            var innerHeight=height-margin.top-margin.bottom;
+            var xValues=filteredData.map(function(d){return d.rs_5d;});
+            var yValues=filteredData.map(function(d){return d.rs_1d;});
+            var xMaxAbs=Math.max(1,Math.max.apply(null,xValues.map(Math.abs)))*1.2;
+            var yMaxAbs=Math.max(1,Math.max.apply(null,yValues.map(Math.abs)))*1.2;
+            function xScale(v){return (v/xMaxAbs)*(innerWidth/2)+innerWidth/2;}
+            function yScale(v){return (-v/yMaxAbs)*(innerHeight/2)+innerHeight/2;}
+            var qColors={'리더':'#dc2626','단기 반등':'#7c3aed','단기반등':'#7c3aed','숨고르기':'#ca8a04','약세 지속':'#475569','약세지속':'#475569'};
+            var points=filteredData.map(function(d,i){return Object.assign({},d,{x:xScale(d.rs_5d),y:yScale(d.rs_1d),index:i});});
+            var offsets=[
+                {dx:0,dy:-20,anchor:'middle'},{dx:0,dy:24,anchor:'middle'},
+                {dx:22,dy:-12,anchor:'start'},{dx:-22,dy:-12,anchor:'end'},
+                {dx:22,dy:12,anchor:'start'},{dx:-22,dy:12,anchor:'end'},
+                {dx:26,dy:0,anchor:'start'},{dx:-26,dy:0,anchor:'end'},
+                {dx:0,dy:-36,anchor:'middle'},{dx:0,dy:38,anchor:'middle'},
+                {dx:36,dy:-18,anchor:'start'},{dx:-36,dy:-18,anchor:'end'},
+                {dx:36,dy:18,anchor:'start'},{dx:-36,dy:18,anchor:'end'},
+                {dx:40,dy:0,anchor:'start'},{dx:-40,dy:0,anchor:'end'},
+            ];
+            var usedPositions=[];
+            var labelData=points.map(function(p){
+                var color=qColors[p.quadrant]||'#475569';
+                var shortName=p.sector.length>7?p.sector.substring(0,6)+'..':p.sector;
+                var bestPos=null,bestScore=-Infinity;
+                offsets.forEach(function(off){
+                    var lx=p.x+off.dx,ly=p.y+off.dy;
+                    if(lx<8||lx>innerWidth-8||ly<14||ly>innerHeight-8)return;
+                    var minDist=Infinity;
+                    usedPositions.forEach(function(pos){var d=Math.sqrt((lx-pos.x)**2+(ly-pos.y)**2);minDist=Math.min(minDist,d);});
+                    points.forEach(function(other){if(other.index===p.index)return;var d=Math.sqrt((lx-other.x)**2+(ly-other.y)**2);minDist=Math.min(minDist,d*0.6);});
+                    var distFromPoint=Math.sqrt(off.dx**2+off.dy**2);
+                    var score=minDist-distFromPoint*0.2;
+                    if(score>bestScore){bestScore=score;bestPos={x:lx,y:ly,anchor:off.anchor};}
+                });
+                if(!bestPos)bestPos={x:p.x,y:p.y-28,anchor:'middle'};
+                usedPositions.push({x:bestPos.x,y:bestPos.y});
+                return Object.assign({},p,{labelX:bestPos.x,labelY:bestPos.y,anchor:bestPos.anchor,shortName,color});
+            });
+            var svg='<svg width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'">'
+                +'<defs>'
+                +'<filter id="kd-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+                +'<filter id="kd-textShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="white" flood-opacity="0.9"/></filter>'
+                +'<linearGradient id="kd-q1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#fef3c7;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#fef9c3;stop-opacity:0.65"/></linearGradient>'
+                +'<linearGradient id="kd-q2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#fee2e2;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#fecaca;stop-opacity:0.65"/></linearGradient>'
+                +'<linearGradient id="kd-q3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:0.65"/></linearGradient>'
+                +'<linearGradient id="kd-q4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#ede9fe;stop-opacity:0.85"/><stop offset="100%" style="stop-color:#f3e8ff;stop-opacity:0.65"/></linearGradient>'
+                +'</defs>'
+                +'<g transform="translate('+margin.left+','+margin.top+')">'
+                +'<rect x="0" y="0" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#kd-q1)"/>'
+                +'<rect x="'+innerWidth/2+'" y="0" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#kd-q2)"/>'
+                +'<rect x="0" y="'+innerHeight/2+'" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#kd-q3)"/>'
+                +'<rect x="'+innerWidth/2+'" y="'+innerHeight/2+'" width="'+innerWidth/2+'" height="'+innerHeight/2+'" fill="url(#kd-q4)"/>'
+                +'<line x1="0" y1="'+innerHeight/2+'" x2="'+innerWidth+'" y2="'+innerHeight/2+'" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>'
+                +'<line x1="'+innerWidth/2+'" y1="0" x2="'+innerWidth/2+'" y2="'+innerHeight+'" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>'
+                +'<text x="'+innerWidth+'" y="'+(innerHeight/2+16)+'" text-anchor="end" font-size="10px" font-weight="600" fill="#6b7280">5D 수익률 →</text>'
+                +'<text x="'+(innerWidth/2-8)+'" y="10" text-anchor="end" font-size="10px" font-weight="600" fill="#6b7280">↑ 1D 수익률</text>'
+                +'<text x="'+(innerWidth-8)+'" y="22" text-anchor="end" font-size="13px" font-weight="800" fill="#dc2626">리더</text>'
+                +'<text x="8" y="22" text-anchor="start" font-size="13px" font-weight="800" fill="#ca8a04">단기반등</text>'
+                +'<text x="'+(innerWidth-8)+'" y="'+(innerHeight-10)+'" text-anchor="end" font-size="13px" font-weight="800" fill="#7c3aed">숨고르기</text>'
+                +'<text x="8" y="'+(innerHeight-10)+'" text-anchor="start" font-size="13px" font-weight="800" fill="#475569">약세지속</text>';
+            labelData.forEach(function(p){
+                var needsLine=Math.abs(p.labelY-p.y)>14||Math.abs(p.labelX-p.x)>18;
+                svg+='<g>'+(needsLine?'<line x1="'+p.x+'" y1="'+p.y+'" x2="'+p.labelX+'" y2="'+(p.labelY+4)+'" stroke="#94a3b8" stroke-width="1" opacity="0.4"/>':'')
+                    +'<text x="'+p.labelX+'" y="'+p.labelY+'" text-anchor="'+p.anchor+'" font-size="11px" font-weight="700" fill="'+p.color+'" filter="url(#kd-textShadow)">'+p.shortName+'</text></g>';
+            });
+            points.forEach(function(p){
+                var color=qColors[p.quadrant]||'#475569';
+                svg+='<circle cx="'+p.x+'" cy="'+p.y+'" r="8" fill="'+color+'" stroke="white" stroke-width="2" filter="url(#kd-glow)"/>';
+            });
+            svg+='</g></svg>';
+            container.innerHTML=svg;
+        }
+
+        /* ── 13. KOSDAQ ADR ──────────────────────────────── */
+        function renderKosdaqAdrChart(data) {
+            var container = document.getElementById('kosdaq-adr-chart');
+            data = (data||[]).filter(function(d){ var v=Number(d.kosdaq); return isFinite(v) && v>0 && v<=200; }).slice(-30);
+            if (!data || data.length < 2) {
+                container.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:2rem 0;">KOSDAQ ADR 데이터 없음</p>';
+                return;
+            }
+            var width=350,height=270;
+            var margin={top:28,right:18,bottom:20,left:38};
+            var innerWidth=width-margin.left-margin.right;
+            var innerHeight=height-margin.top-margin.bottom;
+            var values=data.map(function(d){return d.kosdaq;});
+            var dMin=Math.min.apply(null,values), dMax=Math.max.apply(null,values);
+            var minVal=Math.min(70, Math.floor((dMin-8)/10)*10), maxVal=Math.max(130, Math.ceil((dMax+8)/10)*10);
+            var range=maxVal-minVal;
+            var xStep=innerWidth/(data.length-1);
+            function yScale(v){return innerHeight-((v-minVal)/range)*innerHeight;}
+            var pathData=data.map(function(d,i){
+                var x=i*xStep,y=Math.max(0,Math.min(innerHeight,yScale(d.kosdaq)));
+                return (i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+            }).join(' ');
+            var latestVal=values[values.length-1].toFixed(1);
+            var y80=yScale(80),y100=yScale(100),y120=yScale(120);
+            var areaPath=pathData+' L'+innerWidth+','+innerHeight+' L0,'+innerHeight+' Z';
+            var svg='<svg width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'">'
+                +'<defs><linearGradient id="kd-adr-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0.12"/><stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:0.01"/></linearGradient></defs>'
+                +'<g transform="translate('+margin.left+','+margin.top+')">'
+                +'<text x="0" y="-12" font-size="11px" font-weight="700" fill="#0F172A">KOSDAQ ADR</text>'
+                +'<text x="'+innerWidth+'" y="-12" text-anchor="end" font-size="11px" font-weight="700" fill="#1d4ed8">'+latestVal+'</text>'
+                +'<line x1="0" y1="'+y120+'" x2="'+innerWidth+'" y2="'+y120+'" stroke="#22c55e" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>'
+                +'<line x1="0" y1="'+y100+'" x2="'+innerWidth+'" y2="'+y100+'" stroke="#94A3B8" stroke-width="1"/>'
+                +'<line x1="0" y1="'+y80+'" x2="'+innerWidth+'" y2="'+y80+'" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>'
+                +'<text x="-4" y="'+(y120+4)+'" text-anchor="end" font-size="9px" fill="#22c55e" font-weight="700">120</text>'
+                +'<text x="-4" y="'+(y100+4)+'" text-anchor="end" font-size="9px" fill="#6b7280" font-weight="700">100</text>'
+                +'<text x="-4" y="'+(y80+4)+'" text-anchor="end" font-size="9px" fill="#ef4444" font-weight="700">80</text>'
+                +'<path d="'+areaPath+'" fill="url(#kd-adr-fill)"/>'
+                +'<path d="'+pathData+'" fill="none" stroke="#1d4ed8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+                +'<circle cx="'+innerWidth+'" cy="'+yScale(values[values.length-1])+'" r="6" fill="#1d4ed8" stroke="white" stroke-width="2"/>'
+                +'</g></svg>';
+            container.innerHTML=svg;
+        }
+
+        /* ── 14. KOSDAQ SECTOR BAR ───────────────────────── */
+        function renderKosdaqSectorChart(data) {
+            var container = document.getElementById('kosdaq-sector-bar-chart');
+            var sorted=data.slice().sort(function(a,b){return b.change-a.change;});
+            // cap to top 12 up + bottom 12 down = 24 rows max (same as KOSPI)
+            if (sorted.length > 24) {
+                var top12 = sorted.slice(0, 12);
+                var bot12 = sorted.slice(-12);
+                sorted = top12.concat(bot12);
+            }
+            var numBars=sorted.length;
+            if (numBars===0){container.innerHTML='<p style="color:#9ca3af;text-align:center;padding:2rem 0;">데이터 없음</p>';return;}
+            var labelW=60,valueW=42,width=340;
+            var chartW=width-labelW-valueW-16;
+            var fixedRows=24, barH=11, gap=2;
+            var totalHeight=fixedRows*(barH+gap)+10;
+            var height=totalHeight;
+            var maxVal=Math.max.apply(null,sorted.map(function(d){return Math.abs(d.change);}));
+            maxVal=Math.max(maxVal,3);
+            function xScale(v){return (Math.abs(v)/maxVal)*(chartW/2);}
+            var centerX=labelW+chartW/2;
+            var fontSize=numBars<=16?'11px':'10px';
+            var valFontSize=numBars<=16?'10px':'9px';
+
+            var svg='<svg width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'">'
+                +'<defs>'
+                +'<linearGradient id="kdBarUp" x1="100%" y1="0%" x2="0%" y2="0%"><stop offset="0%" style="stop-color:#dc2626"/><stop offset="100%" style="stop-color:#fb7185"/></linearGradient>'
+                +'<linearGradient id="kdBarDown" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#60a5fa"/><stop offset="100%" style="stop-color:#1d4ed8"/></linearGradient>'
+                +'</defs>'
+                +'<line x1="'+centerX+'" y1="0" x2="'+centerX+'" y2="'+height+'" stroke="#E5E7EB" stroke-width="1"/>';
+
+            sorted.forEach(function(d,i){
+                var y=i*(barH+gap)+2;
+                var bw=Math.max(xScale(d.change),4);
+                var bx=d.change>=0?centerX:centerX-bw;
+                var fill=d.change>=0?'url(#kdBarUp)':'url(#kdBarDown)';
+                var valColor=d.change>=0?'#dc2626':'#1d4ed8';
+                var valX=d.change>=0?centerX+bw+4:centerX-bw-4;
+                var anchor=d.change>=0?'start':'end';
+                svg+='<text x="'+(labelW-6)+'" y="'+(y+barH/2+1)+'" text-anchor="end" dominant-baseline="middle" font-size="'+fontSize+'" fill="#374151" font-weight="600">'+d.sector+'</text>';
+                svg+='<rect x="'+bx+'" y="'+y+'" width="'+bw+'" height="'+barH+'" fill="'+fill+'" rx="3"/>';
+                svg+='<text x="'+valX+'" y="'+(y+barH/2+1)+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="'+valFontSize+'" fill="'+valColor+'" font-weight="700">'+(d.change>0?'+':'')+d.change.toFixed(1)+'%</text>';
+            });
+            svg+='</svg>';
+            container.innerHTML=svg;
+        }
+
+        /* ── 15. KOSPI/KOSDAQ MARKET OVERVIEW (legacy, kept for compat) ── */
+        function renderKospiMarketOverview(advance, decline, unchanged, total) {
+            var container = document.getElementById('kospi-market-overview');
+            if (!container) return;
+            // this element may not exist in new layout — silently skip
+        }
+        function renderKosdaqMarketOverview(advance, decline, unchanged, total) {
+            var container = document.getElementById('kosdaq-market-overview');
+            if (!container) return;
+        }
+
+        /* ══════════════════════════════════════════════════ */
+        /* INIT                                               */
+        /* ══════════════════════════════════════════════════ */
+        function init() {
+            var data = window.reportData;
+
+            // --- Titles & Dates ---
+            var titleText = data.reportTitle || '국내 증시 장중 시황';
+            ['report-title','report-title-2','report-title-3'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.textContent = titleText;
+            });
+            var dateStr = data.date || new Date().toLocaleDateString('ko-KR');
+            ['report-date','report-date-2','report-date-3'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.textContent = dateStr;
+            });
+
+            // --- Page 1 widgets ---
+            renderIndexKpiStrip(data.indices || null);
+            renderAnalysis(data.analysisText || '');
+
+            // --- Page 2: KOSPI ---
+            // ADR
+            if (data.adrData && data.adrData.length > 0) {
+                renderAdrChart(data.adrData);
+            } else {
+                var adrEl = document.getElementById('adr-chart');
+                if (adrEl) adrEl.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:2rem 0;font-size:0.85rem;">ADR 데이터 없음</p>';
+            }
+            // RS
+            if (data.rsData && data.rsData.length > 0) {
+                renderRsChart(data.rsData);
+            } else {
+                var rsEl = document.getElementById('rs-chart');
+                if (rsEl) rsEl.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:2rem 0;font-size:0.85rem;">RS 데이터 없음</p>';
+            }
+            // Sector bar
+            if (data.sectorReturns && data.sectorReturns.length > 0) {
+                renderSectorBarChart(data.sectorReturns);
+            }
+            // Gainers/Losers
+            // 지수 기여도 상위/하위 (시총가중 내재화 산출) — 상승/하락률 TOP 자리에 표시
+            if (data.topContributors && data.topContributors.length > 0) {
+                renderContributors(data.topContributors, 'top-gainers', true);
+            } else if (data.topGainers && data.topGainers.length > 0) {
+                renderGainersLosers(data.topGainers, 'top-gainers', true);
+            }
+            if (data.bottomContributors && data.bottomContributors.length > 0) {
+                renderContributors(data.bottomContributors, 'top-losers', false);
+            } else if (data.topLosers && data.topLosers.length > 0) {
+                renderGainersLosers(data.topLosers, 'top-losers', false);
+            }
+            // News
+            renderNewsHeadlines(data.newsHeadlines || [], 'news-headlines');
+            // Breadth gauge
+            renderBreadthGauge(data.kospiAdvance || 0, data.kospiDecline || 0, 'kospi-breadth-gauge');
+
+            // --- Page 3: KOSDAQ ---
+            if (data.adrData && data.adrData.length > 0) {
+                renderKosdaqAdrChart(data.adrData);
+            } else {
+                var kdAdrEl = document.getElementById('kosdaq-adr-chart');
+                if (kdAdrEl) kdAdrEl.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:2rem 0;font-size:0.85rem;">ADR 데이터 없음</p>';
+            }
+            if (data.kosdaqRsData && data.kosdaqRsData.length > 0) {
+                renderKosdaqRsChart(data.kosdaqRsData);
+            } else {
+                var kdRsEl = document.getElementById('kosdaq-rs-chart');
+                if (kdRsEl) kdRsEl.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:2rem 0;font-size:0.85rem;">RS 데이터 없음</p>';
+            }
+            if (data.kosdaqSectors && data.kosdaqSectors.length > 0) renderKosdaqSectorChart(data.kosdaqSectors);
+            if (data.kosdaqTopGainers && data.kosdaqTopGainers.length > 0) renderGainersLosers(data.kosdaqTopGainers, 'kosdaq-top-gainers', true);
+            if (data.kosdaqTopLosers && data.kosdaqTopLosers.length > 0) renderGainersLosers(data.kosdaqTopLosers, 'kosdaq-top-losers', false);
+            renderNewsHeadlines(data.newsHeadlines || [], 'kosdaq-news-headlines');
+            renderBreadthGauge(data.kosdaqAdvance || 0, data.kosdaqDecline || 0, 'kosdaq-breadth-gauge');
+            renderThemeHeatmap(data.kosdaqThemeReturns || [], 'kosdaq-theme-heatmap');
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>

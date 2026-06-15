@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <meta charset="UTF-8" />
+  <title>금일장 요약 대시보드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { margin:0; width:1200px; min-height:2048px; background:#07111f; color:#f8fafc; font-family: 'Pretendard', 'Noto Sans KR'; }
+    .dashboard { width:1200px; height:2048px; padding:54px; background:
+      radial-gradient(circle at 10% 8%, rgba(59,130,246,.34), transparent 34%),
+      radial-gradient(circle at 88% 6%, rgba(16,185,129,.22), transparent 30%),
+      linear-gradient(145deg,#07111f 0%,#111827 48%,#17113a 100%); }
+    .card { background:rgba(15,23,42,.78); border:1px solid rgba(148,163,184,.18); box-shadow:0 22px 60px rgba(0,0,0,.34); border-radius:30px; }
+    .chip { border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.08); border-radius:999px; padding:8px 16px; }
+    .up { color:#34d399; } .down { color:#fb7185; } .flat { color:#cbd5e1; }
+    .bar-bg { height:13px; border-radius:999px; background:rgba(148,163,184,.16); overflow:hidden; }
+    .bar-up { height:100%; border-radius:999px; background:linear-gradient(90deg,#059669,#6ee7b7); }
+    .bar-down { height:100%; border-radius:999px; background:linear-gradient(90deg,#e11d48,#fb7185); }
+  </style>
+</head>
+<body>
+  <div id="close-dashboard" class="dashboard">
+    <header class="flex items-start justify-between mb-8">
+      <div>
+        <div class="text-sky-300 text-2xl font-bold tracking-[.28em]">MARKET CLOSE</div>
+        <h1 class="text-6xl font-black mt-3">금일장 요약 대시보드</h1>
+        <p id="dateLine" class="text-slate-300 text-2xl mt-4"></p>
+      </div>
+      <div id="badge" class="chip text-3xl font-black text-emerald-300"></div>
+    </header>
+
+    <section class="grid grid-cols-2 gap-6 mb-7" id="indexCards"></section>
+
+    <section class="card p-8 mb-7">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-3xl font-black">오늘의 핵심 3줄</h2>
+        <span class="text-slate-400 text-xl">15:31 장마감 브리핑</span>
+      </div>
+      <ol id="summary" class="space-y-4 text-3xl leading-tight"></ol>
+    </section>
+
+    <section class="grid grid-cols-2 gap-6 mb-7">
+      <div class="card p-7">
+        <h2 class="text-3xl font-black mb-5">강세 섹터 TOP 5</h2>
+        <div id="strongSectors" class="space-y-4"></div>
+      </div>
+      <div class="card p-7">
+        <h2 class="text-3xl font-black mb-5">약세 섹터 TOP 5</h2>
+        <div id="weakSectors" class="space-y-4"></div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-2 gap-6 mb-7">
+      <div class="card p-7">
+        <h2 class="text-3xl font-black mb-5">상승률 상위</h2>
+        <div id="gainers" class="space-y-3"></div>
+      </div>
+      <div class="card p-7">
+        <h2 class="text-3xl font-black mb-5">하락률 상위</h2>
+        <div id="losers" class="space-y-3"></div>
+      </div>
+    </section>
+
+    <section class="card p-8">
+      <h2 class="text-3xl font-black mb-5">내일 체크포인트</h2>
+      <div id="checkpoints" class="grid grid-cols-2 gap-4 text-2xl"></div>
+    </section>
+  </div>
+
+  <script>
+    function cls(v){ return v > 0 ? 'up' : v < 0 ? 'down' : 'flat'; }
+    function pct(v){ return `${Number(v || 0) >= 0 ? '+' : ''}${Number(v || 0).toFixed(2)}%`; }
+    function idx(v){ return Number(v || 0).toLocaleString('ko-KR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function maxAbs(items){ return Math.max(1, ...items.map(x => Math.abs(Number(x.change || 0)))); }
+    function sectorRows(id, items, positive){
+      const max = maxAbs(items);
+      document.getElementById(id).innerHTML = (items || []).map(x => {
+        const width = Math.min(100, Math.abs(Number(x.change || 0)) / max * 100);
+        return `<div>
+          <div class="flex justify-between text-2xl font-bold mb-2"><span>${x.sector || '-'}</span><span class="${cls(x.change)}">${pct(x.change)}</span></div>
+          <div class="bar-bg"><div class="${positive ? 'bar-up' : 'bar-down'}" style="width:${width}%"></div></div>
+        </div>`;
+      }).join('');
+    }
+    function movers(id, items){
+      document.getElementById(id).innerHTML = (items || []).map((x, i) =>
+        `<div class="flex justify-between items-center text-2xl py-2 border-b border-slate-700/60">
+          <span><b class="text-slate-500 mr-3">${i+1}</b>${x.name || '-'}</span>
+          <b class="${cls(x.change)}">${pct(x.change)}</b>
+        </div>`).join('');
+    }
+    function indexCard(m){
+      const total = (m.advance || 0) + (m.decline || 0) + (m.unchanged || 0);
+      const advRate = total ? Math.round((m.advance || 0) / total * 100) : 0;
+      return `<div class="card p-8">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="text-slate-400 text-2xl font-bold">${m.name}</div>
+            <div class="text-6xl font-black mt-2">${idx(m.index)}</div>
+          </div>
+          <div class="${cls(m.change)} text-4xl font-black">${pct(m.change)}</div>
+        </div>
+        <div class="mt-8">
+          <div class="flex justify-between text-xl text-slate-300 mb-2"><span>상승 ${m.advance}</span><span>하락 ${m.decline}</span><span>보합 ${m.unchanged}</span></div>
+          <div class="bar-bg"><div class="bar-up" style="width:${advRate}%"></div></div>
+        </div>
+      </div>`;
+    }
+    function init(){
+      const d = window.reportData || {};
+      document.getElementById('dateLine').textContent = `${d.date || ''} · ${d.time || ''} 기준`;
+      document.getElementById('badge').textContent = d.badge || 'NEUTRAL';
+      document.getElementById('indexCards').innerHTML = [d.kospi, d.kosdaq].map(indexCard).join('');
+      document.getElementById('summary').innerHTML = (d.summary || []).map(x => `<li class="flex gap-4"><b class="text-sky-300">•</b><span>${x}</span></li>`).join('');
+      sectorRows('strongSectors', d.strongSectors || [], true);
+      sectorRows('weakSectors', d.weakSectors || [], false);
+      movers('gainers', d.gainers || []);
+      movers('losers', d.losers || []);
+      document.getElementById('checkpoints').innerHTML = (d.checkpoints || []).map((x, i) =>
+        `<div class="chip"><b class="text-sky-300 mr-2">${i+1}</b>${x}</div>`).join('');
+    }
+  </script>
+</body>
+</html>

@@ -79,26 +79,33 @@ function KvBlock({ body }: { body: string | string[] | KvItem[] }) {
         : []
   return (
     <div className="space-y-1.5">
-      {rows.map((item, idx) => (
-        <div
-          key={idx}
-          className="flex items-center justify-between gap-3 rounded-[10px] border border-line/45 bg-canvas/25 px-2.5 py-1.5"
-        >
-          <span className="text-xs text-greige">{item.k}</span>
-          <span
+      {rows.map((item, idx) => {
+        // 값이 수치가 아니라 긴 해석 문장이면 우측정렬 모노폰트 대신 세로 배치로 가독성 확보
+        const isLong = String(item.v ?? '').length > 28
+        const toneClass =
+          item.tone === 'up' ? 'text-up' : item.tone === 'down' ? 'text-down' : 'text-beige'
+        return (
+          <div
+            key={idx}
             className={cn(
-              'font-mono text-xs font-semibold tabular-nums',
-              item.tone === 'up'
-                ? 'text-up'
-                : item.tone === 'down'
-                  ? 'text-down'
-                  : 'text-beige',
+              'rounded-[10px] border border-line/45 bg-canvas/25 px-2.5 py-1.5',
+              isLong ? 'space-y-0.5' : 'flex items-center justify-between gap-3',
             )}
           >
-            {item.v}
-          </span>
-        </div>
-      ))}
+            <span className="text-xs text-greige">{item.k}</span>
+            <span
+              className={cn(
+                isLong
+                  ? 'block text-xs leading-relaxed'
+                  : 'font-mono text-xs font-semibold tabular-nums',
+                toneClass,
+              )}
+            >
+              {item.v}
+            </span>
+          </div>
+        )
+      })}
     </div>
   )
 }

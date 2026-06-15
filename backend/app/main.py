@@ -1232,3 +1232,16 @@ def idea_committee_result(job_id: str):
 def idea_committee_latest():
     from .ideation.runner import get_latest_result
     return get_latest_result()
+
+
+# ---------------------------------------------------------------------------
+# 정적 프론트엔드 서빙 (단일 서비스 배포)
+# frontend/dist 가 존재하면 빌드된 SPA 를 같은 오리진에서 서빙한다.
+# 모든 /api 라우트가 위에서 먼저 등록되므로 API 와 충돌하지 않는다.
+# dist 가 없으면(로컬 dev: Vite 가 5173 에서 별도 구동) 마운트를 건너뛴다.
+# ---------------------------------------------------------------------------
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+_FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if _FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")

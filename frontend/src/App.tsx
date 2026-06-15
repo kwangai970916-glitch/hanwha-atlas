@@ -4,7 +4,9 @@ import { WifiOff } from 'lucide-react'
 import { Header } from './components/Header'
 import { cn } from './lib/utils'
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:8000'
+// 프로덕션 빌드는 백엔드와 같은 오리진에서 서빙되므로 상대경로('')가 기본값.
+// 로컬 dev 는 127.0.0.1:8000. VITE_API_BASE 가 있으면 항상 우선.
+const API_BASE = import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? '' : 'http://127.0.0.1:8000')
 const TABS = [
   { id: 'market',    label: '시장현황',    sub: 'Live / Sector / Chart' },
   { id: 'pnl',      label: '손익현황',    sub: 'P&L / Holdings / News' },

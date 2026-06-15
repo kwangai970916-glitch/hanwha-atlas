@@ -1,0 +1,25 @@
+# 빌드 컨텍스트에서 제외 (이미지 경량화 · 빌드 가속)
+**/node_modules
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+frontend/dist
+# backend/data 는 통째 제외하되, 위원회 seed(라이브 latest 폴백)만 포함
+backend/data/**
+!backend/data/committee_runs
+!backend/data/committee_runs/seed
+!backend/data/committee_runs/seed/**
+backend/sitele/output
+committee_engine
+**/.git
+**/logs
+**/tmp
+**/.claude
+**/.omc
+**/.omx
+**/.odw
+**/.superpowers
+**/.workflow
+**/.env

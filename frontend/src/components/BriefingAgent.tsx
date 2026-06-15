@@ -48,6 +48,30 @@ export function BriefingAgent({ apiBase }: { apiBase: string }) {
 
   useEffect(() => () => stopTimer(), [stopTimer])
 
+  // 슬롯 진입(마운트·전환) 시 백엔드 캐시에 남은 마지막 결과를 즉시 복원 —
+  // 1~3분 재생성 없이 직전 리포트를 바로 보여준다. 활성 실행 중이면 runRef 가드로 무시.
+  useEffect(() => {
+    const runId = runRef.current
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/briefing/${slot}/status`)
+        if (!res.ok) return
+        const s = (await res.json()) as BriefingStatus
+        if (cancelled || runRef.current !== runId) return
+        if (s.success) {
+          setResult(s)
+          setStatus('done')
+        }
+      } catch {
+        /* 캐시 복원 실패는 무시 — '지금 생성'으로 진행 가능 */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [apiBase, slot])
+
   const activeSlot = SLOTS.find((s) => s.id === slot)!
   const pngUrl = status === 'done' && result?.png_path ? `${apiBase}/api/briefing/${slot}/png?t=${result.png_path}` : null
   const pngUrls = status === 'done' && result?.png_paths?.length
@@ -88,9 +112,12 @@ export function BriefingAgent({ apiBase }: { apiBase: string }) {
             stopTimer()
             return
           }
-          if (s.success === false || s.error) throw new Error(s.error || '리포트 생성에 실패했습니다.')
+          if (s.success === false || s.error) {
+            throw Object.assign(new Error(s.error || '리포트 생성에 실패했습니다.'), { fatal: true })
+          }
         } catch (e) {
-          if (i === MAX_POLLS - 1) throw e
+          // 백엔드가 실패를 보고하면 즉시 중단해 에러를 표시 — 일시적 네트워크 오류만 재시도
+          if ((e as { fatal?: boolean }).fatal || i === MAX_POLLS - 1) throw e
         }
       }
       throw new Error('생성 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.')

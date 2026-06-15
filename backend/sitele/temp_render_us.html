@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미국 증시 데일리 프리미엄 트리맵 리포트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', 'Noto Sans KR'],
+                        mono: ['Pretendard', 'Noto Sans KR'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
+
+        * {
+            font-family: 'Pretendard', 'Noto Sans KR';
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #03050a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 1200px * 1160px 고정 이미지 캡처용 세로형 대시보드 캔버스 */
+        .infographic-canvas {
+            width: 1200px;
+            height: 1160px;
+            background: radial-gradient(circle at 50% 0%, #0d1224 0%, #04060c 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* 프리미엄 네온 광원구 */
+        .glow-orb-1 {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.03) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            pointer-events: none;
+        }
+
+        .glow-orb-2 {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.03) 0%, transparent 70%);
+            bottom: -200px;
+            right: -200px;
+            pointer-events: none;
+        }
+
+        /* 프리미엄 글래스모피즘 카드 */
+        .glass-card {
+            background: rgba(10, 14, 28, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.0) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.0) 100%);
+            pointer-events: none;
+        }
+
+        /* 트리맵 사각형 셀 기본 스타일 */
+        .treemap-cell {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            box-sizing: border-box;
+            border: 2px solid #04060c;
+            color: #ffffff;
+            overflow: hidden;
+            font-weight: 700;
+        }
+
+        /* 트리맵 7단계 피팅 컬러 (Finviz와 정밀 매핑) */
+        .color-super-up {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 16px rgba(16, 185, 129, 0.3);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+        .color-up {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .color-mid-up {
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .color-flat {
+            background: #2b3547;
+            border: 2px solid #04060c;
+        }
+        .color-mid-down {
+            background: linear-gradient(135deg, #881337 0%, #9f1239 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .color-down {
+            background: linear-gradient(135deg, #be123c 0%, #991b1b 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .color-super-down {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 16px rgba(244, 63, 94, 0.3);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+
+        .accent-bar {
+            height: 5px;
+            background: linear-gradient(90deg, #10b981 0%, #8b5cf6 50%, #f43f5e 100%);
+            border-radius: 999px;
+            box-shadow: 0 0 16px rgba(139, 92, 246, 0.3);
+        }
+
+        .text-glow-up {
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+        .text-glow-down {
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1200px * 900px Infographic Canvas (Landscape Premium Dashboard) -->
+    <div class="infographic-canvas relative">
+        <div class="glow-orb-1"></div>
+        <div class="glow-orb-2"></div>
+
+        <!-- HEADER -->
+        <div class="flex justify-between items-end mb-4 relative z-10">
+            <div>
+                <span class="text-emerald-400 text-xs font-extrabold tracking-widest uppercase mb-1 block">Wall Street Daily Dashboard</span>
+                <h1 class="text-3xl font-black text-white tracking-tight leading-none">미국 증시 리포트</h1>
+            </div>
+            <div class="text-right">
+                <span class="text-slate-400 font-extrabold text-sm font-mono text-white" id="report-date">2026.05.18</span>
+            </div>
+        </div>
+
+        <div class="accent-bar w-full mb-4 relative z-10"></div>
+
+        <!-- MAIN LAYOUT (가로형 배치) -->
+        <div class="flex flex-col gap-3.5 flex-1 relative z-10" style="min-height: 0;">
+            
+            <!-- 1. 상단: 지수 보드 (w-full) -->
+            <div class="grid grid-cols-4 gap-4" id="indices-board">
+                <!-- Dynamic Indices -->
+            </div>
+
+            <!-- 2. 중단: Finviz 스타일 대형 가로형 트리맵 히트맵 -->
+            <div class="glass-card p-5 flex flex-col" style="min-height: 0;">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+                        <h2 class="text-lg font-bold text-white tracking-tight">S&P 500 섹터 가중평균 히트맵</h2>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Cap Weighted Treemap</span>
+                </div>
+                
+                <!-- 트리맵 컨테이너 (시원한 가로형 뷰) -->
+                <div class="relative rounded-xl overflow-hidden bg-slate-950/60 p-1 border border-white/5 shrink-0" id="sector-heatmap" style="width: 1088px; height: 600px;">
+                    <!-- JS Treemap cells injected here -->
+                </div>
+            </div>
+
+            <!-- 3. 하단: 시장 폭 & TOP 5 (가로 3열 그리드 구성) -->
+            <div class="grid grid-cols-12 gap-4">
+                
+                <!-- 하단 좌측 (5 cols): 시장 폭 -->
+                <div class="col-span-4 glass-card py-3 px-4 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-4 bg-indigo-500 rounded-full"></span>
+                            <h3 class="text-sm font-extrabold text-white uppercase tracking-wider">시장 폭 (Breadth)</h3>
+                        </div>
+                    </div>
+                    <div class="text-xs font-bold text-slate-400 space-y-1 my-1" id="breadth-summary">
+                        <!-- Breadth info -->
+                    </div>
+                    <!-- 게이지 바 -->
+                    <div class="w-full h-4 rounded-full bg-slate-950 flex overflow-hidden border border-white/5 mt-1" id="breadth-progress-bar">
+                        <!-- widths -->
+                    </div>
+                </div>
+
+                <!-- 하단 중앙 (4 cols): 상승 TOP 5 -->
+                <div class="col-span-4 glass-card py-3 px-4">
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </span>
+                        <h3 class="text-xs font-extrabold text-emerald-400 tracking-wider uppercase">상승 TOP 5</h3>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="top-gainers-list">
+                        <!-- Dynamic list -->
+                    </div>
+                </div>
+
+                <!-- 하단 우측 (4 cols): 하락 TOP 5 -->
+                <div class="col-span-4 glass-card py-3 px-4">
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-rose-500/10 text-rose-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"></path>
+                            </svg>
+                        </span>
+                        <h3 class="text-xs font-extrabold text-rose-400 tracking-wider uppercase">하락 TOP 5</h3>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="top-losers-list">
+                        <!-- Dynamic list -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="mt-5 flex justify-between items-center text-slate-500 text-[10px] font-semibold relative z-10">
+            <div>© 2026 UNKNOWN ALPHA. Proprietary Financial Intel.</div>
+            <div class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>System Verified</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Python 인젝션용 데이터 백업 정의
+        window.usReportData = {
+    "date": "2026.05.27",
+    "indices": [
+        {
+            "name": "S&P500",
+            "close": 7520.36,
+            "change": 0.02
+        },
+        {
+            "name": "나스닥",
+            "close": 26674.74,
+            "change": 0.07
+        },
+        {
+            "name": "다우",
+            "close": 50644.28,
+            "change": 0.36
+        },
+        {
+            "name": "러셀2000",
+            "close": 2245.85,
+            "change": 0.02
+        }
+    ],
+    "sectors": [
+        {
+            "sector": "에너지",
+            "change": 0.87
+        },
+        {
+            "sector": "기술",
+            "change": 0.37
+        },
+        {
+            "sector": "커뮤니케이션",
+            "change": 0.22
+        },
+        {
+            "sector": "경기소비재",
+            "change": 0.17
+        },
+        {
+            "sector": "소재",
+            "change": 0.07
+        },
+        {
+            "sector": "산업재",
+            "change": -0.03
+        },
+        {
+            "sector": "금융",
+            "change": -0.1
+        },
+        {
+            "sector": "헬스케어",
+            "change": -0.18
+        },
+        {
+            "sector": "부동산",
+            "change": -0.23
+        },
+        {
+            "sector": "필수소비재",
+            "change": -0.28
+        },
+        {
+            "sector": "유틸리티",
+            "change": -0.43
+        }
+    ],
+    "top_gainers": [
+        {
+            "name": "SMCI",
+            "close": 880.2,
+            "change": 3.58
+        },
+        {
+            "name": "PLTR",
+            "close": 42.15,
+            "change": 2.16
+        },
+        {
+            "name": "NVDA",
+            "close": 948.5,
+            "change": 1.25
+        },
+        {
+            "name": "AMD",
+            "close": 172.4,
+            "change": 0.84
+        },
+        {
+            "name": "AMZN",
+            "close": 185.3,
+            "change": 0.53
+        }
+    ],
+    "top_losers": [
+        {
+            "name": "INTC",
+            "close": 31.5,
+            "change": -1.24
+        },
+        {
+            "name": "TSLA",
+            "close": 174.2,
+            "change": -0.53
+        },
+        {
+            "name": "NFLX",
+            "close": 605.4,
+            "change": -0.32
+        },
+        {
+            "name": "MU",
+            "close": 112.3,
+            "change": -0.21
+        },
+        {
+            "name": "AAPL",
+            "close": 188.9,
+            "change": -0.11
+        }
+    ],
+    "breadth": {
+        "advance": 301,
+        "decline": 194,
+        "unchanged": 8,
+        "total": 503
+    },
+    "analysis_text": "2026년 5월 27일 미국 증시는 주요 지수가 모두 강보합권에서 마감하며 방향성보다는 관망 성격이 짙은 흐름을 보였다. S&P500은 0.02%, 나스닥은 0.07% 상승에 그쳤고, 다우가 0.36% 올라 상대적으로 우위를 보였다. 지수 레벨 자체는 견조했지만 상승 폭이 제한된 것은 이미 상당 부분 반영된 AI·빅테크 기대감과 향후 FOMC 경로에 대한 신중론이 병존했기 때문이다. 국채 금리와 연준 발언을 둘러싼 불확실성이 완전히 해소되지 않은 가운데, 시장은 공격적인 위험 선호보다는 실적 가시성과 현금흐름 안정성이 확인되는 종목 중심으로 선별 매수에 나선 모습이다. S&P500 내부적으로는 상승 301개, 하락 194개로 시장 폭이 우호적이었으나, 지수 상승률은 제한돼 대형주의 혼조와 차익실현 압력이 동시에 작용했음을 시사한다.\n\n섹터별로는 에너지가 0.87% 상승하며 11개 업종 중 가장 강한 흐름을 보였고, 기술도 0.37% 올라 지수 방어에 기여했다. 에너지 섹터의 상대 강세는 경기 둔화 우려가 과도하게 반영됐던 구간에서 원자재 및 에너지 가격 민감주에 대한 저가 매수가 유입된 결과로 해석된다. 반면 유틸리티(-0.43%), 필수소비재(-0.28%), 부동산(-0.23%) 등 방어적·금리 민감 업종은 부진했다. 이는 시장이 전면적인 경기 방어 모드로 이동하기보다는, 금리 부담을 의식하면서도 성장성과 이익 모멘텀이 남아 있는 업종에 자금을 배분하고 있음을 보여준다. 산업재와 금융이 약보합권에 머문 점도 경기 확장 기대가 강하게 재점화되기보다는, 제한적인 리스크 온 흐름이 유지된 하루였음을 뒷받침한다.\n\n개별 종목에서는 AI 인프라와 반도체 밸류체인이 여전히 시장의 핵심 축이었다. SMCI가 3.58% 상승하며 가장 두드러진 강세를 보였고, NVDA도 1.25% 올라 AI 서버·가속컴퓨팅 수요에 대한 신뢰가 유지됐다. AMD 역시 0.84% 상승해 AI 반도체 경쟁 구도 내 후발 수혜 기대가 이어졌다. PLTR은 2.16% 오르며 AI 소프트웨어 및 데이터 분석 수요 확대 기대를 반영했고, AMZN은 0.53% 상승해 클라우드와 소비 회복 기대가 완만하게 반영됐다. 반면 INTC는 1.24% 하락하며 반도체 내에서도 경쟁력과 마진 회복에 대한 의구심이 남아 있음을 드러냈고, TSLA는 0.53% 하락해 전기차 수요 둔화 및 가격 경쟁 부담이 지속되는 모습이다. NFLX, MU, AAPL의 약세는 대형 성장주 전반의 추세 훼손이라기보다는 단기 차익실현과 종목별 모멘텀 차별화로 보는 것이 타당하다.\n\n종합하면 이날 시장은 지수상으로는 매우 좁은 상승에 그쳤지만, 내부적으로는 상승 종목 수가 우세하고 AI·에너지 중심의 선별 매수가 유지된 균형 잡힌 장세였다. 다만 나스닥과 S&P500의 상승률이 각각 0.07%, 0.02%에 불과했다는 점은 투자자들이 여전히 금리, 연준 정책 경로, 밸류에이션 부담을 의식하고 있음을 보여준다. 따라서 단기적으로는 지수 자체의 추가 상승 탄력보다 섹터 로테이션과 실적 기반 종목 선별이 더 중요한 국면으로 판단된다."
+};
+
+        const SECTOR_WEIGHTS = {
+            "기술": 30.5,
+            "금융": 13.0,
+            "헬스케어": 12.0,
+            "경기소비재": 10.5,
+            "커뮤니케이션": 9.0,
+            "산업재": 8.5,
+            "필수소비재": 6.0,
+            "에너지": 4.0,
+            "소재": 2.5,
+            "유틸리티": 2.2,
+            "부동산": 2.3
+        };
+
+        function getHeatmapClass(change) {
+            if (change >= 2.0) return 'color-super-up';
+            if (change >= 1.0) return 'color-up';
+            if (change >= 0.2) return 'color-mid-up';
+            if (change > -0.2 && change < 0.2) return 'color-flat';
+            if (change <= -2.0) return 'color-super-down';
+            if (change <= -1.0) return 'color-down';
+            return 'color-mid-down';
+        }
+
+        // Squarified Treemap Layout Engine
+        function squarifyTreemap(width, height, data) {
+            const totalValue = data.reduce((sum, d) => sum + d.weight, 0);
+            const scale = (width * height) / totalValue;
+            
+            const nodes = data.map(d => ({
+                ...d,
+                area: d.weight * scale
+            })).sort((a, b) => b.area - a.area);
+            
+            let x = 0, y = 0, w = width, h = height;
+            const result = [];
+            
+            function worstRatio(row, side) {
+                if (row.length === 0) return Infinity;
+                const rowArea = row.reduce((sum, n) => sum + n.area, 0);
+                const minArea = Math.min(...row.map(n => n.area));
+                const maxArea = Math.max(...row.map(n => n.area));
+                const s2 = rowArea * rowArea;
+                const w2 = side * side;
+                return Math.max((w2 * maxArea) / s2, s2 / (w2 * minArea));
+            }
+            
+            function layoutRow(row, isHorizontal) {
+                const rowArea = row.reduce((sum, n) => sum + n.area, 0);
+                const side = isHorizontal ? w : h;
+                const rowThickness = rowArea / side;
+                
+                let subX = x;
+                let subY = y;
+                
+                row.forEach(node => {
+                    const nodeLength = node.area / rowThickness;
+                    if (isHorizontal) {
+                        result.push({ ...node, x: subX, y: subY, w: nodeLength, h: rowThickness });
+                        subX += nodeLength;
+                    } else {
+                        result.push({ ...node, x: subX, y: subY, w: rowThickness, h: nodeLength });
+                        subY += nodeLength;
+                    }
+                });
+                
+                if (isHorizontal) {
+                    y += rowThickness;
+                    h -= rowThickness;
+                } else {
+                    x += rowThickness;
+                    w -= rowThickness;
+                }
+            }
+            
+            let row = [];
+            
+            nodes.forEach(node => {
+                const nextRow = [...row, node];
+                const isHorizontal = w <= h;
+                const side = isHorizontal ? w : h;
+                if (worstRatio(nextRow, side) <= worstRatio(row, side)) {
+                    row = nextRow;
+                } else {
+                    layoutRow(row, isHorizontal);
+                    row = [node];
+                }
+            });
+            
+            if (row.length > 0) {
+                const isHorizontal = w <= h;
+                layoutRow(row, isHorizontal);
+            }
+            
+            return result;
+        }
+
+        function renderTemplate() {
+            const data = window.usReportData;
+
+            // 1. 날짜 설정
+            document.getElementById('report-date').textContent = data.date || "2026.05.18";
+
+            // 2. 지수 바인딩
+            const indicesBoard = document.getElementById('indices-board');
+            indicesBoard.innerHTML = '';
+            data.indices.forEach(idx => {
+                const isUp = idx.change >= 0;
+                const changeSign = isUp ? '+' : '';
+                const changeColor = isUp ? 'text-emerald-400 text-glow-up' : 'text-rose-500 text-glow-down';
+                const borderColor = isUp ? 'border-emerald-500/20' : 'border-rose-500/20';
+                
+                indicesBoard.innerHTML += `
+                    <div class="glass-card p-3 flex flex-col justify-between border-t-4 ${borderColor}">
+                        <span class="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase">${idx.name}</span>
+                        <div class="mt-1 flex justify-between items-baseline">
+                            <span class="text-xl font-extrabold font-mono text-white leading-none tracking-tight">${idx.close.toLocaleString()}</span>
+                            <span class="text-xs font-bold font-mono ${changeColor}">
+                                ${isUp ? '▲' : '▼'}${changeSign}${idx.change.toFixed(2)}%
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 3. 트리맵 렌더링
+            const heatmapContainer = document.getElementById('sector-heatmap');
+            heatmapContainer.innerHTML = '';
+            
+            const containerWidth = 1080;
+            const containerHeight = 590;
+
+            const mapData = data.sectors.map(sec => {
+                const nameClean = sec.sector.replace(/[🟩🟥⬜]/g, "").trim();
+                const weight = SECTOR_WEIGHTS[nameClean] || 5.0;
+                return { name: nameClean, change: sec.change, weight: weight };
+            });
+
+            const layoutNodes = squarifyTreemap(containerWidth, containerHeight, mapData);
+
+            console.log("=== SQUARIFY TREEMAP DEBUG ===");
+            console.log("Container Dimensions: " + containerWidth + "x" + containerHeight);
+            layoutNodes.forEach((node, idx) => {
+                console.log(`Node ${idx} (${node.name}): x=${node.x.toFixed(2)}, y=${node.y.toFixed(2)}, w=${node.w.toFixed(2)}, h=${node.h.toFixed(2)}, area=${node.area.toFixed(2)}, weight=${node.weight}`);
+            });
+
+            layoutNodes.forEach(node => {
+                const colorClass = getHeatmapClass(node.change);
+                const isUp = node.change >= 0;
+                const sign = isUp ? '+' : '';
+                
+                const nameFontSize = Math.max(9, Math.min(node.w * 0.11, node.h * 0.23, 17));
+                const rateFontSize = Math.max(10, Math.min(node.w * 0.13, node.h * 0.27, 21));
+                
+                const hideName = node.w < 35 || node.h < 25;
+                
+                const cellDiv = document.createElement('div');
+                cellDiv.className = `treemap-cell ${colorClass}`;
+                cellDiv.style.left = `${node.x}px`;
+                cellDiv.style.top = `${node.y}px`;
+                cellDiv.style.width = `${node.w - 1}px`;
+                cellDiv.style.height = `${node.h - 1}px`;
+                
+                if (hideName) {
+                    cellDiv.innerHTML = `
+                        <span style="font-size: ${rateFontSize}px; font-weight: 800;" class="font-mono">${sign}${node.change.toFixed(1)}%</span>
+                    `;
+                } else {
+                    cellDiv.innerHTML = `
+                        <span style="font-size: ${nameFontSize}px;" class="opacity-95 font-extrabold uppercase tracking-wider text-center leading-none mb-0.5">${node.name}</span>
+                        <span style="font-size: ${rateFontSize}px;" class="font-mono font-black mt-0.5 leading-none">${sign}${node.change.toFixed(2)}%</span>
+                    `;
+                }
+                heatmapContainer.appendChild(cellDiv);
+            });
+
+            // 4. 시장 폭 바인딩
+            const br = data.breadth;
+            const advPct = br.total > 0 ? ((br.advance / br.total) * 100).toFixed(1) : 0;
+            const decPct = br.total > 0 ? ((br.decline / br.total) * 100).toFixed(1) : 0;
+            const unchPct = br.total > 0 ? ((br.unchanged / br.total) * 100).toFixed(1) : 0;
+
+            document.getElementById('breadth-summary').innerHTML = `
+                <div class="flex justify-between w-full text-[11px] font-extrabold">
+                    <span class="text-emerald-400">▲ 상승 ${br.advance} (${advPct}%)</span>
+                    <span class="text-slate-400">■ 보합 ${br.unchanged} (${unchPct}%)</span>
+                    <span class="text-rose-400">▼ 하락 ${br.decline} (${decPct}%)</span>
+                </div>
+            `;
+
+            const progressBar = document.getElementById('breadth-progress-bar');
+            progressBar.innerHTML = `
+                <div style="width: ${advPct}%;" class="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full rounded-l-full"></div>
+                <div style="width: ${unchPct}%;" class="bg-slate-750 h-full"></div>
+                <div style="width: ${decPct}%;" class="bg-gradient-to-r from-rose-500 to-rose-700 h-full rounded-r-full"></div>
+            `;
+
+            // 5. 상승/하락 TOP 5
+            const gainersList = document.getElementById('top-gainers-list');
+            gainersList.innerHTML = '';
+            data.top_gainers.slice(0, 5).forEach((item, i) => {
+                gainersList.innerHTML += `
+                    <div class="flex justify-between items-center bg-emerald-500/5 border border-emerald-500/10 rounded-lg py-1 px-2.5">
+                        <span class="font-mono font-bold text-white text-[11px]">${item.name} <span class="text-[9px] text-slate-400 font-normal">$${item.close}</span></span>
+                        <span class="font-mono font-extrabold text-[11px] text-emerald-400">+${item.change.toFixed(2)}%</span>
+                    </div>
+                `;
+            });
+
+            const losersList = document.getElementById('top-losers-list');
+            losersList.innerHTML = '';
+            data.top_losers.slice(0, 5).forEach((item, i) => {
+                losersList.innerHTML += `
+                    <div class="flex justify-between items-center bg-rose-500/5 border border-rose-500/10 rounded-lg py-1 px-2.5">
+                        <span class="font-mono font-bold text-white text-[11px]">${item.name} <span class="text-[9px] text-slate-400 font-normal">$${item.close}</span></span>
+                        <span class="font-mono font-extrabold text-[11px] text-rose-400">${item.change.toFixed(2)}%</span>
+                    </div>
+                `;
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', renderTemplate);
+        } else {
+            renderTemplate();
+        }
+    </script>
+</body>
+</html>

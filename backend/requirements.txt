@@ -11,3 +11,6 @@ anthropic
 openai
 yfinance
 feedparser
+beautifulsoup4
+matplotlib
+numpy

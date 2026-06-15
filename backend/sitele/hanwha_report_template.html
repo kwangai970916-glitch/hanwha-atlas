@@ -1,0 +1,855 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>한화손보 운용본부 시황 리포트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#111827;--body:#374151;--muted:#6b7280;--subtle:#9ca3af;
+  --hair:#e5e7eb;--paper:#ffffff;--bg:#d1d5db;
+  --orange:#F37321;
+  --up:#dc2626;--up-lt:rgba(220,38,38,.08);
+  --dn:#1d4ed8;--dn-lt:rgba(29,78,216,.08);
+}
+body{
+  background:var(--bg);
+  font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  padding:0;
+  margin:0;
+}
+
+/* root container — renderer screenshots this element.
+   모든 슬롯 동일 A4 캔버스(820×1160)로 고정 → 출력 사이즈 통일. */
+#hanwha-report{
+  width:820px;
+  height:1160px;
+  background:var(--paper);
+  box-shadow:0 16px 60px rgba(0,0,0,.30);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+/* 본문이 헤더~푸터 사이를 채워 하단 푸터를 바닥에 고정 */
+.body-row{flex:1 1 auto;min-height:0;}
+
+/* ── HEADER ─────────────────────────────────────────── */
+.hdr{
+  background:linear-gradient(135deg,#F37321 0%,#F5894A 42%,#FDDCB5 78%,#FFF8F3 100%);
+  padding:15px 32px 13px;
+  display:flex;justify-content:space-between;align-items:flex-end;
+  flex-shrink:0;position:relative;overflow:hidden;
+}
+.hdr::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 70% at 0% -20%,rgba(255,255,255,.30),transparent),
+    radial-gradient(ellipse 50% 60% at 100% 120%,rgba(243,115,33,.20),transparent);
+  pointer-events:none;
+}
+.brand{font-size:22px;font-weight:900;letter-spacing:-.02em;color:#fff;line-height:1;position:relative;z-index:1;}
+.brand .dim{font-size:13px;font-weight:600;color:rgba(255,255,255,.65);margin-left:6px;vertical-align:middle;}
+.hdr-sub{display:flex;align-items:center;gap:8px;margin-top:5px;position:relative;z-index:1;}
+.slot-tag{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.8);}
+.hdr-right{text-align:right;position:relative;z-index:1;}
+.hdr-date{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);}
+.hdr-time{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.6);margin-top:3px;}
+
+/* ── TITLE BLOCK ─────────────────────────────────────── */
+.title-blk{
+  padding:18px 32px 16px;border-bottom:1px solid var(--hair);
+  display:grid;grid-template-columns:1fr 190px;gap:20px;align-items:start;
+}
+.stance-row{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.stance{font-size:10px;font-weight:800;letter-spacing:.10em;padding:3px 10px;border-radius:4px;}
+.s-off{background:var(--dn-lt);color:var(--dn);border:1px solid rgba(29,78,216,.2);}
+.s-on {background:var(--up-lt);color:var(--up);border:1px solid rgba(220,38,38,.2);}
+.s-neu{background:#f3f4f6;color:var(--muted);border:1px solid var(--hair);}
+.sub-tag{font-size:10px;font-weight:600;color:var(--muted);background:#f3f4f6;padding:3px 9px;border-radius:4px;border:1px solid var(--hair);}
+.t-h{font-size:22px;font-weight:900;line-height:1.25;letter-spacing:-.025em;color:var(--ink);}
+.t-dek{font-size:13px;line-height:1.75;color:var(--body);margin-top:10px;}
+.t-dek b{font-weight:700;color:var(--ink);}
+.kpi-stack{display:flex;flex-direction:column;gap:7px;}
+.kpi-card{background:#f9fafb;border:1px solid var(--hair);border-radius:8px;padding:10px 14px;}
+.kpi-k{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--subtle);}
+.kpi-v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;color:var(--ink);margin-top:2px;}
+.kpi-c{font-size:11px;font-weight:600;margin-top:2px;}
+
+/* ── 5-COLUMN STRIP ──────────────────────────────────── */
+/* 옵션 5 — 네이비 다크 밴드 */
+.strip{display:grid;grid-template-columns:repeat(5,1fr);background:#1c2231;}
+.st{padding:13px 15px;border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px;position:relative;}
+.st:last-child{border-right:none;}
+.st-k{font-size:8.5px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#8a93a6;}
+.st-v{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:800;color:#fff;line-height:1.05;}
+.st-c{align-self:flex-start;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.st-c.up{background:rgba(229,72,77,.22);color:#ff8a8d;}
+.st-c.dn{background:rgba(51,149,186,.24);color:#7fc4e0;}
+.st-c.fl{background:rgba(255,255,255,.08);color:#aeb5bf;}
+.st-fg{height:5px;border-radius:3px;margin-top:5px;position:relative;background:linear-gradient(90deg,#7e22ce,#dc2626,#ea580c,#16a34a);}
+.st-fg-dot{position:absolute;top:-2.5px;width:10px;height:10px;border-radius:50%;background:#1c2231;border:2px solid #fff;transform:translateX(-50%);box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.st-spark{display:none;}
+
+/* ── 2-COLUMN BODY ───────────────────────────────────── */
+.body-row{display:grid;grid-template-columns:1fr 264px;flex:1;}
+.main{padding:18px 20px 24px 32px;border-right:1px solid var(--hair);display:flex;flex-direction:column;gap:17px;overflow:hidden;}
+.rail{padding:17px 22px 22px 16px;display:flex;flex-direction:column;gap:12px;background:#f9fafb;}
+
+/* section blocks (main) */
+.sec{}
+.sec-h{display:flex;align-items:center;gap:8px;margin-bottom:7px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);}
+.sec-n{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);}
+.sec-t{font-size:11.5px;font-weight:800;color:var(--ink);letter-spacing:.02em;text-transform:uppercase;}
+.sec p{font-size:12.5px;line-height:1.92;color:var(--body);word-break:keep-all;text-align:justify;}
+.sec p+p{margin-top:4px;}
+.sec p b{font-weight:700;color:var(--ink);}
+.tk{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
+.insight{
+  background:linear-gradient(135deg,rgba(243,115,33,.07),rgba(243,115,33,.02));
+  border-left:3px solid var(--orange);border-radius:0 6px 6px 0;
+  padding:9px 14px;margin-top:9px;
+}
+.insight p{font-size:12px;font-weight:600;color:var(--ink);line-height:1.72;}
+
+/* bullets (sec) */
+.sec-bullets{display:flex;flex-direction:column;gap:6px;}
+.sec-bullet{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;line-height:1.65;color:var(--body);}
+.sec-bullet-dash{color:var(--orange);font-weight:700;flex-shrink:0;}
+
+/* kv (sec) */
+.sec-kv{display:flex;flex-direction:column;}
+.sec-kv-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--hair);gap:10px;}
+.sec-kv-row:last-child{border-bottom:none;}
+.sec-kv-k{font-size:11.5px;color:var(--muted);flex-shrink:0;max-width:55%;}
+.sec-kv-v{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;text-align:right;}
+
+/* rail cards */
+.rc{background:var(--paper);border:1px solid var(--hair);border-radius:8px;padding:11px 13px;}
+.rc-h{font-size:9px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding-bottom:7px;border-bottom:1px solid var(--hair);margin-bottom:9px;display:flex;justify-content:space-between;align-items:baseline;}
+.rc-h .u{font-size:7.5px;letter-spacing:.02em;text-transform:none;color:var(--subtle);font-weight:500;}
+
+/* diverging investor bars */
+.fl-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.fl-row:last-child{margin-bottom:0;}
+.fl-lbl{width:36px;font-size:10.5px;font-weight:600;color:var(--body);flex-shrink:0;}
+.fl-trk{flex:1;height:14px;background:#e9ecf0;border-radius:3px;position:relative;overflow:hidden;}
+.fl-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#c8cdd6;}
+.fl-bar{position:absolute;top:1px;bottom:1px;border-radius:2px;}
+.fl-v{width:68px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;text-align:right;flex-shrink:0;}
+
+/* sector split */
+.sec-split{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.sec-group-h{font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+.sec-row-item{display:flex;justify-content:space-between;align-items:center;padding:4px 7px;border-radius:5px;margin-bottom:3px;}
+.sec-row-item:last-child{margin-bottom:0;}
+.sec-row-n{font-size:10.5px;font-weight:600;}
+.sec-row-c{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:800;}
+
+/* breadth bar */
+.brd-bar{height:8px;display:flex;border-radius:4px;overflow:hidden;}
+
+/* movers */
+.mv{display:flex;justify-content:space-between;align-items:center;padding:4.5px 0;border-bottom:1px solid #f3f4f6;}
+.mv:last-child{border:none;}
+.mv-n{font-size:11px;color:var(--body);}
+.mv-c{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}
+
+/* sentiment rows */
+.sent-row{display:flex;justify-content:space-between;align-items:center;padding:4.5px 0;border-bottom:1px solid #f3f4f6;}
+.sent-row:last-child{border:none;}
+.sent-k{font-size:10.5px;color:var(--muted);}
+.sent-v{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}
+/* premarket rail 보강 — 매크로 미니카드 + F&G 게이지 */
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.pm-card{background:#fafafa;border:1px solid var(--hair);border-radius:7px;padding:6px 9px;}
+.pm-k{font-size:8.5px;font-weight:700;color:var(--subtle);letter-spacing:.04em;}
+.pm-v{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--ink);margin-top:2px;line-height:1.1;}
+.pm-fg-v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:800;color:var(--ink);display:flex;align-items:baseline;gap:8px;}
+.pm-fg-lbl{font-family:'Pretendard',sans-serif;font-size:11px;font-weight:600;color:#6d28d9;}
+.pm-fg-track{height:6px;border-radius:3px;margin-top:7px;position:relative;background:linear-gradient(90deg,#7e22ce,#dc2626,#ea580c,#16a34a);}
+.pm-fg-dot{position:absolute;top:-3px;width:11px;height:11px;border-radius:50%;background:#fff;border:2px solid var(--ink);transform:translateX(-50%);box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.pm-fg-cap{display:flex;justify-content:space-between;margin-top:5px;font-size:8px;color:var(--subtle);font-family:'IBM Plex Mono',monospace;}
+.tag{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;}
+.t-fear{background:#ede9fe;color:#6d28d9;}
+.t-warn{background:#fef3c7;color:#92400e;}
+.t-safe{background:#d1fae5;color:#065f46;}
+.t-greed{background:#fee2e2;color:#dc2626;}
+.t-neutral{background:#f3f4f6;color:#6b7280;}
+
+/* colour utils */
+.dn{color:var(--dn)}.up{color:var(--up)}.fl{color:var(--muted)}
+
+/* ── FOOTER ──────────────────────────────────────────── */
+.foot{border-top:1px solid var(--hair);padding:9px 32px;display:flex;justify-content:space-between;align-items:center;background:#f9fafb;flex-shrink:0;}
+.foot-d{font-size:8.5px;color:var(--subtle);}
+.foot-t{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--subtle);}
+
+/* ── LEGACY PANE ─────────────────────────────────────── */
+.legacy-pane{display:flex;flex-direction:column;gap:0;}
+.legacy-section{padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--hair);}
+.legacy-section:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0;}
+.legacy-hdr{font-size:9px;font-weight:700;letter-spacing:.20em;color:var(--orange);text-transform:uppercase;padding-bottom:6px;margin-bottom:7px;border-bottom:1px solid rgba(243,115,33,.15);display:flex;align-items:center;gap:6px;}
+.legacy-body{font-size:12.5px;font-weight:400;line-height:1.78;color:var(--body);}
+.legacy-body p{margin-bottom:4px;}
+.legacy-body p:last-child{margin-bottom:0;}
+.legacy-bullet{display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;line-height:1.72;}
+.legacy-dot{margin-top:7px;width:4px;height:4px;border-radius:999px;background:var(--orange);flex-shrink:0;}
+.legacy-scenario{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.bull-box{background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.20);border-radius:10px;padding:10px 12px;}
+.bear-box{background:rgba(29,78,216,.05);border:1px solid rgba(29,78,216,.20);border-radius:10px;padding:10px 12px;}
+.sc-label{font-size:8px;font-weight:700;letter-spacing:.14em;margin-bottom:4px;}
+.bull-box .sc-label{color:var(--up);}
+.bear-box .sc-label{color:var(--dn);}
+.sc-text{font-size:12px;font-weight:400;line-height:1.70;color:var(--body);}
+</style>
+</head>
+<body>
+<div id="hanwha-report">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="brand">ATLAS<span class="dim">운용본부</span></div>
+      <div class="hdr-sub"><span class="slot-tag" id="slot-tag">시황</span></div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-date" id="hdr-date">—</div>
+      <div class="hdr-time" id="hdr-time">— KST 기준</div>
+    </div>
+  </div>
+
+  <!-- TITLE BLOCK -->
+  <div class="title-blk">
+    <div>
+      <div class="stance-row">
+        <span class="stance s-neu" id="stance-chip">NEUTRAL</span>
+        <span class="sub-tag" id="slot-sub">시황</span>
+      </div>
+      <div class="t-h" id="report-title">—</div>
+      <p class="t-dek" id="report-headline" style="display:none"></p>
+    </div>
+    <div class="kpi-stack" id="kpi-stack">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- 5-COLUMN STRIP -->
+  <div class="strip" id="strip">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- BODY: main (left) + rail (right) -->
+  <div class="body-row">
+    <div class="main" id="main-pane">
+      <!-- filled by JS -->
+    </div>
+    <div class="rail" id="rail-pane">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="foot">
+    <span class="foot-d">본 자료는 내부 참고용 보조자료입니다 · 투자 권유 목적 아님 · 외부 배포 금지</span>
+    <span class="foot-t" id="footer-ts">ATLAS · AI DESK</span>
+  </div>
+
+</div>
+
+<script>
+// ── utils ─────────────────────────────────────────────────────────────────
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const numFmt = (v, d=2) => Number(v||0).toLocaleString('ko-KR', {minimumFractionDigits:d, maximumFractionDigits:d});
+const pct = (v, d=2) => { const n=Number(v||0); return `${n>=0?'+':''}${n.toFixed(d)}%`; };
+const comma = v => { const n=Number(v||0); return `${n>=0?'+':'-'}${Math.abs(n).toLocaleString('ko-KR')}`; };
+const clsCh = v => Number(v)>0?'up':Number(v)<0?'dn':'fl';
+
+// ── stance chip ───────────────────────────────────────────────────────────
+function applyStance(el, stance) {
+  el.className = 'stance ' + (
+    stance === 'RISK-ON'  ? 's-on'  :
+    stance === 'RISK-OFF' ? 's-off' : 's-neu'
+  );
+  el.textContent = esc(stance || 'NEUTRAL');
+}
+
+// ── KPI stack: top indices (KOSPI + KOSDAQ) ───────────────────────────────
+function renderKpiStack(indices) {
+  if (!indices || !indices.length) return '';
+  const highlighted = indices.filter(x => x.highlight).slice(0,2);
+  if (!highlighted.length) return '';
+  return highlighted.map(x => {
+    const chgCls = clsCh(x.change);
+    const chgStr = pct(x.change);
+    return `<div class="kpi-card">
+      <div class="kpi-k">${esc(x.name)}</div>
+      <div class="kpi-v">${numFmt(x.value)}</div>
+      <div class="kpi-c ${chgCls}">${chgStr}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── sparklines (static decorative SVG) ───────────────────────────────────
+const SPARK_UP = `<svg width="78" height="16" viewBox="0 0 78 16"><polyline points="0,10 20,9 40,8 55,6 68,5 78,4" fill="none" stroke="var(--up)" stroke-width="1.5" opacity=".7"/><line x1="0" y1="8" x2="78" y2="8" stroke="var(--hair)" stroke-width="0.5" stroke-dasharray="3 2"/></svg>`;
+const SPARK_DN = `<svg width="78" height="16" viewBox="0 0 78 16"><polyline points="0,5 15,6 30,7 48,10 62,12 78,14" fill="none" stroke="var(--dn)" stroke-width="1.5" opacity=".7"/><line x1="0" y1="8" x2="78" y2="8" stroke="var(--hair)" stroke-width="0.5" stroke-dasharray="3 2"/></svg>`;
+const SPARK_WARN = `<svg width="78" height="16" viewBox="0 0 78 16"><polyline points="0,13 20,11 40,8 58,6 78,4" fill="none" stroke="#d97706" stroke-width="1.5" opacity=".7"/><line x1="0" y1="8" x2="78" y2="8" stroke="var(--hair)" stroke-width="0.5" stroke-dasharray="3 2"/></svg>`;
+
+function fgBar(val) {
+  const w = Math.min(100, Math.max(0, Number(val||0)));
+  return `<div style="height:7px;background:#ede9fe;border-radius:3px;overflow:hidden;width:78px;"><div style="width:${w}%;height:100%;background:#6d28d9;"></div></div>`;
+}
+function adrBar(upPct) {
+  const u = Math.min(100, Math.max(0, Math.round(upPct)));
+  const d = 100 - u;
+  return `<div style="height:7px;display:flex;border-radius:3px;overflow:hidden;width:78px;"><div style="width:${u}%;background:var(--up);opacity:.7;"></div><div style="width:${d}%;background:var(--dn);opacity:.55;"></div></div>`;
+}
+
+// ── Fear & Greed label ────────────────────────────────────────────────────
+function fgLabel(v) {
+  const n = Number(v||0);
+  return n<=25?'극도공포':n<=45?'공포':n<=55?'중립':n<=75?'탐욕':'극도탐욕';
+}
+function fgTag(v) {
+  const n = Number(v||0);
+  if (n<=25) return 't-fear';
+  if (n<=45) return 't-fear';
+  if (n<=55) return 't-neutral';
+  if (n<=75) return 't-greed';
+  return 't-greed';
+}
+
+// ── VKOSPI label ─────────────────────────────────────────────────────────
+function vkLabel(v) {
+  const n = Number(v||0);
+  return n<15?'안정':n<20?'보통':n<25?'경계':'공포';
+}
+function vkTag(v) {
+  const n = Number(v||0);
+  return n<15?'t-safe':n<20?'t-neutral':n<25?'t-warn':'t-fear';
+}
+
+// ── 5-column STRIP (close slot) ───────────────────────────────────────────
+function buildStripClose(dp) {
+  const inv  = dp.investor  || {};
+  const sent = dp.sentiment || {};
+  const brd  = dp.breadth   || {};
+
+  const foreign  = (inv.foreign     != null) ? Number(inv.foreign)     : null;
+  const institution = (inv.institution != null) ? Number(inv.institution) : null;
+  const vkospi   = sent.vkospi;
+  const fg       = sent.fear_greed;
+  const up       = brd.up   || 0;
+  const down     = brd.down || 0;
+  const total    = up + down || 1;
+  const upPct    = (up / total * 100);
+  const adrVal   = upPct.toFixed(1);
+  const adrLabel = upPct >= 55 ? '상승 우세' : upPct <= 45 ? '하락 우세' : '박빙';
+  const adrCls   = upPct >= 50 ? 'up' : 'dn';
+
+  const fHasData = foreign !== null && foreign !== 0;
+  const fCls = (foreign||0) >= 0 ? 'up' : 'dn';
+  const fStr = fHasData ? ((foreign>=0?'+':'')+Math.abs(foreign).toLocaleString('ko-KR')) : '—';
+  const fAction = fHasData ? `KOSPI 순${foreign>=0?'매수':'매도'}` : '장 마감 후';
+  const iHasData = institution !== null && institution !== 0;
+  const iCls = (institution||0) >= 0 ? 'up' : 'dn';
+  const iStr = iHasData ? ((institution>=0?'+':'')+Math.abs(institution).toLocaleString('ko-KR')) : '—';
+  const iAction = iHasData ? `KOSPI 순${institution>=0?'매수':'매도'}` : '장 마감 후';
+
+  let vkCol1 = '';
+  if (vkospi != null) {
+    const lbl = vkLabel(vkospi);
+    const tCls = vkTag(vkospi);
+    const color = Number(vkospi)<20?'#065f46':Number(vkospi)<25?'#92400e':'#6d28d9';
+    vkCol1 = `<div class="st">
+      <div class="st-k">VKOSPI</div>
+      <div class="st-v">${Number(vkospi).toFixed(1)}</div>
+      <div class="st-c" style="color:${color}">▲ ${lbl}</div>
+      <div class="st-spark">${SPARK_WARN}</div>
+    </div>`;
+  } else {
+    vkCol1 = `<div class="st">
+      <div class="st-k">VKOSPI</div>
+      <div class="st-v fl">—</div>
+      <div class="st-c fl">데이터 없음</div>
+      <div class="st-spark">${SPARK_WARN}</div>
+    </div>`;
+  }
+
+  let fgCol = '';
+  if (fg != null) {
+    const fn = Number(fg);
+    const lbl = fgLabel(fn);
+    fgCol = `<div class="st">
+      <div class="st-k">Fear&amp;Greed</div>
+      <div class="st-v">${fn}</div>
+      <div class="st-c" style="color:#6d28d9">${lbl}</div>
+      <div class="st-spark" style="margin-top:6px;">${fgBar(fn)}</div>
+    </div>`;
+  } else {
+    fgCol = `<div class="st">
+      <div class="st-k">Fear&amp;Greed</div>
+      <div class="st-v fl">—</div>
+      <div class="st-c fl">데이터 없음</div>
+    </div>`;
+  }
+
+  return `
+    <div class="st">
+      <div class="st-k">외국인</div>
+      <div class="st-v ${fHasData?fCls:'fl'}">${fStr}${fHasData?'<span style="font-size:9px;color:var(--subtle)">억</span>':''}</div>
+      <div class="st-c ${fHasData?fCls:'fl'}">${fAction}</div>
+      <div class="st-spark">${fHasData?(foreign>=0?SPARK_UP:SPARK_DN):''}</div>
+    </div>
+    <div class="st">
+      <div class="st-k">기관</div>
+      <div class="st-v ${iHasData?iCls:'fl'}">${iStr}${iHasData?'<span style="font-size:9px;color:var(--subtle)">억</span>':''}</div>
+      <div class="st-c ${iHasData?iCls:'fl'}">${iAction}</div>
+      <div class="st-spark">${iHasData?(institution>=0?SPARK_UP:SPARK_DN):''}</div>
+    </div>
+    ${vkCol1}
+    ${fgCol}
+    <div class="st">
+      <div class="st-k">시장폭 ADR</div>
+      <div class="st-v ${adrCls}">${adrVal}<span style="font-size:9px;color:var(--subtle)">%</span></div>
+      <div class="st-c ${adrCls}">${adrLabel}</div>
+      <div class="st-spark" style="margin-top:6px;">${adrBar(upPct)}</div>
+    </div>`;
+}
+
+// ── 5-column STRIP (premarket slot) ──────────────────────────────────────
+function buildStripPremarket(dp) {
+  const indices = (dp.indices || []).slice(0, 4);
+  const sent    = dp.sentiment || {};
+  const vkospi  = sent.vkospi;
+  const fg      = sent.fear_greed;
+
+  let cols = indices.map(x => {
+    const chg = Number(x.change||0);
+    const cls = chg>=0?'up':'dn';
+    return `<div class="st ${cls}">
+      <div class="st-k">${esc(x.name)}</div>
+      <div class="st-v">${numFmt(x.value)}</div>
+      <div class="st-c ${cls}">${pct(chg)}</div>
+    </div>`;
+  }).join('');
+
+  // 5번째 칸: Fear & Greed 미니 게이지
+  if (fg != null) {
+    const fn = Number(fg);
+    const lbl = fgLabel(fn);
+    const fgColor = fn<=25?'#ff8a8d':fn>=75?'#6ee7a8':'#fcd34d';  // 네이비 배경용 밝은색
+    cols += `<div class="st">
+      <div class="st-k">Fear &amp; Greed</div>
+      <div class="st-v">${fn}<span style="font-size:10px;font-weight:600;color:${fgColor};margin-left:7px">${lbl}</span></div>
+      <div class="st-fg"><div class="st-fg-dot" style="left:${Math.max(4,Math.min(96,fn))}%"></div></div>
+    </div>`;
+  } else if (vkospi != null) {
+    const lbl = vkLabel(vkospi);
+    const color = Number(vkospi)<20?'#6ee7a8':Number(vkospi)<25?'#fcd34d':'#c4b5fd';  // 네이비 배경용 밝은색
+    cols += `<div class="st">
+      <div class="st-k">VKOSPI</div>
+      <div class="st-v">${Number(vkospi).toFixed(1)}</div>
+      <div class="st-c fl" style="color:${color}">${lbl}</div>
+    </div>`;
+  }
+
+  return cols;
+}
+
+// ── 5-column STRIP (intraday: same as close) ──────────────────────────────
+function buildStripIntraday(dp) {
+  return buildStripClose(dp);
+}
+
+// ── MAIN PANE: render blocks ──────────────────────────────────────────────
+function renderBlockBody(block, isFirst) {
+  const type = block.type || 'paragraph';
+  const body = block.body;
+
+  if (type === 'paragraph') {
+    const text = String(body || '—');
+    if (!text || text==='—') return '<p class="sec p">—</p>';
+    const lines = text.split('\n').filter(l => l.trim());
+    let html = lines.map(l => `<p>${esc(l.trim())}</p>`).join('');
+    // add insight box after the first paragraph block
+    if (isFirst && lines.length > 0) {
+      // insight: take last sentence or the whole last line as a callout
+      const last = lines[lines.length-1].trim();
+      if (last) {
+        html += `<div class="insight"><p>${esc(last)}</p></div>`;
+      }
+    }
+    return html;
+  }
+
+  if (type === 'bullets') {
+    const arr = Array.isArray(body) ? body : [String(body||'—')];
+    return `<div class="sec-bullets">${
+      arr.map(item => {
+        const t = String(item||'').replace(/^[-•·]\s*/,'').trim() || '—';
+        return `<div class="sec-bullet"><span class="sec-bullet-dash">—</span><span>${esc(t)}</span></div>`;
+      }).join('')
+    }</div>`;
+  }
+
+  if (type === 'kv') {
+    const arr = Array.isArray(body) ? body : [];
+    if (!arr.length) return '<span style="color:var(--subtle)">—</span>';
+    return `<div class="sec-kv">${
+      arr.map(item => {
+        const tone = item.tone || 'neutral';
+        const toneCls = tone==='up'?'up':tone==='down'?'dn':'fl';
+        return `<div class="sec-kv-row">
+          <span class="sec-kv-k">${esc(item.k||'')}</span>
+          <span class="sec-kv-v ${toneCls}">${esc(item.v||'—')}</span>
+        </div>`;
+      }).join('')
+    }</div>`;
+  }
+
+  return '<span style="color:var(--subtle)">—</span>';
+}
+
+function renderBlocksPane(blocks) {
+  if (!blocks || !blocks.length) return '<div class="sec"><div class="sec-h"><span class="sec-n">01</span><span class="sec-t">내용 없음</span></div><p>데이터가 없습니다.</p></div>';
+  const labels = ['01','02','03','04','05','06'];
+  return blocks.map((block, i) => {
+    const num = labels[i] || String(i+1).padStart(2,'0');
+    const label = esc(block.label || block.id || `섹션 ${num}`);
+    const bodyHtml = renderBlockBody(block, i===0);
+    return `<div class="sec">
+      <div class="sec-h"><span class="sec-n">${num}</span><span class="sec-t">${label}</span></div>
+      ${bodyHtml}
+    </div>`;
+  }).join('');
+}
+
+// ── RAIL CARDS ────────────────────────────────────────────────────────────
+function renderRail(dp, slot) {
+  const inv  = dp.investor   || {};
+  const sent = dp.sentiment  || {};
+  const brd  = dp.breadth    || {};
+  const tm   = dp.top_movers || {};
+  const secs = (dp.sectors   || []);
+
+  // 1. 투자자 수급
+  let invHtml = '';
+  if (inv.available) {
+    const rows = [
+      {lbl:'개인',   val: inv.individual   || 0},
+      {lbl:'외국인', val: inv.foreign      || 0},
+      {lbl:'기관',   val: inv.institution  || 0},
+    ];
+    const maxAbs = Math.max(1, ...rows.map(r => Math.abs(r.val)));
+    invHtml = `<div class="rc">
+      <div class="rc-h">투자자 수급 <span class="u">억원 · KOSPI</span></div>
+      ${rows.map(r => {
+        const p = Math.abs(r.val) / maxAbs * 45;
+        const isPos = r.val >= 0;
+        const barStyle = isPos
+          ? `left:50%;width:${p.toFixed(1)}%;background:var(--up);`
+          : `right:50%;width:${p.toFixed(1)}%;background:var(--dn);`;
+        const valStr = (isPos?'+':'-') + Math.abs(r.val).toLocaleString('ko-KR');
+        const cls = isPos?'up':'dn';
+        return `<div class="fl-row">
+          <span class="fl-lbl">${r.lbl}</span>
+          <div class="fl-trk"><div class="fl-mid"></div><div class="fl-bar" style="${barStyle}opacity:.75;"></div></div>
+          <span class="fl-v ${cls}">${valStr}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // 2. 주요 섹터 (top3 up / bottom3 dn)
+  let sectorHtml = '';
+  if (secs.length) {
+    const sorted = [...secs].sort((a,b)=>Number(b.change||0)-Number(a.change||0));
+    const topUp  = sorted.slice(0,3);
+    const topDn  = sorted.slice(-3).reverse();
+    sectorHtml = `<div class="rc">
+      <div class="rc-h">주요 섹터</div>
+      <div class="sec-split">
+        <div>
+          <div class="sec-group-h" style="color:var(--up)">▲ 상승</div>
+          ${topUp.map(s=>{
+            const chg = Number(s.change||0);
+            return `<div class="sec-row-item" style="background:var(--up-lt)">
+              <span class="sec-row-n" style="color:var(--ink)">${esc(s.sector||'')}</span>
+              <span class="sec-row-c up">+${chg.toFixed(1)}%</span>
+            </div>`;
+          }).join('')}
+        </div>
+        <div>
+          <div class="sec-group-h" style="color:var(--dn)">▼ 하락</div>
+          ${topDn.map(s=>{
+            const chg = Number(s.change||0);
+            return `<div class="sec-row-item" style="background:var(--dn-lt)">
+              <span class="sec-row-n" style="color:var(--ink)">${esc(s.sector||'')}</span>
+              <span class="sec-row-c dn">${chg.toFixed(1)}%</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // 3. 등락현황
+  let breadthHtml = '';
+  const upCnt   = brd.up   || 0;
+  const dnCnt   = brd.down || 0;
+  if (upCnt || dnCnt) {
+    const total  = upCnt + dnCnt || 1;
+    const upW    = (upCnt / total * 100).toFixed(1);
+    const dnW    = (dnCnt / total * 100).toFixed(1);
+    breadthHtml = `<div class="rc">
+      <div class="rc-h">등락 현황 <span class="u">KOSPI + KOSDAQ</span></div>
+      <div class="brd-bar">
+        <div style="width:${upW}%;background:var(--up);opacity:.75;"></div>
+        <div style="width:${dnW}%;background:var(--dn);opacity:.6;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:8.5px;color:var(--subtle);">
+        <span>▲ 상승 ${upCnt.toLocaleString()}종</span>
+        <span>▼ 하락 ${dnCnt.toLocaleString()}종</span>
+      </div>
+    </div>`;
+  }
+
+  // 4. 특징주 (gainers + losers, up to 5 total)
+  let moversHtml = '';
+  const gainers = (tm.gainers || []).slice(0,3);
+  const losers  = (tm.losers  || []).slice(0,3);
+  if (gainers.length || losers.length) {
+    const all = [
+      ...gainers.map(m=>({name:m.name,chg:Number(m.change||0),cls:'up'})),
+      ...losers.map(m=>({name:m.name,chg:Number(m.change||0),cls:'dn'})),
+    ].slice(0,6);
+    moversHtml = `<div class="rc">
+      <div class="rc-h">특징주</div>
+      ${all.map(m=>`<div class="mv">
+        <span class="mv-n">${esc(m.name)}</span>
+        <span class="mv-c ${m.cls}">${m.chg>=0?'+':''}${m.chg.toFixed(1)}%</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // 5. 심리지표 (VKOSPI + F&G + usdkrw + PBR)
+  const rows = [];
+  if (sent.vkospi != null) {
+    const vn = Number(sent.vkospi);
+    const lbl = vkLabel(vn);
+    const tCls = vkTag(vn);
+    rows.push(`<div class="sent-row">
+      <span class="sent-k">VKOSPI</span>
+      <div style="display:flex;align-items:center;gap:5px">
+        <span class="sent-v">${vn.toFixed(1)}</span>
+        <span class="tag ${tCls}">${lbl}</span>
+      </div>
+    </div>`);
+  }
+  if (sent.fear_greed != null) {
+    const fn = Number(sent.fear_greed);
+    const lbl = fgLabel(fn);
+    const tCls = fgTag(fn);
+    rows.push(`<div class="sent-row">
+      <span class="sent-k">Fear &amp; Greed</span>
+      <div style="display:flex;align-items:center;gap:5px">
+        <span class="sent-v">${fn}</span>
+        <span class="tag ${tCls}">${lbl}</span>
+      </div>
+    </div>`);
+  }
+  if (sent.usdkrw != null) {
+    rows.push(`<div class="sent-row">
+      <span class="sent-k">원/달러</span>
+      <span class="sent-v fl">${Number(sent.usdkrw).toLocaleString('ko-KR')}원</span>
+    </div>`);
+  }
+  if (sent.pbr != null) {
+    rows.push(`<div class="sent-row">
+      <span class="sent-k">KOSPI PBR</span>
+      <span class="sent-v fl">${Number(sent.pbr).toFixed(2)}배</span>
+    </div>`);
+  }
+  if (sent.per != null) {
+    rows.push(`<div class="sent-row">
+      <span class="sent-k">KOSPI PER</span>
+      <span class="sent-v fl">${Number(sent.per).toFixed(1)}x</span>
+    </div>`);
+  }
+  // fallback: vix
+  if (!rows.length && sent.vix != null) {
+    const vn = Number(sent.vix);
+    rows.push(`<div class="sent-row">
+      <span class="sent-k">VIX</span>
+      <span class="sent-v">${vn.toFixed(1)}</span>
+    </div>`);
+  }
+  const sentHtml = rows.length
+    ? `<div class="rc"><div class="rc-h">심리 지표</div>${rows.join('')}</div>`
+    : '';
+
+  // ── premarket 전용: 미국 지수 + 매크로 게이지 (국내 수급·섹터 없음) ──
+  if (slot === 'premarket') {
+    const idx = (dp.indices || []).filter(x => !x.highlight);  // US 지수만(하이라이트=국내)
+    // ① 미국 증시 — 다이버징 바
+    const maxAbsUs = Math.max(1, ...idx.map(x => Math.abs(Number(x.change||0))));
+    let usHtml = '';
+    if (idx.length) {
+      usHtml = `<div class="rc">
+        <div class="rc-h">미국 증시 <span class="u">전일 마감</span></div>
+        ${idx.slice(0,5).map(x => {
+          const ch = Number(x.change||0);
+          const isPos = ch>=0;
+          const p = Math.abs(ch)/maxAbsUs*45;
+          const barStyle = isPos ? `left:50%;width:${p.toFixed(1)}%;background:var(--up);` : `right:50%;width:${p.toFixed(1)}%;background:var(--dn);`;
+          return `<div class="fl-row">
+            <span class="fl-lbl" style="width:62px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name)}</span>
+            <div class="fl-trk"><div class="fl-mid"></div><div class="fl-bar" style="${barStyle}opacity:.8;"></div></div>
+            <span class="fl-v ${isPos?'up':'dn'}">${isPos?'+':''}${ch.toFixed(2)}%</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+    // ② 금리·환율·변동성 미니카드
+    const rt = dp.rates || {};
+    const mc = [];
+    if (rt.us10y != null) mc.push(['미 10년물', Number(rt.us10y).toFixed(2)+'%']);
+    if (rt.dxy   != null) mc.push(['달러인덱스', Number(rt.dxy).toFixed(1)]);
+    if (rt.usdkrw!= null) mc.push(['원/달러', Number(rt.usdkrw).toLocaleString('ko-KR')+'원']);
+    if (sent.vix != null) mc.push(['VIX', Number(sent.vix).toFixed(1)]);
+    const macroHtml = mc.length
+      ? `<div class="rc"><div class="rc-h">금리 · 환율 · 변동성</div>
+          <div class="pm-grid">${mc.map(([k,v])=>`<div class="pm-card"><div class="pm-k">${k}</div><div class="pm-v">${v}</div></div>`).join('')}</div></div>`
+      : '';
+    // ③ Fear & Greed 게이지
+    const fg = sent.fear_greed;
+    const fgHtml = (fg != null)
+      ? `<div class="rc"><div class="rc-h">투자심리 Fear &amp; Greed</div>
+          <div class="pm-fg-v">${fg}<span class="pm-fg-lbl">${fg<=25?'극도 공포':fg<=45?'공포':fg>=75?'탐욕':'중립'}</span></div>
+          <div class="pm-fg-track"><div class="pm-fg-dot" style="left:${Math.max(3,Math.min(97,Number(fg)))}%"></div></div>
+          <div class="pm-fg-cap"><span>0 · 공포</span><span>탐욕 · 100</span></div></div>`
+      : '';
+    return [usHtml, macroHtml, fgHtml].filter(Boolean).join('');
+  }
+
+  return [invHtml, sectorHtml, breadthHtml, moversHtml, sentHtml].filter(Boolean).join('');
+}
+
+// ── LEGACY mode ───────────────────────────────────────────────────────────
+function renderLegacyText(text) {
+  if (!text) return '<span style="color:var(--subtle)">—</span>';
+  return text.split('\n').filter(l=>l.trim()).map(l => {
+    l = l.trim();
+    if (l.startsWith('- ')||l.startsWith('• ')) {
+      return `<div class="legacy-bullet"><span class="legacy-dot"></span><span>${esc(l.slice(2))}</span></div>`;
+    }
+    return `<p>${esc(l)}</p>`;
+  }).join('');
+}
+
+function renderLegacyPane(d) {
+  const s = d.sections || {};
+  return `<div class="legacy-pane">
+    <div class="legacy-section">
+      <div class="legacy-hdr">핵심 이슈</div>
+      <div class="legacy-body">${renderLegacyText(s.key_issue)}</div>
+    </div>
+    <div class="legacy-section">
+      <div class="legacy-hdr">Bull / Bear 시나리오</div>
+      <div class="legacy-scenario">
+        <div class="bull-box"><div class="sc-label">▲ BULL CASE</div><div class="sc-text">${renderLegacyText(s.bull_case)}</div></div>
+        <div class="bear-box"><div class="sc-label">▼ BEAR CASE</div><div class="sc-text">${renderLegacyText(s.bear_case)}</div></div>
+      </div>
+    </div>
+    <div class="legacy-section">
+      <div class="legacy-hdr">매크로 &amp; 수급 체크</div>
+      <div class="legacy-body">${renderLegacyText(s.macro_flow)}</div>
+    </div>
+    <div class="legacy-section">
+      <div class="legacy-hdr">국내 증시 전망</div>
+      <div class="legacy-body">${renderLegacyText(s.kr_outlook)}</div>
+    </div>
+    <div class="legacy-section">
+      <div class="legacy-hdr">전략적 시사점</div>
+      <div class="legacy-body">${renderLegacyText(s.strategy)}</div>
+    </div>
+    <div class="legacy-section">
+      <div class="legacy-hdr">뉴스 &amp; 종목 플로우</div>
+      <div class="legacy-body">${renderLegacyText(s.news_flow||'')}</div>
+    </div>
+  </div>`;
+}
+
+// ── MAIN init() — called by renderer after injecting window.reportData ─────
+function init() {
+  const d  = window.reportData || {};
+  const dp = d.data_panel || {};
+  const slot = d.slot || 'close';
+  const isEnvelope = d.mode === 'envelope';
+
+  // header
+  const slotLabel = d.slot_label || '시황';
+  const slotKo = slot === 'premarket' ? '장전' : slot === 'intraday' ? '장중' : '장마감';
+  document.getElementById('slot-tag').textContent = slotLabel + ' · ' + (d.date || '—');
+  document.getElementById('hdr-date').textContent  = (d.date || '—') + ' (' + slotKo + ')';
+  document.getElementById('hdr-time').textContent  = (d.time || '—') + ' KST 기준';
+
+  // stance
+  const stanceEl = document.getElementById('stance-chip');
+  const stance   = d.stance || 'NEUTRAL';
+  applyStance(stanceEl, stance);
+
+  // slot sub-tag
+  document.getElementById('slot-sub').textContent = slotLabel;
+
+  // title
+  document.getElementById('report-title').textContent = d.title || '—';
+
+  // headline (envelope only — shown as dek paragraph)
+  const hdEl = document.getElementById('report-headline');
+  if (isEnvelope && d.headline && d.headline !== '—') {
+    hdEl.textContent = d.headline;
+    hdEl.style.display = '';
+  } else {
+    hdEl.style.display = 'none';
+  }
+
+  // KPI stack
+  document.getElementById('kpi-stack').innerHTML = renderKpiStack(dp.indices || []);
+
+  // 5-column strip
+  let stripHtml = '';
+  if (slot === 'close' || slot === 'intraday') {
+    stripHtml = buildStripClose(dp);
+  } else {
+    stripHtml = buildStripPremarket(dp);
+  }
+  document.getElementById('strip').innerHTML = stripHtml;
+
+  // main pane (left)
+  const mainEl = document.getElementById('main-pane');
+  if (isEnvelope) {
+    mainEl.innerHTML = renderBlocksPane(d.blocks || []);
+  } else {
+    mainEl.innerHTML = renderLegacyPane(d);
+  }
+
+  // rail (right)
+  document.getElementById('rail-pane').innerHTML = renderRail(dp, slot);
+
+  // footer
+  const ts = isEnvelope && d.as_of
+    ? d.as_of.replace('T',' ')
+    : (d.date||'') + ' ' + (d.time||'');
+  document.getElementById('footer-ts').textContent =
+    'ATLAS · AI DESK · ' + ts;
+}
+</script>
+</body>
+</html>
