@@ -93,14 +93,16 @@ _ENV_INJECTED = _load_env_file()
 
 @app.on_event("startup")
 def _warm_caches() -> None:
-    """부팅 직후 백그라운드로 시세 캐시를 예열해 첫 사용자의 홈탭 로딩을 단축한다.
-    (배포 서버는 컨테이너 부팅 시점에 미리 채워두므로 사용자 첫 요청이 warm hit 된다.)"""
+    """백그라운드 상시 워머 — 시세 캐시를 주기적으로 미리 채워 모든 사용자 요청을 warm hit 시킨다.
+    부팅 직후 1회 + 이후 45초마다 갱신하여 캐시가 식어 콜드(수 초)로 노출되는 일을 막는다.
+    (Cross-Asset 테이블·홈탭 KPI·히트맵 전종목 집계가 대상.)"""
     import threading
+    import time as _time
 
-    def _job() -> None:
+    def _refresh_once() -> None:
         try:
             from .market_table import warm_cache
-            warm_cache()  # 해외지수/FX/원자재 yfinance + 국채
+            warm_cache()  # 해외지수/FX/원자재 yfinance + 국채 (Cross-Asset 테이블)
         except Exception:
             pass
         for _idx in ("KOSPI", "KOSDAQ"):
@@ -109,8 +111,18 @@ def _warm_caches() -> None:
                 get_index(_idx)
             except Exception:
                 pass
+        try:
+            from .price_service import get_market_heatmap
+            get_market_heatmap()  # 전종목 KOSPI 행 캐시 예열 (히트맵 첫 진입 콜드 방지)
+        except Exception:
+            pass
 
-    threading.Thread(target=_job, name="warm-caches", daemon=True).start()
+    def _loop() -> None:
+        while True:
+            _refresh_once()
+            _time.sleep(45)
+
+    threading.Thread(target=_loop, name="warm-caches", daemon=True).start()
 
 
 router = CommandRouter()
@@ -129,13 +141,151 @@ def health():
     return {"status": "ok", "service": "ai-investment-desk-os"}
 
 
+@app.get("/api/_diag/datasources")
+def diag_datasources():
+    """[임시 진단] 데이터센터 IP(배포 서버)에서 각 시세 소스가 실제로 동작하는지 측정.
+    한국 데이터 소스가 클라우드에서 차단되는지 ground truth 확보용. 운영 후 제거 예정."""
+    import time as _t
+    import re as _re
+    out: Dict[str, Any] = {}
+
+    def probe(name: str, fn):
+        s = _t.time()
+        try:
+            out[name] = {"ok": True, **fn(), "sec": round(_t.time() - s, 2)}
+        except Exception as e:
+            out[name] = {"ok": False, "err": (type(e).__name__ + ": " + str(e))[:240], "sec": round(_t.time() - s, 2)}
+
+    import requests as _rq
+
+    def naver_sum():
+        h = {"User-Agent": "Mozilla/5.0", "Referer": "https://finance.naver.com/sise/"}
+        r = _rq.get("https://finance.naver.com/sise/sise_market_sum.naver?sosok=0&page=1", headers=h, timeout=10)
+        n = len(_re.findall(r"/item/main\.naver\?code=\d{6}", r.text))
+        return {"status": r.status_code, "codes_page1": n, "bytes": len(r.text)}
+    probe("naver_sise_market_sum", naver_sum)
+
+    def naver_mobile():
+        h = {"User-Agent": "Mozilla/5.0"}
+        r = _rq.get("https://m.stock.naver.com/api/stocks/marketValue/KOSPI?page=1&pageSize=100", headers=h, timeout=10)
+        j = r.json()
+        stocks = (j.get("stocks") or j.get("datas") or [])
+        return {"status": r.status_code, "rows": len(stocks), "keys": list(j.keys())[:5]}
+    probe("naver_mobile_marketvalue", naver_mobile)
+
+    def naver_poll():
+        h = {"User-Agent": "Mozilla/5.0", "Referer": "https://finance.naver.com/"}
+        r = _rq.get("https://polling.finance.naver.com/api/realtime/domestic/stock/005930", headers=h, timeout=10)
+        return {"status": r.status_code, "bytes": len(r.text)}
+    probe("naver_polling", naver_poll)
+
+    def pykrx_full():
+        from pykrx import stock as krx
+        import datetime as _d
+        for b in range(0, 8):
+            day = (_d.date.today() - _d.timedelta(days=b)).strftime("%Y%m%d")
+            codes = krx.get_market_ticker_list(day, market="KOSPI") or []
+            if codes:
+                cap = krx.get_market_cap_by_ticker(day, market="KOSPI")
+                ohlcv = krx.get_market_ohlcv_by_ticker(day, market="KOSPI")
+                return {"day": day, "codes": len(codes), "cap_rows": int(len(cap)), "ohlcv_rows": int(len(ohlcv))}
+        return {"codes": 0}
+    probe("pykrx_kospi_full", pykrx_full)
+
+    def pykrx_index():
+        from pykrx import stock as krx
+        import datetime as _d
+        for b in range(0, 8):
+            day = (_d.date.today() - _d.timedelta(days=b)).strftime("%Y%m%d")
+            df = krx.get_index_ohlcv(day, day, "1001")  # KOSPI
+            if df is not None and len(df):
+                return {"day": day, "kospi_close": float(df["종가"].iloc[-1])}
+        return {"rows": 0}
+    probe("pykrx_index_kospi", pykrx_index)
+
+    def krx_portal():
+        h = {"User-Agent": "Mozilla/5.0", "Referer": "http://data.krx.co.kr/"}
+        import datetime as _d
+        for b in range(0, 8):
+            day = (_d.date.today() - _d.timedelta(days=b)).strftime("%Y%m%d")
+            payload = {"bld": "dbms/MDC/STAT/standard/MDCSTAT01501", "mktId": "STK", "trdDd": day,
+                       "money": "1", "csvxls_isNo": "false"}
+            r = _rq.post("http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd", data=payload, headers=h, timeout=12)
+            j = r.json()
+            block = j.get("OutBlock_1") or j.get("output") or []
+            if block:
+                return {"status": r.status_code, "day": day, "rows": len(block), "sample_keys": list(block[0].keys())[:6]}
+        return {"status": "no-rows"}
+    probe("krx_data_portal", krx_portal)
+
+    def yf_one():
+        import yfinance as yf
+        h = yf.Ticker("005930.KS").history(period="5d")
+        return {"rows": int(len(h)), "last": (float(h["Close"].iloc[-1]) if len(h) else None)}
+    probe("yfinance_samsung", yf_one)
+
+    # ── 실제 내부 함수(탭 구동 코드 경로)를 캐시 클리어 후 fresh 호출 ──
+    def fresh_kospi():
+        from . import price_service as ps
+        try:
+            with ps._cache_lock:
+                for k in ("naver:kospi-market-rows", "kospi:all-stocks", "naver:kospi-sector-map"):
+                    ps._cache.pop(k, None)
+        except Exception:
+            pass
+        r = ps._get_kospi_market_rows()
+        secs: Dict[str, int] = {}
+        for x in r:
+            secs[x.get("sector")] = secs.get(x.get("sector"), 0) + 1
+        return {"rows": len(r), "distinct_sectors": len(secs),
+                "sources": list({x.get("source") for x in r})[:3]}
+    probe("FN_fresh_get_kospi_rows", fresh_kospi)
+
+    def real_index():
+        from .price_service import get_index
+        k = get_index("KOSPI"); q = get_index("KOSDAQ")
+        return {"kospi": k.get("price"), "kospi_src": k.get("source"),
+                "kosdaq": q.get("price"), "kosdaq_src": q.get("source")}
+    probe("FN_get_index", real_index)
+
+    def real_sectors():
+        from .price_service import get_sector_returns
+        return {"count": len(get_sector_returns())}
+    probe("FN_get_sector_returns", real_sectors)
+
+    # ── pykrx 대체 OHLCV 후보 (candles/backtest 용) ──
+    def naver_fchart():
+        h = {"User-Agent": "Mozilla/5.0"}
+        r = _rq.get("https://fchart.stock.naver.com/sise.nhn?symbol=005930&timeframe=day&count=120&requestType=0",
+                    headers=h, timeout=10)
+        n = len(_re.findall(r"<item ", r.text))
+        return {"status": r.status_code, "bars": n, "bytes": len(r.text)}
+    probe("ALT_naver_fchart_ohlcv", naver_fchart)
+
+    def naver_sisejson():
+        h = {"User-Agent": "Mozilla/5.0", "Referer": "https://finance.naver.com/"}
+        r = _rq.get("https://api.finance.naver.com/siseJson.naver?symbol=005930&requestType=1&startTime=20260101&endTime=20260613&timeframe=day",
+                    headers=h, timeout=10)
+        body = r.text or ""
+        return {"status": r.status_code, "bytes": len(body), "head": body[:60]}
+    probe("ALT_naver_sisejson_ohlcv", naver_sisejson)
+
+    return {"as_of": dt.datetime.now().isoformat(timespec="seconds"), "results": out}
+
+
 @app.get("/api/data-status")
 def data_status():
+    # source_list() 일부 프로브가 클라우드(pykrx/엑셀 미가용)에서 예외를 던질 수 있으므로
+    # 전체를 감싸 부분 실패해도 200 을 유지한다(진단/배지용 — 핵심 탭과 무관).
+    try:
+        sources = [source.model_dump() for source in source_list()]
+    except Exception as e:
+        sources = [{"name": "data_status", "status": "error", "detail": str(e)[:200]}]
     result = {
         # 실제 라이브 데이터 파이프라인 상태:
         #   시세=네이버 준실시간 + pykrx 폴백 / 시황·테이블=infomax 엑셀 / 위원회 LLM=MiMo.
         "mode": "live: naver+pykrx / infomax-excel / mimo-committee",
-        "sources": [source.model_dump() for source in source_list()],
+        "sources": sources,
     }
     return wrap("data_status", result, confidence=0.9).model_dump()
 
@@ -275,7 +425,7 @@ def market_breadth():
 
 
 @app.get("/api/market/heatmap")
-def market_heatmap(top_per_sector: int = 16):
+def market_heatmap(top_per_sector: int = 40):
     """Finviz 스타일 그룹 히트맵: GICS 11 대분류 그룹 + 대표 종목 타일.
 
     셀 크기=시총, 색=등락률. 미분류 종목은 제외. 호버 일중 흐름은

@@ -63,7 +63,17 @@ WATCH_STOCKS: List[tuple[str, str, str]] = [
 
 WATCH_SECTOR_MAP: Dict[str, str] = {code: sector for code, _, sector in WATCH_STOCKS}
 WATCH_NAME_MAP: Dict[str, str] = {code: name for code, name, _ in WATCH_STOCKS}
-_SECTOR_MAP_FILE = Path(__file__).resolve().parents[2] / "data" / "kospi_sector_map.json"
+def _resolve_sector_map_file() -> Path:
+    """섹터맵 파일 경로. 배포 이미지에 동봉되도록 backend/app/data 를 우선하고,
+    없으면 로컬 개발용 루트 /data 를 쓴다. 둘 다 없으면 동봉 경로(쓰기용)를 반환."""
+    bundled = Path(__file__).resolve().parent / "data" / "kospi_sector_map.json"   # backend/app/data (Docker COPY backend/ 로 포함)
+    if bundled.exists():
+        return bundled
+    legacy = Path(__file__).resolve().parents[2] / "data" / "kospi_sector_map.json"  # 루트/data (로컬 전용)
+    return legacy if legacy.exists() else bundled
+
+
+_SECTOR_MAP_FILE = _resolve_sector_map_file()
 
 # 지수: 우리 심볼 -> (네이버 index name, pykrx 코드, 표시명)
 INDEX_MAP: Dict[str, Dict[str, str]] = {
@@ -841,7 +851,7 @@ def get_market_breadth() -> Dict[str, Any]:
     }
 
 
-def get_market_heatmap(top_per_sector: int = 16) -> Dict[str, Any]:
+def get_market_heatmap(top_per_sector: int = 40) -> Dict[str, Any]:
     """Finviz 스타일 그룹 히트맵 데이터.
 
     전종목을 GICS 11 대분류로 접고, 대분류별 시총가중 등락률 + 대표 종목 타일을

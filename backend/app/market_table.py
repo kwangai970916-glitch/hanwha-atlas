@@ -28,7 +28,7 @@ def _parallel(jobs: List[Tuple[str, Callable[[], Any]]]) -> Dict[str, Any]:
 
 _cache: Dict[str, Dict[str, Any]] = {}   # ticker -> {"value": {...}, "ts": epoch}
 _cache_lock = threading.Lock()
-_TTL = 60  # 해외/장외성 데이터라 60초 캐시
+_TTL = 180  # 해외/장외성(채권·지수·FX)은 초단위로 안 변해 3분 캐시. 백그라운드 워머가 상시 갱신.
 
 
 def _cache_get(ticker: str, allow_stale: bool = False) -> Optional[dict]:
@@ -336,18 +336,28 @@ def _kr_bond(name: str) -> dict:
         d = _naver_bond(code)
         if d.get("close") is not None:
             return d
+    # TradingEconomics 우선(클라우드에서 동작·캐시됨). pykrx 장외수익률은 데이터센터 IP에서
+    # 죽어 있어(get_otc_treasury_yields 빈값) hot path 에서 제외하고 최후 폴백으로만 둔다.
+    d = _tradingeconomics_bond(name)
+    if d.get("close") is not None:
+        return d
     label = _PYKRX_BOND.get(name)
     if label:
         d = _pykrx_bond(label)
         if d.get("close") is not None:
             return d
-    d = _tradingeconomics_bond(name)
-    if d.get("close") is not None:
-        return d
     return {}
 
 
+_TABLE_CK = "market_table:full"
+
+
 def get_market_table() -> dict:
+    # 함수 레벨 캐시: 백그라운드 워머(45s)가 채워두면 사용자 요청은 dict 반환(<5ms).
+    # (개별 셀 캐시만으로는 매 요청이 국고채 dead-pykrx 루프를 재실행해 4~19s 소요됐음.)
+    cached = _cache_get(_TABLE_CK)
+    if cached is not None:
+        return cached
     # 한국 국고채(무키 실값). 값이 없으면 행 자체를 추가하지 않음(가짜 None 금지).
     kr_bond_names = ["국고채 3Y", "국고채 10Y", "국고채 30Y"]
     # 미국채는 기존 yfinance 유지.
@@ -403,8 +413,14 @@ def get_market_table() -> dict:
         d = res.get(f"fx:{name}") or {}
         fx.append({"name": name, "value": d.get("close"), "chg_1d": d.get("chg_1d")})
 
-    return {"bonds": bonds, "equities": equities, "fx": fx,
-            "as_of": dt.datetime.now().isoformat()}
+    result = {"bonds": bonds, "equities": equities, "fx": fx,
+              "as_of": dt.datetime.now().isoformat()}
+    # 유의미한 값이 하나라도 있을 때만 캐시(전부 빈값이면 직전 stale 보존).
+    if any(r.get("value") is not None for r in (bonds + equities + fx)):
+        _cache_set(_TABLE_CK, result)
+        return result
+    stale = _cache_get(_TABLE_CK, allow_stale=True)
+    return stale if stale is not None else result
 
 
 def warm_cache() -> None:
