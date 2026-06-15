@@ -46,12 +46,18 @@ function fmtChange(chg: number): string {
 /* ── 레이아웃 산출 ── */
 const HEADER_H = 22
 
+// 시총 편중 완화: 삼성전자/SK하이닉스가 포함된 정보기술이 시총 그대로면 맵을 압도한다.
+// 면적 = 시총^SIZE_EXP 로 압축해 거대 섹터/종목을 진정시키되 순위·대소 관계는 유지.
+// (1.0=원시 시총비례, 0.5=루트. 0.65 ≈ 정보기술 면적 점유 ~35%→~23%)
+const SIZE_EXP = 0.65
+const sizeOf = (cap: number) => Math.pow(Math.max(cap, 1), SIZE_EXP)
+
 type Placed = { sector: Sector; rect: Rect; tiles: { stock: Stock; rect: Rect }[] }
 
 function buildLayout(sectors: Sector[], w: number, h: number): Placed[] {
   if (w <= 0 || h <= 0) return []
   const sectorRects = squarify(
-    sectors.map((s) => ({ value: Math.max(s.market_cap, 1), data: s })),
+    sectors.map((s) => ({ value: sizeOf(s.market_cap), data: s })),
     { x: 0, y: 0, w, h },
   )
   return sectorRects.map(({ rect, data: sector }) => {
@@ -60,7 +66,7 @@ function buildLayout(sectors: Sector[], w: number, h: number): Placed[] {
       ? { x: rect.x, y: rect.y + HEADER_H, w: rect.w, h: rect.h - HEADER_H }
       : rect
     const tiles = squarify(
-      sector.stocks.map((s) => ({ value: Math.max(s.market_cap, 1), data: s })),
+      sector.stocks.map((s) => ({ value: sizeOf(s.market_cap), data: s })),
       inner,
     ).map(({ rect: r, data: stock }) => ({ stock, rect: r }))
     return { sector, rect, tiles }
@@ -314,7 +320,7 @@ export function SectorTreemap({ apiBase }: { apiBase: string }) {
           </motion.div>
           {hover && <HoverPanel apiBase={apiBase} stock={hover.stock} x={hover.x} y={hover.y} />}
           <p className="mt-2 text-[10px] text-muted">
-            크기 = 시가총액 · 색 = 등락률(상승 레드 / 하락 블루) · 종목 호버 시 일중 흐름·시총 표시 · 미분류 종목 제외
+            크기 = 시가총액(편중 완화 스케일) · 색 = 등락률(상승 레드 / 하락 블루) · 종목 호버 시 일중 흐름·시총 표시 · 미분류 종목 제외
           </p>
         </>
       )}
