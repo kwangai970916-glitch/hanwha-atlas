@@ -3,6 +3,7 @@
 import datetime as dt
 import hashlib
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -338,12 +339,68 @@ def _pick(theme: Dict[str, Any], item: Dict[str, Any],
     }
 
 
+# 키워드 의도 파싱: "반도체 제외 타섹터" 같은 부정(제외) 의도를 인식한다.
+_EXCLUDE_MARKERS = ('제외', '제외하고', '말고', '빼고', '빼', '외에', '외엔', '아닌', '없는', 'except', 'not', 'no')
+_KW_STOPWORDS = {
+    '타섹터', '다른', '딴', '섹터', '업종', '종목', '추천', '추천해줘', '무엇', '무엇을', '뭐', '뭘',
+    '어떤', '어느', '보는게', '보는', '볼까', '봐야', '좋을까', '좋은', '좋아', '할까', '하면', '하나',
+    '것', '게', '들', '관련', '대해', '대한', '쪽', '주는', '주식', '투자', '아이디어', '알려줘', '골라줘',
+}
+
+
+def _parse_keyword_intent(keywords: str) -> Tuple[List[str], List[str]]:
+    """(includes, excludes). 예) '반도체 제외 타섹터' → includes=[], excludes=['반도체'].
+
+    부정 마커(제외/말고/빼고 등)가 있으면 마커 앞 내용어는 제외 대상, 마커 뒤 내용어는
+    포함 대상으로 간주한다. 마커가 없으면 모든 내용어가 포함(기존 동작).
+    """
+    toks = [w.strip().lower() for w in re.split(r'[\s,?!.·]+', str(keywords or '')) if w.strip()]
+    has_marker = any(any(m in t for m in _EXCLUDE_MARKERS) for t in toks)
+    includes: List[str] = []
+    excludes: List[str] = []
+    seen_marker = False
+    for t in toks:
+        if any(m in t for m in _EXCLUDE_MARKERS):
+            seen_marker = True
+            continue
+        if t in _KW_STOPWORDS or len(t) < 2:
+            continue
+        if has_marker and not seen_marker:
+            excludes.append(t)   # 마커 앞 토큰 = 제외 대상
+        else:
+            includes.append(t)
+    return includes, excludes
+
+
+def _theme_hay(theme: Dict[str, Any]) -> str:
+    return ' '.join([theme['theme'], theme['sector'], *theme['macro_tags']]).lower()
+
+
 def _matches_keywords(theme: Dict[str, Any], keywords: str) -> bool:
-    words = [w.strip().lower() for w in keywords.replace(',', ' ').split() if w.strip()]
-    if not words:
-        return True
-    haystack = ' '.join([theme['theme'], theme['sector'], *theme['macro_tags']]).lower()
-    return any(w in haystack for w in words)
+    includes, excludes = _parse_keyword_intent(keywords)
+    haystack = _theme_hay(theme)
+    if excludes and any(x in haystack for x in excludes):
+        return False  # 사용자가 제외 요청한 섹터는 탈락
+    if not includes:
+        return True   # 제외만 있거나 키워드 없음 → 나머지 전부 통과
+    return any(inc in haystack for inc in includes)
+
+
+def _select_themes(keywords: str) -> List[Dict[str, Any]]:
+    """키워드 의도(포함/제외)를 반영해 테마 레인을 선택한다.
+
+    제외가 우선: 제외 섹터를 먼저 제거하고, 그 다음 포함어로 좁힌다. 포함어가 아무 것도
+    못 맞추면(예: '다른거' 같은 일반어) 제외만 적용된 풀을 그대로 반환한다. 모두 비면 전체.
+    """
+    includes, excludes = _parse_keyword_intent(keywords)
+    pool = list(THEME_SEEDS)
+    if excludes:
+        pool = [t for t in pool if not any(x in _theme_hay(t) for x in excludes)]
+    if includes:
+        matched = [t for t in pool if any(inc in _theme_hay(t) for inc in includes)]
+        if matched:
+            return matched
+    return pool or list(THEME_SEEDS)
 
 
 # ---------------------------------------------------------------------------
@@ -866,7 +923,7 @@ def build_radar(keywords: str = '', horizon_months: int = 3, use_llm: bool = Tru
     if enrich_top_picks is None:
         enrich_top_picks = use_llm
 
-    themes_src = [t for t in THEME_SEEDS if _matches_keywords(t, keywords)] or THEME_SEEDS
+    themes_src = _select_themes(keywords)
 
     # 실데이터 팩터: regime tilt 를 먼저 산출(저비용) 후 종목 팩터를 병렬 수집
     live_map: Dict[str, Dict[str, int]] = {}

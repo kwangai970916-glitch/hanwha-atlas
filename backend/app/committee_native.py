@@ -420,7 +420,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
         for key, agent, icon, system, fallback in analysts:
             user = (f"[분석 대상] {subject} · 기준일 {date}\n\n[수집 데이터(JSON)]\n{ctx_block}\n\n"
                     "위 데이터만 근거로 마크다운 리포트를 작성하라. 섹션 3~4개, 마지막에 '핵심 시사점' 1줄.")
-            reports[key] = speak(system, user, fallback, max_tokens=1100)
+            reports[key] = speak(system, user, fallback, max_tokens=1600)
             write_msg(agent, "analysts", reports[key], icon)
 
         digest = "\n\n".join(
@@ -432,14 +432,14 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
         bull = speak(
             f"{_PERSONA} Bull 리서처다. 애널리스트 보고서를 근거로 {subject} 매수론을 가장 강하게 주장한다.",
             f"[애널리스트 보고서 요약]\n{digest}\n\n매수 논거 3~5개를 근거 수치와 함께 제시하라.",
-            f"## 🐂 Bull 논거 (규칙 폴백)\n\n{_bullets(ctx.get('price'))}\n" + _FALLBACK_NOTE, 900)
+            f"## 🐂 Bull 논거 (규칙 폴백)\n\n{_bullets(ctx.get('price'))}\n" + _FALLBACK_NOTE, 1300)
         write_msg("Bull 리서처", "research_debate", bull, "arrow_up")
 
         bear = speak(
             f"{_PERSONA} Bear 리서처다. Bull 주장을 반박하며 {subject} 의 하방 리스크를 가장 강하게 주장한다.",
             f"[애널리스트 보고서 요약]\n{digest}\n\n[Bull 주장]\n{_clip(bull, 1500)}\n\n"
             "Bull 논거를 조목조목 반박하고 하방 리스크 3~5개를 제시하라.",
-            f"## 🐻 Bear 논거 (규칙 폴백)\n\n{_bullets(ctx.get('shorting') or ctx.get('news'))}\n" + _FALLBACK_NOTE, 900)
+            f"## 🐻 Bear 논거 (규칙 폴백)\n\n{_bullets(ctx.get('shorting') or ctx.get('news'))}\n" + _FALLBACK_NOTE, 1300)
         write_msg("Bear 리서처", "research_debate", bear, "arrow_down")
 
         judge = speak(
@@ -447,7 +447,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
             f"[Bull]\n{_clip(bull, 1500)}\n\n[Bear]\n{_clip(bear, 1500)}\n\n"
             f"승자 판정과 근거, {subject} 에 대한 투자계획(방향·비중·진입 조건·모니터링 지표)을 작성하라.",
             "## 리서치 매니저 판정 (규칙 폴백)\n\n토론 데이터가 제한적이므로 중립 보유(HOLD) 관점을 유지한다."
-            + _FALLBACK_NOTE, 1100)
+            + _FALLBACK_NOTE, 1800)
         reports["investment_plan"] = judge
         reports["investment_debate"] = (
             f"## 🐂 Bull Case\n\n{bull}\n\n## 🐻 Bear Case\n\n{bear}\n\n"
@@ -466,7 +466,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
                 f"{_PERSONA} 리스크 토론자({label})다.",
                 f"[투자계획]\n{_clip(judge, 1500)}\n\n{stance} 핵심 포인트 3개 이내.",
                 f"## {label} 관점 (규칙 폴백)\n\n데이터 제한으로 {label} 관점 기본 점검 항목만 제시한다."
-                + _FALLBACK_NOTE, 550)
+                + _FALLBACK_NOTE, 800)
             write_msg(f"{label} 리스크", "risk_debate", risk_views[label], "shield")
 
         risk_judge = speak(
@@ -475,7 +475,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
             f"[보수]\n{_clip(risk_views['보수'], 800)}\n\n[중립]\n{_clip(risk_views['중립'], 800)}\n\n"
             "승인/조건부 승인/보류 중 하나로 판정하고 손절·비중 한도 등 리스크 가드레일을 제시하라.",
             "## 리스크 매니저 판정 (규칙 폴백)\n\n데이터 제한으로 조건부 승인(소규모 비중·타이트한 손절)을 권고한다."
-            + _FALLBACK_NOTE, 900)
+            + _FALLBACK_NOTE, 1300)
         reports["risk_debate"] = (
             f"## ⚡ Aggressive\n\n{risk_views['공격']}\n\n## 🛡️ Conservative\n\n{risk_views['보수']}\n\n"
             f"## ⚖️ Neutral\n\n{risk_views['중립']}\n\n## 🧑‍⚖️ Risk Manager 판정\n\n{risk_judge}")
@@ -488,7 +488,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
             f"[투자계획]\n{_clip(judge, 1200)}\n\n[리스크 판정]\n{_clip(risk_judge, 1000)}\n\n"
             "진입가 구간·분할 매매·손절/익절 기준·실행 일정이 담긴 트레이딩 플랜을 작성하라.",
             "## 트레이딩 플랜 (규칙 폴백)\n\n분할 진입(3회)·-7% 손절·소규모 비중 기본 플랜을 적용한다."
-            + _FALLBACK_NOTE, 900)
+            + _FALLBACK_NOTE, 2400)
         reports["trader_investment_plan"] = trader
         write_msg("트레이더", "decision", trader, "briefcase")
 
@@ -500,7 +500,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
             "'## 최종 결정: 매수(BUY)|보유(HOLD)|매도(SELL)' 중 하나의 형식으로 시작한다. "
             "이어서 핵심 근거 3개, 리스크 가드레일, 재심의 트리거를 제시하라.",
             "## 최종 결정: 보유(HOLD)\n\nLLM 미가용으로 규칙 폴백 기준 중립 판정을 적용한다."
-            + _FALLBACK_NOTE, 1100)
+            + _FALLBACK_NOTE, 1800)
         reports["final_trade_decision"] = final
         decision = _extract_decision(final)
         write_msg("최종 결정", "decision", final, "gavel")

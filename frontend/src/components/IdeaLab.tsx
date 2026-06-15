@@ -231,7 +231,13 @@ export function IdeaLab({ apiBase }: { apiBase: string; holdings?: Holding[] }) 
           const md = await fetch(`${apiBase}/api/idea/committee/messages/${job_id}?since=${sinceRef.current}`).then(x => x.json())
           if (md.messages?.length) {
             setMessages(prev => [...prev, ...md.messages])
-            sinceRef.current = md.messages[md.messages.length - 1].idx + 1
+            const last = md.messages[md.messages.length - 1]
+            sinceRef.current = last.idx + 1
+            // 진행 단계를 '마지막 발언의 stage'로 즉시 동기화 — 5초 status 폴링 지연 때문에
+            // 라이브피드가 4단계 진행카드보다 앞서가던 desync 를 제거한다.
+            if (typeof last.stage === 'string' && last.stage in STAGE_TO_PHASE) {
+              setActivePhase(STAGE_TO_PHASE[last.stage])
+            }
             setTimeout(() => feedBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
           }
         } catch { /* best-effort */ }

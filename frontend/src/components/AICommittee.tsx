@@ -164,7 +164,12 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
           const md = await fetch(`${apiBase}/api/committee/messages/${job_id}?since=${msgSinceRef.current}`).then(x => x.json())
           if (md.messages?.length) {
             setMessages(prev => [...prev, ...md.messages])
-            msgSinceRef.current = md.messages[md.messages.length - 1].idx + 1
+            const last = md.messages[md.messages.length - 1]
+            msgSinceRef.current = last.idx + 1
+            // 진행 단계를 마지막 발언 stage로 즉시 동기화 — 라이브피드와 4단계 진행카드의 desync 제거
+            if (typeof last.stage === 'string' && last.stage in STAGE_TO_PHASE) {
+              setActivePhase(STAGE_TO_PHASE[last.stage])
+            }
             setTimeout(() => feedBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
           }
         } catch {}
