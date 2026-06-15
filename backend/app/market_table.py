@@ -2,7 +2,25 @@ from __future__ import annotations
 import datetime as dt
 import threading
 import time
-from typing import Any, Dict, Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+# 외부 시세 호출(yfinance/네이버/pykrx)은 개별적으로 1~3초 걸리고 서로 독립적이라
+# 순차 실행 시 콜드캐시에서 홈탭이 수십 초 걸린다. 공용 스레드풀로 병렬 fetch 한다.
+_POOL = ThreadPoolExecutor(max_workers=12, thread_name_prefix="mkt")
+
+
+def _parallel(jobs: List[Tuple[str, Callable[[], Any]]]) -> Dict[str, Any]:
+    """[(key, thunk), ...] 를 동시에 실행해 {key: result} 반환. 개별 실패는 None."""
+    results: Dict[str, Any] = {}
+    futs = {_POOL.submit(fn): key for key, fn in jobs}
+    for fut in futs:
+        key = futs[fut]
+        try:
+            results[key] = fut.result()
+        except Exception:
+            results[key] = None
+    return results
 
 # ---------------------------------------------------------------------------
 # 가벼운 TTL + last-valid 캐시
@@ -338,18 +356,6 @@ def get_market_table() -> dict:
         "UST 10Y": "^TNX",
         "UST 30Y": "^TYX",
     }
-    bonds = []
-    for name in kr_bond_names:
-        d = _kr_bond(name)
-        if d.get("close") is not None:
-            bonds.append({"name": name, "value": round(float(d.get("close")), 3),
-                          "chg_1d": d.get("chg_1d"), "chg_unit": "bp"})
-    for name, t in ust_tickers.items():
-        d = _yf_bond_index(t)
-        val = d.get("close")
-        bonds.append({"name": name, "value": round(float(val), 3) if val is not None else None,
-                      "chg_1d": d.get("chg_1d"), "chg_unit": "bp"})
-
     eq_tickers = {
         "S&P 500":   "^GSPC",
         "Nasdaq 100":"^NDX",
@@ -358,11 +364,6 @@ def get_market_table() -> dict:
         "CSI 300":   "000300.SS",
         "VIX":       "^VIX",
     }
-    equities = []
-    for name, t in eq_tickers.items():
-        d = _yf(t)
-        equities.append({"name": name, "value": d.get("close"), "chg_1d": d.get("chg_1d")})
-
     fx_tickers = {
         "USD/KRW": "USDKRW=X",
         "USD/JPY": "USDJPY=X",
@@ -371,13 +372,47 @@ def get_market_table() -> dict:
         "Gold":    "GC=F",
         "천연가스":  "NG=F",
     }
+
+    # 모든 행을 한 번에 병렬 fetch (콜드캐시에서 sum→max 로 단축).
+    jobs: List[Tuple[str, Callable[[], Any]]] = []
+    jobs += [(f"krb:{n}", (lambda nm=n: _kr_bond(nm))) for n in kr_bond_names]
+    jobs += [(f"ust:{n}", (lambda tk=t: _yf_bond_index(tk))) for n, t in ust_tickers.items()]
+    jobs += [(f"eq:{n}", (lambda tk=t: _yf(tk))) for n, t in eq_tickers.items()]
+    jobs += [(f"fx:{n}", (lambda tk=t: _yf(tk))) for n, t in fx_tickers.items()]
+    res = _parallel(jobs)
+
+    bonds = []
+    for name in kr_bond_names:
+        d = res.get(f"krb:{name}") or {}
+        if d.get("close") is not None:
+            bonds.append({"name": name, "value": round(float(d.get("close")), 3),
+                          "chg_1d": d.get("chg_1d"), "chg_unit": "bp"})
+    for name in ust_tickers:
+        d = res.get(f"ust:{name}") or {}
+        val = d.get("close")
+        bonds.append({"name": name, "value": round(float(val), 3) if val is not None else None,
+                      "chg_1d": d.get("chg_1d"), "chg_unit": "bp"})
+
+    equities = []
+    for name in eq_tickers:
+        d = res.get(f"eq:{name}") or {}
+        equities.append({"name": name, "value": d.get("close"), "chg_1d": d.get("chg_1d")})
+
     fx = []
-    for name, t in fx_tickers.items():
-        d = _yf(t)
+    for name in fx_tickers:
+        d = res.get(f"fx:{name}") or {}
         fx.append({"name": name, "value": d.get("close"), "chg_1d": d.get("chg_1d")})
 
     return {"bonds": bonds, "equities": equities, "fx": fx,
             "as_of": dt.datetime.now().isoformat()}
+
+
+def warm_cache() -> None:
+    """서버 부팅 직후 백그라운드에서 호출 — 시세 캐시를 미리 채워 첫 사용자 로딩을 단축."""
+    try:
+        get_market_table()
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------

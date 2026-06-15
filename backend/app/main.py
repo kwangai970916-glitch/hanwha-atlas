@@ -91,6 +91,28 @@ def _load_env_file() -> dict:
 _ENV_INJECTED = _load_env_file()
 
 
+@app.on_event("startup")
+def _warm_caches() -> None:
+    """부팅 직후 백그라운드로 시세 캐시를 예열해 첫 사용자의 홈탭 로딩을 단축한다.
+    (배포 서버는 컨테이너 부팅 시점에 미리 채워두므로 사용자 첫 요청이 warm hit 된다.)"""
+    import threading
+
+    def _job() -> None:
+        try:
+            from .market_table import warm_cache
+            warm_cache()  # 해외지수/FX/원자재 yfinance + 국채
+        except Exception:
+            pass
+        for _idx in ("KOSPI", "KOSDAQ"):
+            try:
+                from .price_service import get_index
+                get_index(_idx)
+            except Exception:
+                pass
+
+    threading.Thread(target=_job, name="warm-caches", daemon=True).start()
+
+
 router = CommandRouter()
 morning_service = MorningBriefService()
 stock_service = StockDoctorService()
@@ -408,26 +430,37 @@ def market_kpi():
     """
     from .price_service import get_index
     from .market_table import get_yf_metric
+    from concurrent.futures import ThreadPoolExecutor
 
-    price_days: list[str] = []
-
-    def idx_kpi(name: str) -> dict:
+    def idx_kpi(name: str) -> tuple[dict, Optional[str]]:
         q = get_index(name)
         day = q.get("as_of_day")
-        if day:
-            price_days.append(str(day)[:10])
         # change = 전일대비 %(하위호환 유지), change_pt = 포인트 변화(PM 가독성)
-        return {"value": q.get("price"), "change": q.get("change_pct"),
-                "change_pct": q.get("change_pct"), "change_pt": q.get("change")}
+        return ({"value": q.get("price"), "change": q.get("change_pct"),
+                 "change_pct": q.get("change_pct"), "change_pt": q.get("change")},
+                str(day)[:10] if day else None)
 
     now = dt.datetime.now()
+    # 6개 외부호출(KOSPI/KOSDAQ + yfinance 4종)을 병렬로 — 콜드캐시에서 sum→max 로 단축.
+    with ThreadPoolExecutor(max_workers=6) as _ex:
+        _f = {
+            "kospi":  _ex.submit(idx_kpi, "KOSPI"),
+            "kosdaq": _ex.submit(idx_kpi, "KOSDAQ"),
+            "usdkrw": _ex.submit(get_yf_metric, "USDKRW=X"),
+            "vix":    _ex.submit(get_yf_metric, "^VIX"),
+            "wti":    _ex.submit(get_yf_metric, "CL=F"),
+            "gold":   _ex.submit(get_yf_metric, "GC=F"),
+        }
+    kospi, kospi_day = _f["kospi"].result()
+    kosdaq, kosdaq_day = _f["kosdaq"].result()
+    price_days: list[str] = [d for d in (kospi_day, kosdaq_day) if d]
     payload = {
-        "kospi":  idx_kpi("KOSPI"),
-        "kosdaq": idx_kpi("KOSDAQ"),
-        "usdkrw": get_yf_metric("USDKRW=X"),
-        "vix":    get_yf_metric("^VIX"),
-        "wti":    get_yf_metric("CL=F"),
-        "gold":   get_yf_metric("GC=F"),
+        "kospi":  kospi,
+        "kosdaq": kosdaq,
+        "usdkrw": _f["usdkrw"].result(),
+        "vix":    _f["vix"].result(),
+        "wti":    _f["wti"].result(),
+        "gold":   _f["gold"].result(),
         "as_of":  now.isoformat(timespec="seconds"),
     }
     # price_as_of: 시세 기준일(소스 실제 기준일 우선, 없으면 영업일 추정)
