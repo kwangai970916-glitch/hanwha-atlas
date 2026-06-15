@@ -660,11 +660,15 @@ def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], Li
         try:
             from openai import OpenAI
 
-            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=30, max_retries=1)
+            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=40, max_retries=1)
             resp = client.chat.completions.create(
                 model=MIMO_MODEL,
-                max_tokens=1600,
+                max_tokens=2200,
                 temperature=0.4,
+                # MiMo 는 reasoning 모델이라 plain 모드에선 추론토큰이 예산을 잡아먹어 JSON 이
+                # 잘리거나(면책문구/코드펜스/혼합언어) 파싱 실패한다. JSON 모드를 켜면 추론을
+                # 끄고 깔끔한 JSON 만 반환한다(실측 reasoning_tokens=0).
+                response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
@@ -688,6 +692,7 @@ def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], Li
                 model="gpt-4o-mini",
                 max_tokens=1600,
                 temperature=0.4,
+                response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},

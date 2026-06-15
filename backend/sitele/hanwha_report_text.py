@@ -965,6 +965,9 @@ def _call_via_mimo(system: str, user: str, temperature: float = 0.4) -> str:
             model=model,
             max_tokens=4000,
             temperature=temperature,
+            # MiMo reasoning 끄기 — 추론토큰이 4000 예산을 잡아먹어 섹션 JSON 이 잘리는 것을
+            # 막는다(실측 reasoning_tokens=0). 기존 JSON 복구 로직은 그대로 유지.
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},

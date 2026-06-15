@@ -127,6 +127,9 @@ def _chat(system: str, user: str, max_tokens: int = 1200) -> Tuple[Optional[str]
             client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=90, max_retries=1)
             resp = client.chat.completions.create(
                 model=MIMO_MODEL, max_tokens=max_tokens, temperature=0.4,
+                # MiMo reasoning 끄기 — 발언은 산문이므로 추론토큰이 max_tokens 를 잡아먹어
+                # 본문이 잘리는 것을 막고 응답을 빠르게 한다(실측 reasoning_tokens=0).
+                extra_body={"chat_template_kwargs": {"enable_thinking": False}},
                 messages=[{"role": "system", "content": system},
                           {"role": "user", "content": user}],
             )

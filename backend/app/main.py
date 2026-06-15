@@ -1082,7 +1082,9 @@ def _generate_idea_llm(prompt: str) -> dict:
             client = OpenAI(api_key=mimo_key, base_url="https://api.xiaomimimo.com/v1")
             resp = client.chat.completions.create(
                 model="mimo-v2.5",
-                max_tokens=1200,
+                max_tokens=2000,
+                # MiMo reasoning 모델: JSON 모드로 추론 끄고 깔끔한 JSON 강제(파싱 실패 방지)
+                response_format={"type": "json_object"},
                 messages=[{"role": "user", "content": user_prompt}],
             )
             text = resp.choices[0].message.content or ""
