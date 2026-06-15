@@ -166,6 +166,13 @@ def render_full_report(
         # 폰트 로딩 대기
         page.wait_for_timeout(2000)
 
+        # page1 본문을 1160 고정 높이에 맞춰 축소(폰트 로드 후 정확 측정) → 2·3페이지와 동일 크기
+        try:
+            page.evaluate('window.fitPage1 && window.fitPage1()')
+            page.wait_for_timeout(150)
+        except Exception:
+            pass
+
         # 출력 경로 설정
         output_dir = os.path.dirname(output_path)
         base_name = os.path.splitext(os.path.basename(output_path))[0]

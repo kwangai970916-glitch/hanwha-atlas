@@ -511,7 +511,7 @@
     <!-- ═══════════════════════════════════════════════════ -->
     <!-- PAGE 1: 분석 본문                                   -->
     <!-- ═══════════════════════════════════════════════════ -->
-    <div id="page1" class="a4-page" style="height:auto; min-height:1160px; overflow:visible;">
+    <div id="page1" class="a4-page" style="height:1160px; overflow:hidden;">
 
         <!-- Header Band -->
         <div class="hdr-band">
@@ -530,8 +530,9 @@
             </div>
         </div>
 
-        <!-- Content: 시장 분석 본문 (원본 아침시황 page1 — 섹터당 3~4줄, 내용에 맞춰 가변 높이) -->
-        <div class="px-10 py-5 dot-pattern" style="display:flex; flex-direction:column; gap:0.5rem; padding-bottom:1.2rem;">
+        <!-- Content: 시장 분석 본문. page1 을 1160 고정으로 맞추고, 내용이 넘치면 fitPage1()이
+             이 래퍼를 세로로 축소(transform scale)해 2·3페이지와 동일 크기를 보장한다. -->
+        <div id="page1-body" class="px-10 py-5 dot-pattern" style="display:flex; flex-direction:column; gap:0.5rem; padding-bottom:1.2rem; transform-origin: top center;">
 
             <!-- 분석 본문 카드 (내용에 맞춰 확장) -->
             <div class="card" style="overflow:visible; display:flex; flex-direction:column;">
@@ -1615,7 +1616,29 @@
             renderNewsHeadlines(data.newsHeadlines || [], 'kosdaq-news-headlines');
             renderBreadthGauge(data.kosdaqAdvance || 0, data.kosdaqDecline || 0, 'kosdaq-breadth-gauge');
             renderThemeHeatmap(data.kosdaqThemeReturns || [], 'kosdaq-theme-heatmap');
+            fitPage1();
         }
+
+        // page1 본문이 1160 고정 높이를 넘치면 본문 래퍼를 축소해 2·3페이지와 동일 크기 보장.
+        // 폭은 1/scale 로 키운 뒤 scale 로 되돌려(top-left) 가로 여백 없이 꽉 채운다.
+        function fitPage1() {
+            try {
+                var page = document.getElementById('page1');
+                var body = document.getElementById('page1-body');
+                if (!page || !body) return;
+                body.style.transform = ''; body.style.width = '';
+                var hdr = page.querySelector('.hdr-band');
+                var avail = page.clientHeight - (hdr ? hdr.offsetHeight : 0) - 4;
+                var natural = body.scrollHeight;
+                if (natural > avail && natural > 0) {
+                    var scale = Math.max(0.55, avail / natural);
+                    body.style.width = (100 / scale) + '%';
+                    body.style.transformOrigin = 'top left';
+                    body.style.transform = 'scale(' + scale + ')';
+                }
+            } catch (e) {}
+        }
+        window.fitPage1 = fitPage1;
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
