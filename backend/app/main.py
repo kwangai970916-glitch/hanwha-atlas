@@ -5,6 +5,7 @@ import datetime as dt
 import json
 import math
 import os
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -479,35 +480,26 @@ def market_candles(symbol: str, period: str = "1M"):
         return out
 
     is_index = symbol in ("^KS11", "^KQ11")
+    is_kr = is_index or bool(re.fullmatch(r"\d{6}", symbol))
+    # 요청 기간 → 거래일 봉 개수
+    count_map = {"1D": 2, "1W": 7, "1M": 24, "3M": 66, "1Y": 252}
+    count = count_map.get(period, 24)
     try:
-        from pykrx import stock as krx
-        today = dt.date.today()
-        days_map = {"1D": 1, "1W": 7, "1M": 30, "3M": 90, "1Y": 365}
-        days = days_map.get(period, 30)
-        start = (today - dt.timedelta(days=days)).strftime("%Y%m%d")
-        end = today.strftime("%Y%m%d")
-        sym_map = {"^KS11": "1001", "^KQ11": "2001"}
-        pykrx_sym = sym_map.get(symbol, symbol)
-        if pykrx_sym in ("1001", "2001"):
-            df = krx.get_index_ohlcv_by_date(start, end, pykrx_sym)
+        if is_kr:
+            # KR 종목/지수: 네이버 fchart→siseJson→yfinance(.KS/.KQ). pykrx 는 클라우드에서
+            # 죽으므로 사용하지 않는다(공유 OHLCV 소스 사용).
+            from .ohlcv_sources import daily_ohlcv
+            candles = daily_ohlcv(symbol, count=max(count, 2))
+            if candles:
+                candles = candles[-count:]  # 요청 기간으로 트림
         else:
-            df = krx.get_market_ohlcv_by_date(start, end, pykrx_sym)
-        if df.empty:
-            candles = yahoo_candles(symbol, period)
-        else:
-            candles = []
-            for idx, row in df.iterrows():
-                d = str(idx)[:10]
-                candles.append({"time": d, "open": float(row["시가"]), "high": float(row["고가"]),
-                                "low": float(row["저가"]), "close": float(row["종가"]),
-                                "volume": float(row.get("거래량", 0) or 0)})
-        return _reconcile_candles_with_live(symbol, candles, is_index)
-    except Exception as e:
-        candles = yahoo_candles(symbol, period)
+            candles = yahoo_candles(symbol, period)  # US/글로벌 티커
         out = _reconcile_candles_with_live(symbol, candles, is_index)
         if not candles:
-            out["error"] = str(e)
+            out["error"] = "no candle data"
         return out
+    except Exception as e:
+        return {"candles": [], "last_close": None, "error": str(e)}
 
 
 def _reconcile_candles_with_live(symbol: str, candles: list[dict], is_index: bool) -> dict:
@@ -535,6 +527,19 @@ def _reconcile_candles_with_live(symbol: str, candles: list[dict], is_index: boo
                     base = float(last.get("close", live))
                     candles.append({"time": today_str, "open": base, "high": max(base, float(live)),
                                     "low": min(base, float(live)), "close": float(live), "volume": 0.0})
+                last_close = float(live)
+        elif re.fullmatch(r"\d{6}", symbol):
+            # 종목: 마지막 봉 종가를 실시간 네이버 시세로 맞춰 KPI/Drawer 표시가와 일치시킨다.
+            from .price_service import get_quote
+            q = get_quote(symbol)
+            live = q.get("price")
+            if live:
+                today_str = dt.date.today().strftime("%Y-%m-%d")
+                last = candles[-1]
+                if last.get("time") == today_str:
+                    last["close"] = float(live)
+                    last["high"] = max(last.get("high", live), float(live))
+                    last["low"] = min(last.get("low", live), float(live))
                 last_close = float(live)
     except Exception:
         pass

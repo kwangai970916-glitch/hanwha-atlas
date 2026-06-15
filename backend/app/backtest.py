@@ -198,6 +198,43 @@ def _safe_div(a, b):
     return a / b if b not in (0, 0.0) else 0.0
 
 
+def _load_ohlcv_df(code: str, start: str, end: str, pd):
+    """일봉 OHLCV 를 DataFrame(한글 컬럼 시가/고가/저가/종가/거래량 + DatetimeIndex)으로 로드.
+
+    공유 OHLCV 소스(네이버 fchart→siseJson→yfinance)를 1순위로 쓰고(클라우드에서 pykrx
+    전종목/지수가 죽으므로), 실패 시 pykrx 를 폴백으로 둔다(로컬/오프라인 대비).
+    다운스트림(시그널·비용·지표) 계약을 그대로 유지하기 위해 컬럼/인덱스를 정규화한다.
+    """
+    try:
+        days = max(60, (pd.Timestamp(end) - pd.Timestamp(start)).days)
+    except Exception:
+        days = 365 * 4
+    count = min(max(int(days * 0.74) + 15, 60), 2000)  # 거래일 ≈ 달력일 * 0.7, 상한 2000봉
+    try:
+        from .ohlcv_sources import daily_ohlcv
+        rows = daily_ohlcv(code, count=count)
+        if rows:
+            df = pd.DataFrame(rows)
+            df["__dt"] = pd.to_datetime(df["time"])
+            df = df.set_index("__dt").sort_index()
+            df = df.rename(columns={"open": "시가", "high": "고가", "low": "저가",
+                                    "close": "종가", "volume": "거래량"})[["시가", "고가", "저가", "종가", "거래량"]]
+            df = df[(df.index >= pd.Timestamp(start)) & (df.index <= pd.Timestamp(end))]
+            if not df.empty:
+                return df
+    except Exception:
+        pass
+    # 폴백: pykrx (로컬/오프라인에서만 동작)
+    try:
+        from pykrx import stock as krx
+        df = krx.get_market_ohlcv_by_date(start.replace("-", ""), end.replace("-", ""), code)
+        if df is not None and not df.empty and "종가" in df.columns:
+            return df
+    except Exception:
+        pass
+    return None
+
+
 def run_backtest(code: str, start: str = None, end: str = None,
                  strategy: str = "ma_cross") -> dict:
     """
@@ -223,7 +260,7 @@ def run_backtest(code: str, start: str = None, end: str = None,
         s_compact = start.replace("-", "")
         e_compact = end.replace("-", "")
 
-        df = krx.get_market_ohlcv_by_date(s_compact, e_compact, code)
+        df = _load_ohlcv_df(code, start, end, pd)
         if df is None or df.empty:
             return {"error": f"{code} 데이터 없음 (기간 {start}~{end})"}
 
@@ -299,21 +336,24 @@ def run_backtest(code: str, start: str = None, end: str = None,
             r = cl.pct_change().fillna(0.0)
             return r, (1.0 + r).cumprod()
 
-        # 1순위: KOSPI 지수
+        # 1순위: KOSPI 지수 — yfinance ^KS11(공유 OHLCV 소스). pykrx 지수는 클라우드에서
+        #         KeyError 로 죽으므로 실시장 KOSPI 오버레이를 위해 ^KS11 을 직접 사용.
         try:
-            idx = krx.get_index_ohlcv(s_compact, e_compact, "1001", name_display=False)
-            if idx is not None and not idx.empty and "종가" in idx.columns and len(idx) > 1:
-                bm_ret, bm_cum = _bm_from_close(idx["종가"])
-                bm_source = "KOSPI(1001)"
+            from .ohlcv_sources import daily_ohlcv as _ohlcv
+            irows = _ohlcv("^KS11", count=max(len(df) + 25, 60))
+            if irows and len(irows) > 1:
+                iclose = pd.Series({pd.to_datetime(r["time"]): r["close"] for r in irows})
+                bm_ret, bm_cum = _bm_from_close(iclose)
+                bm_source = "KOSPI(^KS11)"
         except Exception:
             bm_cum = None
 
         # 2순위: KODEX 200 ETF 프록시 (KOSPI200 추종)
         if bm_cum is None:
             try:
-                etf = krx.get_market_ohlcv_by_date(s_compact, e_compact, "069500")
-                if etf is not None and not etf.empty and "종가" in etf.columns and len(etf) > 1:
-                    bm_ret, bm_cum = _bm_from_close(etf["종가"])
+                etf_df = _load_ohlcv_df("069500", start, end, pd)
+                if etf_df is not None and not etf_df.empty and "종가" in etf_df.columns and len(etf_df) > 1:
+                    bm_ret, bm_cum = _bm_from_close(etf_df["종가"])
                     bm_source = "KOSPI200 (KODEX 200 ETF 069500 프록시)"
                     bm_degraded = True  # 지수 원본이 아닌 추종 ETF임을 표시
             except Exception:
