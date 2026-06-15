@@ -30,6 +30,14 @@ ENV PYTHONUNBUFFERED=1 \
 COPY backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
+# 시황 리포트 PNG 렌더용 헤드리스 Chromium + 한글 폰트.
+# best-effort: 설치 실패해도 빌드는 진행되고(|| true) PNG 만 생략된다(인터랙티브 카드는 정상).
+RUN (python -m playwright install --with-deps chromium \
+     || python -m playwright install chromium || true) \
+ && (apt-get update \
+     && apt-get install -y --no-install-recommends fonts-noto-cjk fonts-nanum \
+     && rm -rf /var/lib/apt/lists/* || true)
+
 # 백엔드 소스 + 빌드된 프론트 산출물
 COPY backend/ backend/
 COPY --from=frontend /fe/dist frontend/dist

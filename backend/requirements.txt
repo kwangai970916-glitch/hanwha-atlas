@@ -14,3 +14,4 @@ feedparser
 beautifulsoup4
 matplotlib
 numpy
+playwright
