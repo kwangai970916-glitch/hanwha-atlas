@@ -529,17 +529,17 @@ def _build_context(code: Optional[str], name: str, horizon: Optional[str]) -> Di
         ohlcv = _collect_ohlcv(code)
         if ohlcv:
             ctx["price"] = ohlcv
-            sources.append("pykrx:OHLCV")
+            sources.append("네이버:OHLCV(일봉)")
 
         fund = _collect_fundamental(code)
         if fund:
             ctx["fundamental"] = fund
-            sources.append("pykrx:fundamental(PER/PBR/DIV)")
+            sources.append("네이버:fundamental(PER/PBR/DIV)")
 
         flows = _collect_investor_flows(code)
         if flows:
             ctx["investor_flows"] = flows
-            sources.append("pykrx:net_purchases(investor)")
+            sources.append("투자자:net_purchases")
 
         short = _collect_shorting(code)
         if short:
@@ -581,7 +581,7 @@ _SYSTEM_PROMPT = (
     "보험사 일반계정(장기·안정성·규제자본 민감) 관점에서 투자 판단을 합니다. "
     "반드시 아래 제공된 CONTEXT(실데이터)에 근거해서만 작성하고, CONTEXT에 없는 수치를 "
     "지어내지 마십시오(환각 금지). evidence 항목의 value는 CONTEXT에 실제로 존재하는 수치를 "
-    "그대로 인용하고, source 에는 그 수치의 출처(예: pykrx OHLCV, pykrx PER/PBR, "
+    "그대로 인용하고, source 에는 그 수치의 출처(예: 네이버 시세 일봉, 네이버 PER/PBR, "
     "Google News, DART, 보유평가)를 명시하십시오. 수치가 부족하면 정성적 판단으로 보완하되 "
     "근거 없는 목표가/숫자를 만들지 마십시오. 출력은 한국어, 오직 JSON 한 개만 출력합니다."
 )
@@ -748,13 +748,13 @@ def _deterministic_idea(ctx: Dict[str, Any]) -> dict:
     if close is not None:
         evidence.append({
             "claim": "최근 종가",
-            "source": f"pykrx OHLCV ({price.get('as_of')})",
+            "source": f"네이버 시세 일봉 ({price.get('as_of')})",
             "value": f"{close:,.0f}원",
         })
     if ret60 is not None:
         evidence.append({
             "claim": "최근 약 3개월 주가 수익률",
-            "source": "pykrx OHLCV",
+            "source": "네이버 시세 일봉",
             "value": f"{ret60:+.2f}%",
         })
         (drivers if ret60 >= 0 else risks).append(
@@ -765,13 +765,13 @@ def _deterministic_idea(ctx: Dict[str, Any]) -> dict:
     pbr = fund.get("PBR")
     div = fund.get("DIV")
     if per is not None:
-        evidence.append({"claim": "밸류에이션 PER", "source": "pykrx fundamental", "value": f"{per}배"})
+        evidence.append({"claim": "밸류에이션 PER", "source": "네이버 펀더멘털", "value": f"{per}배"})
     if pbr is not None:
-        evidence.append({"claim": "밸류에이션 PBR", "source": "pykrx fundamental", "value": f"{pbr}배"})
+        evidence.append({"claim": "밸류에이션 PBR", "source": "네이버 펀더멘털", "value": f"{pbr}배"})
         if pbr < 1.0:
             drivers.append(f"PBR {pbr}배로 자산가치 대비 저평가 영역")
     if div is not None and div > 0:
-        evidence.append({"claim": "배당수익률", "source": "pykrx fundamental", "value": f"{div}%"})
+        evidence.append({"claim": "배당수익률", "source": "네이버 펀더멘털", "value": f"{div}%"})
         drivers.append(f"배당수익률 {div}% — 일반계정 인컴 매력")
 
     foreign = flows.get("외국인")
@@ -779,7 +779,7 @@ def _deterministic_idea(ctx: Dict[str, Any]) -> dict:
     if foreign is not None:
         evidence.append({
             "claim": "외국인 순매수(최근 약 20일)",
-            "source": "pykrx net_purchases",
+            "source": "투자자 순매수",
             "value": f"{foreign:+.1f}억원",
         })
         (drivers if foreign >= 0 else risks).append(
@@ -788,7 +788,7 @@ def _deterministic_idea(ctx: Dict[str, Any]) -> dict:
     if inst is not None:
         evidence.append({
             "claim": "기관 순매수(최근 약 20일)",
-            "source": "pykrx net_purchases",
+            "source": "투자자 순매수",
             "value": f"{inst:+.1f}억원",
         })
 
