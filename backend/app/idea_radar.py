@@ -912,6 +912,135 @@ def _enrich_top_picks(top_picks: List[Dict[str, Any]], horizon_months: int) -> L
     return enriched
 
 
+def _macro_tags_for(tilt: str, cap_chg: float) -> List[str]:
+    base = {'risk-on': '위험선호', 'risk-off': '위험회피', 'neutral': '중립 국면'}.get(tilt, '중립 국면')
+    mom = '강세 모멘텀' if cap_chg > 0.5 else ('약세 압력' if cap_chg < -0.5 else '관망')
+    return [base, mom, '뉴스 모멘텀']
+
+
+def _sector_news_count(sectors: List[str]) -> Dict[str, int]:
+    """섹터명으로 구글뉴스 최근 기사 수를 best-effort 병렬 카운트(뉴스플로우 신호)."""
+    out: Dict[str, int] = {}
+    try:
+        from .idea_engine import _collect_news
+
+        def _one(sec: str) -> Tuple[str, int]:
+            try:
+                items = _collect_news(sec, max_items=8) or []
+                return sec, len(items)
+            except Exception:
+                return sec, 0
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            for sec, n in ex.map(_one, sectors):
+                out[sec] = n
+    except Exception:
+        pass
+    return out
+
+
+_DYNAMIC_CACHE: Dict[str, Any] = {}
+
+
+def _discover_dynamic_themes(keywords: str, tilt: str, max_sectors: int = 6,
+                             stocks_per_sector: int = 2) -> Optional[List[Dict[str, Any]]]:
+    """뉴스플로우 + 거시환경(tilt) + 최근 마켓움직임으로 '지금 투자 적합 섹터'를 동적 발굴.
+
+    KOSPI 전종목(_get_kospi_market_rows)을 상세 섹터로 묶어 시총가중 등락(모멘텀)·상승비율
+    (breadth)을 산출하고, 거시 tilt 와 섹터 뉴스량을 더해 매력도로 랭킹한다. 키워드 포함/제외
+    를 반영한다. 실데이터 실패 시 None → 호출측이 시드(THEME_SEEDS)로 폴백.
+    """
+    ck = f'{keywords}|{tilt}|{_iso_now()[:13]}'  # 시(hour) 단위 캐시
+    if ck in _DYNAMIC_CACHE:
+        return _DYNAMIC_CACHE[ck]
+    try:
+        from collections import defaultdict
+        from .price_service import _get_kospi_market_rows
+        rows = _get_kospi_market_rows()
+    except Exception:
+        return None
+    if not rows or len(rows) < 60:
+        return None
+
+    groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for r in rows:
+        sec = str(r.get('sector') or '').strip()
+        if not sec or sec in ('KOSPI', '기타'):
+            continue
+        chg = r.get('change')
+        cap = r.get('market_cap')
+        if chg is None or not cap or cap <= 0:
+            continue
+        groups[sec].append(r)
+
+    stats: List[Dict[str, Any]] = []
+    for sec, members in groups.items():
+        if len(members) < 2:  # 너무 얇은 섹터 제외(노이즈)
+            continue
+        wtot = sum((m.get('market_cap') or 0) for m in members)
+        if wtot <= 0:
+            continue
+        cap_chg = sum((m.get('change') or 0) * (m.get('market_cap') or 0) for m in members) / wtot
+        up = sum(1 for m in members if (m.get('change') or 0) > 0)
+        breadth = up / len(members)
+        stats.append({'sector': sec, 'cap_chg': cap_chg, 'breadth': breadth,
+                      'members': members, 'cap': wtot})
+    if not stats:
+        return None
+
+    includes, excludes = _parse_keyword_intent(keywords)
+
+    def _ok(sec: str) -> bool:
+        low = sec.lower()
+        if excludes and any(x in low for x in excludes):
+            return False
+        if includes and not any(inc in low for inc in includes):
+            return False
+        return True
+    filtered = [s for s in stats if _ok(s['sector'])]
+    if includes and not filtered:  # 포함어가 아무 섹터도 못 맞추면 제외만 적용
+        filtered = [s for s in stats if not (excludes and any(x in s['sector'].lower() for x in excludes))]
+    if not filtered:
+        filtered = stats
+
+    # 1차 모멘텀 점수 → 상위 후보만 뉴스 조회(비용 절감)
+    for s in filtered:
+        s['mom_score'] = 50 + s['cap_chg'] * 7 + (s['breadth'] - 0.5) * 26
+    filtered.sort(key=lambda s: s['mom_score'], reverse=True)
+    shortlist = filtered[: max(max_sectors * 2, 8)]
+
+    news_counts = _sector_news_count([s['sector'] for s in shortlist])
+    max_news = max([news_counts.get(s['sector'], 0) for s in shortlist] or [1]) or 1
+    tilt_adj = {'risk-on': 4, 'risk-off': -4, 'neutral': 0}.get(tilt, 0)
+    for s in shortlist:
+        news_norm = (news_counts.get(s['sector'], 0) / max_news) * 18  # 0~18 뉴스 가점
+        s['score'] = _clamp(s['mom_score'] + news_norm + tilt_adj)
+        s['news_n'] = news_counts.get(s['sector'], 0)
+    shortlist.sort(key=lambda s: s['score'], reverse=True)
+    top = shortlist[:max_sectors]
+
+    themes: List[Dict[str, Any]] = []
+    for s in top:
+        stocks = sorted(s['members'], key=lambda m: m.get('market_cap') or 0, reverse=True)[:stocks_per_sector]
+        symbols: List[Dict[str, Any]] = []
+        for m in stocks:
+            chg = m.get('change') or 0
+            symbols.append({
+                'symbol': str(m['symbol']), 'name': m.get('display') or str(m['symbol']),
+                'chart': _clamp(56 + chg * 4), 'supply_demand': 60,
+                'news': _clamp(52 + (s.get('news_n', 0) / max_news) * 30),
+                'macro': _clamp(s['mom_score']), 'valuation': 60, 'risk': 60,
+            })
+        if symbols:
+            themes.append({
+                'theme': s['sector'], 'sector': s['sector'],
+                'macro_tags': _macro_tags_for(tilt, s['cap_chg']),
+                'symbols': symbols, '_dynamic': True,
+            })
+    result = themes or None
+    _DYNAMIC_CACHE[ck] = result
+    return result
+
+
 def build_radar(keywords: str = '', horizon_months: int = 3, use_llm: bool = True,
                 macro_snapshot: Optional[Dict[str, Any]] = None,
                 use_live_factors: Optional[bool] = None,
@@ -923,17 +1052,30 @@ def build_radar(keywords: str = '', horizon_months: int = 3, use_llm: bool = Tru
     if enrich_top_picks is None:
         enrich_top_picks = use_llm
 
-    themes_src = _select_themes(keywords)
-
-    # 실데이터 팩터: regime tilt 를 먼저 산출(저비용) 후 종목 팩터를 병렬 수집
-    live_map: Dict[str, Dict[str, int]] = {}
-    sources_map: Dict[str, Dict[str, str]] = {}
+    # 거시 tilt 를 먼저 산출(동적 발굴·종목 팩터에 공통 사용)
+    tilt = 'neutral'
     if use_live_factors:
         try:
             snap = macro_snapshot if macro_snapshot is not None else _live_macro_snapshot()
             tilt = _regime_from_rules(snap, 0).get('tilt', 'neutral')
         except Exception:
             tilt = 'neutral'
+
+    # 테마 발굴: 실데이터 가용 시 뉴스플로우+거시환경+최근 마켓움직임으로 '지금 적합 섹터'를
+    # 동적 발굴한다. 실패하거나 데이터 부족 시 시드 테마(THEME_SEEDS)로 graceful degrade.
+    themes_src: Optional[List[Dict[str, Any]]] = None
+    if use_live_factors:
+        try:
+            themes_src = _discover_dynamic_themes(keywords, tilt)
+        except Exception:
+            themes_src = None
+    if not themes_src:
+        themes_src = _select_themes(keywords)
+
+    # 실데이터 팩터: 종목 팩터를 병렬 수집(top pick 은 실 OHLCV/펀더멘털로 보강)
+    live_map: Dict[str, Dict[str, int]] = {}
+    sources_map: Dict[str, Dict[str, str]] = {}
+    if use_live_factors:
         try:
             live_map, sources_map = _build_live_factor_maps(themes_src, tilt)
         except Exception:
