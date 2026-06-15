@@ -92,6 +92,91 @@ def _safe_float(v: Any) -> Optional[float]:
 # 1) 종목 정규화: 한글명/6자리코드 → KRX 코드 (+ 종목명)
 # ---------------------------------------------------------------------------
 
+# 동봉 정적 name<->code 맵 (네이버 기반 전체 KOSPI/KOSDAQ ~4300종목). 클라우드에서
+# pykrx 전수 ticker-list 가 죽어도 종목명 해석이 가능하도록 한다.
+_STATIC_MAPS_CACHE = None
+
+
+def _static_name_code_maps():
+    global _STATIC_MAPS_CACHE
+    if _STATIC_MAPS_CACHE is not None:
+        return _STATIC_MAPS_CACHE
+    norm: Dict[str, str] = {}
+    c2n: Dict[str, str] = {}
+    try:
+        from pathlib import Path
+        p = Path(__file__).resolve().parent / "data" / "krx_name_to_code.json"
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        for name, code in raw.items():
+            code = str(code).zfill(6)
+            norm[_norm_name(name)] = code
+            c2n.setdefault(code, name)
+    except Exception:
+        pass
+    _STATIC_MAPS_CACHE = (norm, c2n)
+    return _STATIC_MAPS_CACHE
+
+
+def _naver_fundamental(code: str) -> Optional[Dict[str, Any]]:
+    """네이버 모바일 integration API → PER/PBR/EPS/BPS/DIV. 클라우드 동작(무키)."""
+    try:
+        import requests
+        r = requests.get(f"https://m.stock.naver.com/api/stock/{code}/integration",
+                         headers={"User-Agent": "Mozilla/5.0"}, timeout=8)
+        infos = r.json().get("totalInfos") or []
+        m = {it.get("code"): it.get("value") for it in infos if isinstance(it, dict)}
+
+        def fv(k):
+            v = m.get(k)
+            return _safe_float(re.sub(r"[^0-9.\-]", "", str(v))) if v else None
+
+        out: Dict[str, Any] = {"as_of": dt.date.today().isoformat()}
+        for src, dst in (("per", "PER"), ("pbr", "PBR"), ("eps", "EPS"), ("bps", "BPS")):
+            v = fv(src)
+            if v is not None:
+                out[dst] = round(v, 4)
+        dy = fv("dividendYieldRatio")
+        if dy is not None:
+            out["DIV"] = round(dy, 4)
+        return out if len(out) > 1 else None
+    except Exception:
+        return None
+
+
+def _ohlcv_from_naver(code: str, lookback_days: int = 180) -> Optional[Dict[str, Any]]:
+    """pykrx 대체: 공유 OHLCV 소스(네이버)로 _collect_ohlcv 와 동일 산출."""
+    try:
+        from .ohlcv_sources import daily_ohlcv
+        bars = daily_ohlcv(code, count=max(lookback_days + 10, 60))
+        closes = [b["close"] for b in bars if b.get("close")]
+        if len(closes) < 2:
+            return None
+        last = closes[-1]
+
+        def ret_over(n):
+            if len(closes) <= n or not closes[-1 - n]:
+                return None
+            return round((last / closes[-1 - n] - 1.0) * 100.0, 2)
+
+        highs = [b["high"] for b in bars if b.get("high")]
+        lows = [b["low"] for b in bars if b.get("low")]
+        return {
+            "as_of": bars[-1]["time"],
+            "close": last,
+            "volume": (int(bars[-1].get("volume") or 0) or None),
+            "chg_1d_pct": (round((last / closes[-2] - 1.0) * 100.0, 2) if closes[-2] else None),
+            "ret_5d_pct": ret_over(5),
+            "ret_20d_pct": ret_over(20),
+            "ret_60d_pct": ret_over(60),
+            "ret_120d_pct": ret_over(120),
+            "high_period": (max(highs) if highs else None),
+            "low_period": (min(lows) if lows else None),
+            "period_days": len(closes),
+        }
+    except Exception:
+        return None
+
+
 def _resolve_symbol(symbol_or_code: str) -> Tuple[Optional[str], Optional[str]]:
     """입력(한글명 또는 6자리코드) → (code, name). 해석 실패 시 (None, None) 또는 (None, name)."""
     raw = str(symbol_or_code or "").strip()
@@ -112,7 +197,13 @@ def _resolve_symbol(symbol_or_code: str) -> Tuple[Optional[str], Optional[str]]:
         code = _NAME_ALIAS[key]
         return code, (_krx_name(code) or raw)
 
-    # 2) pnl.py 의 KRX 이름→코드 맵(있으면; by-code 기반 캐시, best-effort)
+    # 2) 동봉 정적 name->code (네이버 기반 전체 KOSPI/KOSDAQ, 클라우드 무의존)
+    norm_map, _ = _static_name_code_maps()
+    if key in norm_map:
+        code = norm_map[key]
+        return code, (_krx_name(code) or raw)
+
+    # 3) pnl.py 의 KRX 이름→코드 맵(있으면; by-code 기반 캐시, best-effort)
     try:
         from .pnl import _build_krx_name_to_code, _resolve_code  # type: ignore
 
@@ -128,7 +219,11 @@ def _resolve_symbol(symbol_or_code: str) -> Tuple[Optional[str], Optional[str]]:
 
 
 def _krx_name(code: str) -> Optional[str]:
-    """pykrx by-code 종목명(상장명). 실패 시 None."""
+    """종목명(상장명). 동봉 정적 역맵(네이버) 우선 → pykrx 폴백. 실패 시 None."""
+    _, c2n = _static_name_code_maps()
+    nm = c2n.get(str(code).zfill(6))
+    if nm:
+        return nm
     try:
         from pykrx import stock as krx
 
@@ -195,11 +290,16 @@ def _collect_ohlcv(code: str, lookback_days: int = 180) -> Optional[Dict[str, An
             "period_days": len(closes),
         }
     except Exception:
-        return None
+        pass
+    # 폴백: 공유 OHLCV 소스(네이버) — pykrx 가 죽은 클라우드 대비
+    return _ohlcv_from_naver(code, lookback_days)
 
 
 def _collect_fundamental(code: str) -> Optional[Dict[str, Any]]:
-    """pykrx get_market_fundamental_by_date → 최신 PER/PBR/EPS/BPS/DIV/DPS. 실패/공백 시 None."""
+    """최신 PER/PBR/EPS/BPS/DIV. 네이버 모바일 API 우선(클라우드 동작), pykrx 폴백."""
+    nv = _naver_fundamental(code)
+    if nv:
+        return nv
     try:
         from pykrx import stock as krx
 
