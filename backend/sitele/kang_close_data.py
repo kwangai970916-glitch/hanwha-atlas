@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-강진혁 스타일 마감시황 - 데이터 수집기
+마감 시황 스타일 마감시황 - 데이터 수집기
 pykrx 기반. 기존 코드 일절 수정 없음.
 """
 from __future__ import annotations

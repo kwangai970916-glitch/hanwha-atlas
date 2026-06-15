@@ -651,7 +651,7 @@ def _extract_json(text: str) -> Optional[dict]:
     return None
 
 
-def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], List[str]]:
+def _call_llm(system: str, user: str, pro: bool = False) -> Tuple[Optional[dict], Optional[str], List[str]]:
     """MiMo → OpenAI → Anthropic 폴백. (parsed_json, provider, errors)."""
     errors: List[str] = []
     mimo_key = os.environ.get("MIMO_API_KEY", "").strip()
@@ -665,7 +665,7 @@ def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], Li
 
             client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=60, max_retries=1)
             resp = client.chat.completions.create(
-                model=(MIMO_MODEL_PRO if _USE_PRO else MIMO_MODEL),
+                model=(MIMO_MODEL_PRO if (pro and _USE_PRO) else MIMO_MODEL),
                 max_tokens=2200,
                 temperature=0.4,
                 # MiMo 는 reasoning 모델이라 plain 모드에선 추론토큰이 예산을 잡아먹어 JSON 이
@@ -896,7 +896,7 @@ def _normalize_idea(raw: dict, ctx: Dict[str, Any]) -> dict:
 # 공개 API
 # ---------------------------------------------------------------------------
 
-def build_idea(symbol_or_code: str, horizon: Optional[str] = None) -> Dict[str, Any]:
+def build_idea(symbol_or_code: str, horizon: Optional[str] = None, pro: bool = False) -> Dict[str, Any]:
     """근거접지(RAG) 투자아이디어 생성.
 
     인자:

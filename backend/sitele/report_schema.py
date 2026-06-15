@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Any
 
-PERSONA = {"premarket": "한지영", "intraday": "아침시황", "close": "강진혁"}
+PERSONA = {"premarket": "장전 시황", "intraday": "아침시황", "close": "마감 시황"}
 VALID_STANCES = {"RISK-ON", "NEUTRAL", "RISK-OFF"}
 
 # 슬롯별 블록 순서·라벨·타입(bullets|paragraph|kv). 프론트/PNG/검증 공통 단일 소스.
@@ -22,7 +22,7 @@ SLOT_BLOCKS: dict[str, list[dict[str, str]]] = {
         {"id": "breadth_flow", "label": "등락 · 수급",             "type": "kv"},
         {"id": "headlines",    "label": "주요 헤드라인",            "type": "bullets"},
     ],
-    # 강진혁(신한투자증권) 마감 시황 재현: 동적 한글 제목(heading) + 종목(±%, 사유) + #특징업종 태그
+    # 마감 시황(신한투자증권) 마감 시황 재현: 동적 한글 제목(heading) + 종목(±%, 사유) + #특징업종 태그
     # dyn=True → 섹션 제목을 LLM이 그날 메시지로 생성(예: "반도체 무너지고 방어주만 버텨")
     "close": [
         {"id": "index_wrap",   "label": "지수 총평",        "type": "paragraph", "dyn": True},

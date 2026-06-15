@@ -925,22 +925,36 @@ def _macro_tags_for(tilt: str, cap_chg: float) -> List[str]:
     return [base, mom, '뉴스 모멘텀']
 
 
-def _sector_news_count(sectors: List[str]) -> Dict[str, int]:
-    """섹터명으로 구글뉴스 최근 기사 수를 best-effort 병렬 카운트(뉴스플로우 신호)."""
-    out: Dict[str, int] = {}
-    try:
-        from .idea_engine import _collect_news
+def _sector_news(sectors: List[str]) -> Dict[str, Dict[str, Any]]:
+    """섹터명으로 구글뉴스를 병렬 조회해 {최근48h 기사수 n, 대표 헤드라인 top}을 반환.
 
-        def _one(sec: str) -> Tuple[str, int]:
+    단순 총건수는 섹터마다 포화(다 30건)되므로 '최근 48시간' 기사 수로 차별화하고,
+    카드 멘트에 쓸 실제 대표 헤드라인을 함께 가져온다(뉴스플로우 신호 + 근거 노출)."""
+    out: Dict[str, Dict[str, Any]] = {}
+    try:
+        import email.utils as _eu
+        from .idea_engine import _collect_news
+        now = dt.datetime.now(dt.timezone.utc)
+
+        def _one(sec: str) -> Tuple[str, Dict[str, Any]]:
             try:
-                # max_items 를 넉넉히 둬 섹터 간 뉴스량 차이가 드러나게 한다(8이면 전부 포화).
                 items = _collect_news(sec, max_items=30) or []
-                return sec, len(items)
+                recent = 0
+                for it in items:
+                    try:
+                        pub = _eu.parsedate_to_datetime(it.get('published') or '')
+                        if pub and (now - pub).total_seconds() <= 86400 * 2:
+                            recent += 1
+                    except Exception:
+                        pass
+                top = (items[0].get('title') if items else '') or ''
+                top = re.sub(r'\s*-\s*[^-]+$', '', top).strip()  # 끝의 ' - 매체명' 제거
+                return sec, {'n': recent, 'total': len(items), 'top': top}
             except Exception:
-                return sec, 0
+                return sec, {'n': 0, 'total': 0, 'top': ''}
         with ThreadPoolExecutor(max_workers=8) as ex:
-            for sec, n in ex.map(_one, sectors):
-                out[sec] = n
+            for sec, d in ex.map(_one, sectors):
+                out[sec] = d
     except Exception:
         pass
     return out
@@ -1016,13 +1030,16 @@ def _discover_dynamic_themes(keywords: str, tilt: str, max_sectors: int = 6,
     filtered.sort(key=lambda s: s['mom_score'], reverse=True)
     shortlist = filtered[: max(max_sectors * 2, 8)]
 
-    news_counts = _sector_news_count([s['sector'] for s in shortlist])
-    max_news = max([news_counts.get(s['sector'], 0) for s in shortlist] or [1]) or 1
+    news_info = _sector_news([s['sector'] for s in shortlist])
+    max_news = max([news_info.get(s['sector'], {}).get('n', 0) for s in shortlist] or [1]) or 1
     tilt_adj = {'risk-on': 4, 'risk-off': -4, 'neutral': 0}.get(tilt, 0)
     for s in shortlist:
-        news_norm = (news_counts.get(s['sector'], 0) / max_news) * 18  # 0~18 뉴스 가점
+        ni = news_info.get(s['sector'], {})
+        nn = ni.get('n', 0)
+        news_norm = (nn / max_news) * 18  # 0~18 뉴스 가점(최근 48h 건수)
         s['score'] = _clamp(s['mom_score'] + news_norm + tilt_adj)
-        s['news_n'] = news_counts.get(s['sector'], 0)
+        s['news_n'] = nn
+        s['news_top'] = ni.get('top', '')
     shortlist.sort(key=lambda s: s['score'], reverse=True)
     top = shortlist[:max_sectors]
 
@@ -1038,17 +1055,26 @@ def _discover_dynamic_themes(keywords: str, tilt: str, max_sectors: int = 6,
                 'news': _clamp(52 + (s.get('news_n', 0) / max_news) * 30),
                 'macro': _clamp(s['mom_score']), 'valuation': 60, 'risk': 60,
             })
-        if symbols:
-            themes.append({
-                'theme': s['sector'], 'sector': s['sector'],
-                'macro_tags': _macro_tags_for(tilt, s['cap_chg']),
-                'symbols': symbols, '_dynamic': True,
-                '_cap_chg': round(s['cap_chg'], 2),
-                '_news_n': s.get('news_n', 0),
-                '_news_score': _clamp(45 + (s.get('news_n', 0) / max_news) * 50),
-                '_commentary': (f"시총가중 {s['cap_chg']:+.1f}%·상승 {int(s['breadth'] * 100)}%·"
-                                f"뉴스 {s.get('news_n', 0)}건 — 최근 마켓 모멘텀과 뉴스 흐름이 함께 포착됩니다."),
-            })
+        if not symbols:
+            continue
+        # 실제 상위 등락 종목 + 실제 뉴스 헤드라인으로 멘트 구성(템플릿 금지)
+        movers = sorted(s['members'], key=lambda m: (m.get('change') or 0), reverse=True)[:2]
+        mover_str = ' · '.join(
+            f"{m.get('display') or m.get('symbol')} {(m.get('change') or 0):+.1f}%" for m in movers)
+        top_news = (s.get('news_top') or '').strip()
+        commentary = f"{mover_str} 등 강세 (섹터 시총가중 {s['cap_chg']:+.1f}%)"
+        if top_news:
+            commentary += f" · 뉴스: {top_news[:50]}"
+        themes.append({
+            'theme': s['sector'], 'sector': s['sector'],
+            'macro_tags': _macro_tags_for(tilt, s['cap_chg']),
+            'symbols': symbols, '_dynamic': True,
+            '_cap_chg': round(s['cap_chg'], 2),
+            '_news_n': s.get('news_n', 0),
+            '_news_top': top_news,
+            '_news_score': _clamp(40 + (s.get('news_n', 0) / max_news) * 55),
+            '_commentary': commentary,
+        })
     result = themes or None
     _DYNAMIC_CACHE[ck] = result
     return result

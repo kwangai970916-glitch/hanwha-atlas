@@ -2,7 +2,7 @@
 """
 한화손보 운용본부 통합 시황 리포트 — Claude API / Codex OAuth 텍스트 생성기
 
-한지영 애널리스트 분석 프레임워크 채택:
+장전 시황 애널리스트 분석 프레임워크 채택:
   VIX · Fear&Greed · PER/PBR · 외국인/기관 수급 · Bull/Bear 양면 분석
 장전 / 장중 / 장마감 통일 포맷 (슬롯별 데이터 입력만 다름)
 
@@ -80,7 +80,7 @@ SYSTEM_PROMPT = """당신은 한화손해보험 운용본부 소속 10년 경력
 
 ## 작성 규칙
 - 제목은 모호한 한마디 금지. "[주도 변수]·[시장 반응]·[투자 판단]" 구조로 작성
-- 강진혁 위원 자료처럼 짧고 단단하게 쓸 것: 팩트 먼저, 해석 다음, 액션 마지막
+- 마감 시황 위원 자료처럼 짧고 단단하게 쓸 것: 팩트 먼저, 해석 다음, 액션 마지막
 - 모든 섹션은 "무엇이 올랐다/내렸다"에서 끝내지 말고 "그래서 어떤 포지션 리스크가 생겼는지"까지 연결
 - 금지 표현: "전반적으로", "지켜볼 필요", "변동성 확대 가능성", "시장 관심"처럼 원인·숫자 없는 상투어
 - 수치가 없는 문장은 최대한 줄이고, 최소한 지수·수급·환율·금리·섹터 등 하나의 숫자를 포함
@@ -130,10 +130,10 @@ _COMMON_RULES = """
 - body 타입: paragraph=문자열, bullets=문자열 배열(3~5개), kv=[{"k":지표,"v":값/해석,"tone":"up|down|neutral"}].
 """
 
-PROMPT_PREMARKET_HANJIYOUNG = f"""당신은 키움증권 전략/시황 애널리스트 '한지영' 스타일의 장전 시황 작성자입니다.
+PROMPT_PREMARKET_HANJIYOUNG = f"""당신은 증권사 전략·시황 애널리스트 스타일의 장전 시황 작성자입니다.
 매일 아침 '장 시작 전 생각'이라는 1인칭 사고흐름형 장전 시황을 씁니다. 간밤 글로벌 재료를 곱씹으며 오늘 국내장 대응전략을 함께 고민하는 동료 트레이더의 톤.
 
-## 한지영 문체 DNA (반드시 체화)
+## 장전 시황 문체 DNA (반드시 체화)
 
 ### 1. 톱다운 인과 해설 (간밤 미국 → 매크로 → 국내)
 - 간밤 미국 증시 → 금리·달러·환율 → 오늘 국내장 의미 순으로 '왜 이렇게 됐는지'를 연결고리로 풀어줄 것.
@@ -158,7 +158,7 @@ PROMPT_PREMARKET_HANJIYOUNG = f"""당신은 키움증권 전략/시황 애널리
 - 1인칭이되 '저는'은 자제하고 사고 자체를 서술. 확률 화법('~가능성이 높습니다/~여지가 있습니다')으로 과신 금지.
 - 독자 호칭 '다들/여러분'. 구어체 비유·밈 적재적소('번갈아 레벨업', '셀온/바이온', '국장'). 문장은 짧게 끊고 쉼표로 인과를 잇기.
 
-## 블록별 작성 기준 (각 4~5문장, 한지영 톤)
+## 블록별 작성 기준 (각 4~5문장, 장전 시황 톤)
 - title: 그날을 관통하는 핵심 테마 한 구절. 예: "미 기술주 순환매, 국장은 반도체 갭업 시도"
 - headline: 다우/S&P500/나스닥 등락 + 오늘 국내 시초 한 줄 전망.
 - global_kr(간밤 미국 증시): 장중 성격 한 단어 규정 + 상승/하락 빌미 2~4개 인과 연결. 종목 인라인 등락률 태깅 필수.
@@ -171,10 +171,10 @@ blocks(이 순서·id 고정):
 {_blocks_contract('premarket')}
 """
 
-PROMPT_CLOSE_KANGJINHYUK = f"""당신은 신한투자증권 강진혁 연구원 스타일의 '국내 주식 마감 시황' 전문 애널리스트입니다.
+PROMPT_CLOSE_KANGJINHYUK = f"""당신은 증권사 '국내 주식 마감 시황' 전문 애널리스트입니다.
 운용역이 장 마감 후 읽는 데일리 마감 시황을 작성합니다. 제공 데이터는 정확하다고 가정합니다.
 
-## 강진혁 마감 시황의 핵심 DNA (반드시 체화할 것)
+## 마감 시황 마감 시황의 핵심 DNA (반드시 체화할 것)
 
 ### 1. 섹션 제목(heading)은 그날의 메시지다
 - 추상적 라벨 금지. 그날 장을 한 줄로 요약한 한글 메시지를 제목으로.
@@ -190,7 +190,7 @@ PROMPT_CLOSE_KANGJINHYUK = f"""당신은 신한투자증권 강진혁 연구원 
 - "삼성전자(-2.5%, 외국인 순매도)·SK하이닉스(-2.6%, HBM 경쟁 우려)"
 - 제공된 상승/하락 TOP 종목과 뉴스 헤드라인을 연결해 '사유'를 괄호 안에 추정·명시. 사유 없으면 수급·섹터 맥락으로.
 
-### 4. #특징업종 태그 (feature_tags, bullets — 강진혁 시그니처)
+### 4. #특징업종 태그 (feature_tags, bullets — 마감 시황 시그니처)
 - 각 항목: "테마명: 배경 한 줄(대표종목+등락%)" 형식
 - 예: "교육: AI 디지털교과서 도입 기대(웅진씽크빅 +8.7%, 아이스크림미디어 +1.5%)"
 - 예: "경영권 분쟁: 고려아연(-3.3%)·영풍(-11.7%) 분쟁 격화"
@@ -900,9 +900,9 @@ _PLACEHOLDER_TITLES = {"주도변수·시장반응·판단", "주도 변수·시
 _HANZI_RE = __import__('re').compile(r'[一-鿿㐀-䶿豈-﫿]+')
 # 슬롯별 블록 글자 수 상한 — close는 종목 분석을 위해 더 넉넉하게
 _PARA_MAX_CHARS: dict[str, int] = {
-    "premarket": 340,   # 한지영 톱다운 서술 + 페이지 채움
+    "premarket": 340,   # 장전 시황 톱다운 서술 + 페이지 채움
     "intraday":  260,   # 아침시황 주도주 스토리 서술 위해 상향
-    "close":     460,   # 강진혁 재현 — 종목(±%,사유)+순환매 + 페이지 채움
+    "close":     460,   # 마감 시황 재현 — 종목(±%,사유)+순환매 + 페이지 채움
 }
 
 def _strip_hanzi(text: str) -> str:
@@ -948,6 +948,8 @@ def _postprocess_envelope(env: dict, market_data: dict, slot: str = "premarket")
 # ── MiMo (OpenAI 호환) 호출 — 시황 LLM 1순위 ──────────────────────────────
 MIMO_BASE_URL = "https://api.xiaomimimo.com/v1"
 MIMO_MODEL = "mimo-v2.5"
+# 시황 리포트는 스케줄 생성(비대화형)이라 지연 부담이 적어 고성능 모델(pro)을 기본 사용.
+MIMO_MODEL_PRO = "mimo-v2.5-pro"
 
 
 def _call_via_mimo(system: str, user: str, temperature: float = 0.4) -> str:
@@ -959,8 +961,9 @@ def _call_via_mimo(system: str, user: str, temperature: float = 0.4) -> str:
         from openai import OpenAI
 
         base_url = os.environ.get("MIMO_BASE_URL", "").strip() or MIMO_BASE_URL
-        model = os.environ.get("MIMO_MODEL", "").strip() or MIMO_MODEL
-        client = OpenAI(api_key=api_key, base_url=base_url, timeout=60.0, max_retries=2)
+        _use_pro = os.environ.get("ATLAS_USE_PRO", "1").strip().lower() not in ("0", "false", "off", "no")
+        model = os.environ.get("MIMO_MODEL", "").strip() or (MIMO_MODEL_PRO if _use_pro else MIMO_MODEL)
+        client = OpenAI(api_key=api_key, base_url=base_url, timeout=120.0, max_retries=1)
         resp = client.chat.completions.create(
             model=model,
             max_tokens=4000,

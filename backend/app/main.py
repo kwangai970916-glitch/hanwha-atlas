@@ -1147,7 +1147,9 @@ async def generate_idea(symbol: str = "삼성전자", horizon: str = "",
     sym = (symbol or "").strip() or (prompt or "").strip() or "삼성전자"
     try:
         from .idea_engine import build_idea
-        return build_idea(sym, horizon=(horizon or None))
+        # 단독 아이디어는 고성능 모델(pro) 사용. (아이디어랩 위원회의 다수 에이전트 발언은
+        # build_idea/_call_llm 기본값 pro=False 로 표준 모델 → 속도 유지)
+        return build_idea(sym, horizon=(horizon or None), pro=True)
     except Exception as e:
         # RAG 엔진 자체 실패 → 기존 단순 프롬프트 LLM 폴백(공백 금지)
         fallback_prompt = (prompt or "").strip() or f"{sym} 투자아이디어"
