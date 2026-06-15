@@ -465,15 +465,22 @@ def _build_newsflow_pipeline(
     for theme in themes[:8]:
         rank = rank_by_sector.get(str(theme.get('sector')), {})
         reps = theme.get('representatives') or []
-        news_pull = max([int((p.get('factor_scores') or {}).get('news', 0)) for p in top_picks if p.get('sector') == theme.get('sector')] or [0])
+        # 동적 발굴 테마는 자체 news_score/change/foreign_flow 를 보유. 없으면(시드) 폴백.
+        news_pull = theme.get('news_score')
+        if news_pull is None:
+            news_pull = max([int((p.get('factor_scores') or {}).get('news', 0)) for p in top_picks if p.get('sector') == theme.get('sector')] or [0])
+        change = theme.get('change')
+        if change is None:
+            change = rank.get('change')
+        foreign_flow = theme.get('foreign_flow') or rank.get('foreign_flow')
         sector_flow.append({
             'stage': 'sector',
             'sector': theme.get('sector'),
             'theme': theme.get('theme'),
             'score': theme.get('score'),
             'news_score': news_pull,
-            'change': rank.get('change'),
-            'foreign_flow': rank.get('foreign_flow'),
+            'change': change,
+            'foreign_flow': foreign_flow,
             'macro_tags': theme.get('macro_tags') or [],
             'why': theme.get('commentary') or f"{theme.get('theme')} ??? ??? ??? ??? ?????.",
             'representatives': reps[:4],
@@ -1035,6 +1042,11 @@ def _discover_dynamic_themes(keywords: str, tilt: str, max_sectors: int = 6,
                 'theme': s['sector'], 'sector': s['sector'],
                 'macro_tags': _macro_tags_for(tilt, s['cap_chg']),
                 'symbols': symbols, '_dynamic': True,
+                '_cap_chg': round(s['cap_chg'], 2),
+                '_news_n': s.get('news_n', 0),
+                '_news_score': _clamp(45 + (s.get('news_n', 0) / max_news) * 50),
+                '_commentary': (f"시총가중 {s['cap_chg']:+.1f}%·상승 {int(s['breadth'] * 100)}%·"
+                                f"뉴스 {s.get('news_n', 0)}건 — 최근 마켓 모멘텀과 뉴스 흐름이 함께 포착됩니다."),
             })
     result = themes or None
     _DYNAMIC_CACHE[ck] = result
@@ -1111,6 +1123,7 @@ def build_radar(keywords: str = '', horizon_months: int = 3, use_llm: bool = Tru
         theme_picks = [_pick(theme, item, live_map, sources_map) for item in theme['symbols']]
         best = max(theme_picks, key=lambda p: p['score'])
         avg = _clamp(sum(p['score'] for p in theme_picks) / len(theme_picks))
+        cap_chg = theme.get('_cap_chg')
         themes.append({
             'theme': theme['theme'],
             'sector': theme['sector'],
@@ -1118,7 +1131,12 @@ def build_radar(keywords: str = '', horizon_months: int = 3, use_llm: bool = Tru
             'macro_tags': theme['macro_tags'],
             'representatives': [{'symbol': p['symbol'], 'name': p['name'], 'score': p['score']} for p in theme_picks],
             'top_factors': sorted(best['factor_scores'].items(), key=lambda kv: kv[1], reverse=True)[:3],
-            'commentary': f"{theme['theme']}은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다.",
+            'commentary': theme.get('_commentary') or f"{theme['theme']}은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다.",
+            # 동적 발굴 시 실제 섹터 모멘텀(시총가중 등락%)·뉴스 점수·자금흐름을 노출
+            'change': cap_chg,
+            'news_score': theme.get('_news_score'),
+            'foreign_flow': (None if cap_chg is None else
+                             ('buy' if cap_chg > 0.3 else 'sell' if cap_chg < -0.3 else 'neutral')),
         })
     themes.sort(key=lambda t: t['score'], reverse=True)
     market_regime = _build_market_regime(themes, keywords, use_llm, macro_snapshot)
