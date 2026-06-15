@@ -912,13 +912,25 @@ def briefing_latest():
 
 
 @app.post("/api/briefing/{slot}")
-async def trigger_briefing(slot: str, background_tasks: BackgroundTasks):
+async def trigger_briefing(slot: str, background_tasks: BackgroundTasks, force: bool = False):
     if slot not in ("premarket", "intraday", "close"):
         raise HTTPException(400, "slot must be premarket|intraday|close")
+    # 24시간 캐싱: 24h 이내 성공 생성본이 있으면 재생성하지 않고 캐시를 그대로 쓴다.
+    # (status 폴링이 캐시 결과를 그대로 반환 → 프론트는 즉시 완료 처리). force=true 로 강제 재생성.
+    cached = _briefing_cache.get(slot)
+    if not force and isinstance(cached, dict) and cached.get("success") and cached.get("_cached_at"):
+        try:
+            age = time.time() - float(cached["_cached_at"])
+            if age < 86400:
+                return {"status": "cached", "slot": slot, "age_sec": int(age)}
+        except Exception:
+            pass
     _briefing_cache[slot] = {"status": "running"}
     def _run():
         from .briefing import run_briefing
         result = run_briefing(slot)
+        if isinstance(result, dict):
+            result["_cached_at"] = time.time()
         _briefing_cache[slot] = result
     background_tasks.add_task(_run)
     return {"status": "started", "slot": slot}

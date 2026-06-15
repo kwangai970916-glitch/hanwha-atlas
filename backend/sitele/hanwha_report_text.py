@@ -259,19 +259,60 @@ def _build_premarket_prompt(data: dict) -> str:
     rates = data.get("rates", {})
     sent = data.get("sentiment", {})
     events = data.get("events", [])
+    kr = data.get("kr_indices", {}) or {}
+    kospi = kr.get("kospi", {}) or {}
+    kosdaq = kr.get("kosdaq", {}) or {}
 
     us_lines = "\n".join(
         f"- {k}: {v.get('close', 'N/A'):,} ({v.get('change_str', 'N/A')})"
         for k, v in us.items()
     ) if us else "- 데이터 없음"
 
+    def _mv(m):
+        nm = m.get("name", "")
+        ch = m.get("change_str")
+        if not ch and m.get("change") is not None:
+            try:
+                ch = f"{float(m.get('change')):+.2f}%"
+            except Exception:
+                ch = ""
+        rs = m.get("reason") or m.get("note") or m.get("theme") or ""
+        return f"- {nm}: {ch}" + (f" — {rs}" if rs else "")
+    mover_lines = "\n".join(_mv(m) for m in (data.get("us_movers") or [])[:8]) or "- 데이터 없음"
+    us_narr = (data.get("us_narrative") or "").strip()
+    narr_section = (f"## 간밤 시장 내러티브(참고 — 핵심 스토리 단서)\n{us_narr}\n\n" if us_narr else "")
+
     evt_lines = "\n".join(f"- {e}" for e in events[:5]) if events else "- 없음"
+
+    # 국내 지수 직전 종가 — grounding 의 핵심. 이게 없으면 LLM 이 학습된 통념(예: 3,100선)으로
+    # 코스피 레벨을 지어낸다. 제공되면 지수 섹션 + 앵커링 경고를 함께 주입한다.
+    def _kr_val(d):
+        v = d.get("index", d.get("close", d.get("value")))
+        try:
+            return float(v) if v is not None else None
+        except Exception:
+            return None
+    kp, kq = _kr_val(kospi), _kr_val(kosdaq)
+    kr_section, ground_rule = "", ""
+    if kp:
+        kchg = kospi.get("change", kospi.get("chg_pct"))
+        qchg = kosdaq.get("change", kosdaq.get("chg_pct"))
+        kr_section = "## 국내 증시 (직전 거래일 종가)\n" + \
+            f"- KOSPI: {kp:,.2f}" + (f" ({float(kchg):+.2f}%)" if kchg is not None else "") + "\n"
+        if kq:
+            kr_section += f"- KOSDAQ: {kq:,.2f}" + (f" ({float(qchg):+.2f}%)" if qchg is not None else "") + "\n"
+        ground_rule = (f"\n⚠️ 지수 레벨 grounding(엄수): 현재 KOSPI 수준은 약 {kp:,.0f}pt다. 본문의 모든 "
+                       f"지지·저항·목표·'탈환/돌파/재돌파' 레벨은 반드시 이 수치 부근(±수%)에서만 사용할 것. "
+                       f"학습된 과거 통념(3,100선·2,700선 등 현재와 동떨어진 라운드넘버)을 절대 인용 금지.")
 
     return f"""[장전 시황 분석 요청 — 미국 마감 기준]
 분석 날짜: {data.get('date', '—')}
 
 ## 미국 증시 (전일 마감)
 {us_lines}
+
+## 미국 개별주 무버 (오늘 스토리의 핵심 재료 — 인라인 등락률로 본문에 박을 것)
+{mover_lines}
 
 ## 금리 & 환율
 - 미 10년물 국채 금리: {rates.get('us10y', 'N/A')}%
@@ -282,11 +323,17 @@ def _build_premarket_prompt(data: dict) -> str:
 - VIX: {sent.get('vix', 'N/A')}
 - Fear & Greed Index: {sent.get('fear_greed', 'N/A')} / 100 ({sent.get('fear_greed_label', 'N/A')})
 
-## 오늘 주요 이벤트
+{kr_section}{narr_section}## 오늘 주요 이벤트
 {evt_lines}
-
+{ground_rule}
 ---
-장전 분석 포인트: 미국 마감 결과가 오늘 국내 장 시작에 미치는 영향, 개장 전 선제적으로 주목해야 할 이슈와 섹터를 분석해 주세요.
+[작성 지시 — 가장 중요]
+1. 숫자 나열 금지. 먼저 **오늘 장을 관통하는 메인 내러티브(핵심 스토리) 1~3개**를 규정하라. 위 데이터에서
+   가장 큰 움직임·재료를 골라(예: 특정 개별주 급등, 특정 섹터 랠리, 지정학/정책 이벤트) "무엇이 왜
+   움직였고 그게 오늘 국내장에 어떤 의미인가"를 인과로 풀 것.
+2. 미국 개별주 무버는 단순 등락이 아니라 그 **배경/테마**(IPO 흥행, 메모리/AI 수요, 휴전 등)와 연결해
+   국내 연관 업종(반도체·메모리·방산·에너지 등)으로 착지시킬 것.
+3. 지수·종목·매크로는 위 제공 수치만 사용(임의 생성·학습통념 금지).
 JSON 형식으로만 출력해 주세요."""
 
 

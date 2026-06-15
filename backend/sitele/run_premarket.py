@@ -69,7 +69,11 @@ def _collect_premarket_data() -> dict:
                 "change":     chg,
                 "change_str": f"{chg:+.2f}%",
             }
-        print(f"[장전] 미국 지수 수집 완료 ({len(data['us_indices'])}개)")
+        # 미국 개별주 무버 + 간밤 내러티브 — 메인 스토리 합성용(숫자 나열 방지의 핵심 재료)
+        data["us_movers"] = (raw.get("top_gainers") or [])[:8]
+        if raw.get("analysis_text"):
+            data["us_narrative"] = str(raw["analysis_text"])[:1400]
+        print(f"[장전] 미국 지수/무버 수집 완료 (지수 {len(data['us_indices'])}개, 무버 {len(data['us_movers'])}개)")
     except Exception as e:
         # 임의 수치 주입 금지 — 비우면 프롬프트가 '데이터 없음'으로 표기하고
         # LLM이 '데이터 부족으로 판단 유보'를 명시하도록 설계되어 있다.
@@ -94,6 +98,11 @@ def _collect_premarket_data() -> dict:
         dxy    = _last_close("DX-Y.NYB")
         usdkrw = _last_close("USDKRW=X")
         vix    = _last_close("^VIX")
+        # 국내 지수 직전 종가 — grounding 핵심(이게 없으면 LLM 이 코스피 레벨을 학습통념으로 환각).
+        kospi_lvl  = _last_close("^KS11")
+        kosdaq_lvl = _last_close("^KQ11")
+        if kospi_lvl:  data["kr_indices"]["kospi"]  = {"close": round(kospi_lvl, 2)}
+        if kosdaq_lvl: data["kr_indices"]["kosdaq"] = {"close": round(kosdaq_lvl, 2)}
 
         if us10y:  data["rates"]["us10y"]   = round(us10y, 3)
         if dxy:    data["rates"]["dxy"]     = round(dxy,   2)
