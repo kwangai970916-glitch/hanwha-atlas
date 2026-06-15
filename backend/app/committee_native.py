@@ -47,6 +47,11 @@ KOREAN_RULE = (
 
 _PERSONA = "너는 한화손해보험 일반계정 주식운용 데스크의 AI 투자위원회 소속"
 
+# 고성능 모델(mimo-v2.5-pro)을 핵심 결정 단계(투자계획·트레이딩플랜·최종결정)에만 섞어 쓴다.
+# 단순 발언/토론은 표준 모델(mimo-v2.5)로 빠르게. ATLAS_USE_PRO=0 이면 전 단계 표준만 사용.
+MIMO_MODEL_PRO = os.environ.get("MIMO_MODEL_PRO", "mimo-v2.5-pro")
+_USE_PRO = os.environ.get("ATLAS_USE_PRO", "1").strip().lower() not in ("0", "false", "off", "no")
+
 _HANGUL = re.compile(r"[가-힣]")
 
 # 단계 메타데이터: stage → (step 1-based, 한국어 라벨)  ※ run_committee.py 와 동일
@@ -113,9 +118,11 @@ def _has_any_key() -> bool:
     )
 
 
-def _chat(system: str, user: str, max_tokens: int = 1200) -> Tuple[Optional[str], Optional[str]]:
-    """(text, provider). 모든 공급자 실패 시 (None, None)."""
+def _chat(system: str, user: str, max_tokens: int = 1200,
+          model: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
+    """(text, provider). 모든 공급자 실패 시 (None, None). model 미지정 시 표준 MiMo."""
     system = system + KOREAN_RULE
+    use_model = model or MIMO_MODEL
     mimo_key = os.environ.get("MIMO_API_KEY", "").strip()
     openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -124,9 +131,9 @@ def _chat(system: str, user: str, max_tokens: int = 1200) -> Tuple[Optional[str]
         try:
             from openai import OpenAI
 
-            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=90, max_retries=1)
+            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=120, max_retries=1)
             resp = client.chat.completions.create(
-                model=MIMO_MODEL, max_tokens=max_tokens, temperature=0.4,
+                model=use_model, max_tokens=max_tokens, temperature=0.4,
                 # MiMo reasoning 끄기 — 발언은 산문이므로 추론토큰이 max_tokens 를 잡아먹어
                 # 본문이 잘리는 것을 막고 응답을 빠르게 한다(실측 reasoning_tokens=0).
                 extra_body={"chat_template_kwargs": {"enable_thinking": False}},
@@ -389,10 +396,12 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
         llm_on = _has_any_key()
         fail_streak = [0]
 
-        def speak(system: str, user: str, fallback: str, max_tokens: int = 1200) -> str:
+        def speak(system: str, user: str, fallback: str, max_tokens: int = 1200,
+                  pro: bool = False) -> str:
             if not llm_on or fail_streak[0] >= 2:
                 return fallback
-            text, _provider = _chat(system, user, max_tokens=max_tokens)
+            model = MIMO_MODEL_PRO if (pro and _USE_PRO) else None
+            text, _provider = _chat(system, user, max_tokens=max_tokens, model=model)
             if text:
                 fail_streak[0] = 0
                 return text
@@ -488,7 +497,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
             f"[투자계획]\n{_clip(judge, 1200)}\n\n[리스크 판정]\n{_clip(risk_judge, 1000)}\n\n"
             "진입가 구간·분할 매매·손절/익절 기준·실행 일정이 담긴 트레이딩 플랜을 작성하라.",
             "## 트레이딩 플랜 (규칙 폴백)\n\n분할 진입(3회)·-7% 손절·소규모 비중 기본 플랜을 적용한다."
-            + _FALLBACK_NOTE, 2400)
+            + _FALLBACK_NOTE, 3200, pro=True)
         reports["trader_investment_plan"] = trader
         write_msg("트레이더", "decision", trader, "briefcase")
 
@@ -500,7 +509,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
             "'## 최종 결정: 매수(BUY)|보유(HOLD)|매도(SELL)' 중 하나의 형식으로 시작한다. "
             "이어서 핵심 근거 3개, 리스크 가드레일, 재심의 트리거를 제시하라.",
             "## 최종 결정: 보유(HOLD)\n\nLLM 미가용으로 규칙 폴백 기준 중립 판정을 적용한다."
-            + _FALLBACK_NOTE, 1800)
+            + _FALLBACK_NOTE, 2800, pro=True)
         reports["final_trade_decision"] = final
         decision = _extract_decision(final)
         write_msg("최종 결정", "decision", final, "gavel")

@@ -35,6 +35,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 MIMO_BASE_URL = "https://api.xiaomimimo.com/v1"
 MIMO_MODEL = "mimo-v2.5"
+# 아이디어 생성은 단발 고부가 호출이라 고성능 모델(mimo-v2.5-pro)을 기본 사용. ATLAS_USE_PRO=0 이면 표준.
+MIMO_MODEL_PRO = os.environ.get("MIMO_MODEL_PRO", "mimo-v2.5-pro")
+_USE_PRO = os.environ.get("ATLAS_USE_PRO", "1").strip().lower() not in ("0", "false", "off", "no")
 
 # pykrx 투자자 구분(get_market_net_purchases_of_equities 의 investor 인자)
 _INVESTORS = ["외국인", "기관합계", "개인"]
@@ -660,9 +663,9 @@ def _call_llm(system: str, user: str) -> Tuple[Optional[dict], Optional[str], Li
         try:
             from openai import OpenAI
 
-            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=40, max_retries=1)
+            client = OpenAI(api_key=mimo_key, base_url=MIMO_BASE_URL, timeout=60, max_retries=1)
             resp = client.chat.completions.create(
-                model=MIMO_MODEL,
+                model=(MIMO_MODEL_PRO if _USE_PRO else MIMO_MODEL),
                 max_tokens=2200,
                 temperature=0.4,
                 # MiMo 는 reasoning 모델이라 plain 모드에선 추론토큰이 예산을 잡아먹어 JSON 이

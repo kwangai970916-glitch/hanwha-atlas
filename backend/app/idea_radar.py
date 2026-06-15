@@ -933,7 +933,8 @@ def _sector_news_count(sectors: List[str]) -> Dict[str, int]:
 
         def _one(sec: str) -> Tuple[str, int]:
             try:
-                items = _collect_news(sec, max_items=8) or []
+                # max_items 를 넉넉히 둬 섹터 간 뉴스량 차이가 드러나게 한다(8이면 전부 포화).
+                items = _collect_news(sec, max_items=30) or []
                 return sec, len(items)
             except Exception:
                 return sec, 0
