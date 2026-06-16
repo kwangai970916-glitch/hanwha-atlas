@@ -1316,4 +1316,18 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 _FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if _FRONTEND_DIST.is_dir():
-    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")
+    class _SPAStaticFiles(StaticFiles):
+        """index.html 은 캐시 금지(배포 즉시 새 번들 반영), 해시 에셋은 영구 캐시.
+
+        index.html 에 Cache-Control 이 없으면 브라우저가 휴리스틱 캐시로 옛 번들을
+        계속 띄워, 구버전 UI(예: 슬롯별 캐시 미반영)가 남는 문제가 생긴다.
+        """
+        async def get_response(self, path, scope):
+            resp = await super().get_response(path, scope)
+            ctype = resp.headers.get("content-type", "")
+            if "text/html" in ctype:
+                resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            elif "assets/" in str(path):
+                resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            return resp
+    app.mount("/", _SPAStaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")

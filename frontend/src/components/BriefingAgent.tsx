@@ -59,7 +59,8 @@ export function BriefingAgent({ apiBase }: { apiBase: string }) {
         if (!res.ok) return
         const s = (await res.json()) as BriefingStatus
         if (cancelled || runRef.current !== runId) return
-        if (s.success) {
+        // 슬롯 교차 오염 방지: 응답 slot 이 현재 선택 슬롯과 일치할 때만 반영
+        if (s.success && (!s.slot || s.slot === slot)) {
           setResult(s)
           setStatus('done')
         }

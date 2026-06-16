@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Any
 
-PERSONA = {"premarket": "장전 시황", "intraday": "아침시황", "close": "마감 시황"}
+PERSONA = {"premarket": "장전 시황", "intraday": "장중 시황", "close": "마감 시황"}
 VALID_STANCES = {"RISK-ON", "NEUTRAL", "RISK-OFF"}
 
 # 슬롯별 블록 순서·라벨·타입(bullets|paragraph|kv). 프론트/PNG/검증 공통 단일 소스.

@@ -112,7 +112,7 @@ export function GenerationStepper({ elapsed, slotLabel }: { elapsed: number; slo
                 <span className="font-mono text-[11px] font-semibold tabular-nums text-muted">{String(idx + 1).padStart(2, '0')}/03</span>
               </div>
 
-              <div className="relative mb-3 grid h-36 place-items-center overflow-hidden rounded-card bg-card/30 pb-2 pt-1">
+              <div className="relative mb-3 grid h-44 place-items-center overflow-hidden rounded-card bg-card/30 pb-3 pt-2">
                 {isActive && (
                   <motion.span
                     className="absolute inset-x-6 bottom-2 h-px rounded-full bg-hanwha/80"
