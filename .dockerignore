@@ -6,11 +6,19 @@
 **/*.pyc
 **/.pytest_cache
 frontend/dist
-# backend/data 는 통째 제외하되, 위원회 seed(라이브 latest 폴백)만 포함
+# backend/data 는 통째 제외하되, seed(라이브 latest 폴백) + 마스터파일은 포함.
+# 이미지의 이 파일들은 _restore_data_seed 가 부팅 시 영구 볼륨으로 복원한다.
 backend/data/**
 !backend/data/committee_runs
 !backend/data/committee_runs/seed
 !backend/data/committee_runs/seed/**
+!backend/data/idea_committee_runs
+!backend/data/idea_committee_runs/seed
+!backend/data/idea_committee_runs/seed/**
+!backend/data/idea_committee_runs/_seed_build
+!backend/data/idea_committee_runs/_seed_build/**
+!backend/data/idea_history.json
+!backend/data/주간주식시황_V10_마스터파일.xlsx
 backend/sitele/output
 committee_engine
 **/.git
