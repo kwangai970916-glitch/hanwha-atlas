@@ -1005,21 +1005,27 @@ def briefing_png(slot: str, t: str = ""):
        png_paths 목록 안에 있고 sitele/output 하위여야 서빙(경로 traversal 방지).
        t 미지정/불일치 시 대표 png_path 로 폴백.
     """
-    from .briefing import SITELE_DIR
+    from .briefing import SITELE_DIR, _PNG_VOL_DIR, load_slot_cache
 
-    cache = _briefing_cache.get(slot, {})
+    cache = _briefing_cache.get(slot) or {}
+    if not cache.get("png_path") and not cache.get("png_paths"):
+        disk = load_slot_cache(slot)               # 재배포 후 인메모리 미스 → 디스크 복원
+        if disk:
+            _briefing_cache[slot] = disk
+            cache = disk
     png_paths = cache.get("png_paths") or []
     target = cache.get("png_path")
 
     if t:
-        output_root = (SITELE_DIR / "output").resolve()
+        # sitele/output(휘발) 또는 briefing_png(볼륨) 하위만 허용(traversal 방지)
+        roots = [(SITELE_DIR / "output").resolve(), _PNG_VOL_DIR.resolve()]
         try:
             resolved = Path(t).resolve()
-            resolved.relative_to(output_root)               # traversal 방지
-            allowed = {str(Path(p).resolve()) for p in png_paths} | (
-                {str(Path(target).resolve())} if target else set())
-            if str(resolved) in allowed and resolved.exists():
-                target = str(resolved)
+            if any(resolved.is_relative_to(r) for r in roots):
+                allowed = {str(Path(p).resolve()) for p in png_paths} | (
+                    {str(Path(target).resolve())} if target else set())
+                if str(resolved) in allowed and resolved.exists():
+                    target = str(resolved)
         except (ValueError, OSError):
             pass  # 불일치 → 대표 png_path 폴백
 

@@ -95,7 +95,8 @@ export function BriefingAgent({ apiBase }: { apiBase: string }) {
     }, 1000)
 
     try {
-      const trigger = await fetch(`${apiBase}/api/briefing/${slot}`, { method: 'POST' })
+      // 사용자가 '생성' 을 누른 건 새 리포트를 원한다는 뜻 — 24h 캐시 우회(force)
+      const trigger = await fetch(`${apiBase}/api/briefing/${slot}?force=true`, { method: 'POST' })
       if (!trigger.ok) throw new Error(`생성 요청 실패 (HTTP ${trigger.status})`)
 
       for (let i = 0; i < MAX_POLLS; i++) {

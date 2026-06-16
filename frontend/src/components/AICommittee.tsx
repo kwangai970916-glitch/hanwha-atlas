@@ -257,7 +257,7 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
       </Card>
 
       <Card eyebrow={stage === 'running' ? 'In Session' : 'Committee Workflow'} title="위원회 심의 진행" action={<Badge tone={stage === 'running' ? 'hanwha' : stage === 'done' ? 'up' : 'neutral'} dot>{stage === 'running' ? <span className="animate-pulse-soft">LIVE</span> : stage === 'done' ? 'Complete' : 'Ready'}</Badge>}>
-        <PipelineProgress activePhase={stage === 'idle' ? -1 : activePhase} />
+        <PipelineProgress activePhase={stage === 'running' ? activePhase : stage === 'done' ? PIPELINE.length : -1} />
         {stage === 'running' && (
           <>
             <div className="mt-4 flex items-center gap-2 rounded-chip border border-line bg-canvas/50 px-3 py-2 font-mono text-[11px] text-muted"><Spinner size={13} /><span className="truncate">상태 · {stageMsg || '진행 중'}</span></div>

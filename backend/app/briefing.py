@@ -6,7 +6,73 @@ SITELE_DIR = Path(__file__).resolve().parents[1] / "sitele"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 # 슬롯별 전체 결과를 디스크에 영속화 → 재배포/재시작 후에도 24h 복원(영구 볼륨과 결합).
 _SLOT_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "briefing_cache"
+# 렌더된 PNG 영구 보관 디렉터리(볼륨). sitele/output 은 휘발성이라 재배포 시 사라진다.
+_PNG_VOL_DIR = Path(__file__).resolve().parents[1] / "data" / "briefing_png"
 _SLOT_MAX_AGE = 86400
+
+
+def _persist_pngs(slot: str, out: dict) -> None:
+    """렌더된 PNG(휘발성 sitele/output)를 영구 볼륨으로 복사하고 out 경로를 교체.
+    재배포로 sitele/output 이 비워져도 시황 PNG 가 유지된다(슬롯당 최신 배치만 보관)."""
+    import shutil
+    try:
+        dst_dir = _PNG_VOL_DIR / slot
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        for old in dst_dir.glob("*.png"):
+            try:
+                old.unlink()
+            except Exception:
+                pass
+
+        def _cp(src: str) -> str:
+            if not src or not os.path.exists(src):
+                return src
+            try:
+                dst = dst_dir / os.path.basename(src)
+                shutil.copy2(src, dst)
+                return str(dst)
+            except Exception:
+                return src
+
+        if out.get("png_path"):
+            out["png_path"] = _cp(out["png_path"])
+        if out.get("png_paths"):
+            out["png_paths"] = [_cp(p) for p in out["png_paths"]]
+    except Exception:
+        pass
+
+
+def _send_telegram_png(slot: str, out: dict) -> None:
+    """생성된 시황 PNG 를 텔레그램으로 발송. 토큰/챗ID 가 env 에 있을 때만 동작(시크릿 비커밋)."""
+    token = os.environ.get("ATLAS_TG_BOT_TOKEN", "").strip()
+    chat = os.environ.get("ATLAS_TG_CHAT_ID", "").strip()
+    if not token or not chat:
+        return
+    try:
+        import requests
+        from datetime import datetime as _dt
+        label = {"premarket": "장전 시황", "intraday": "장중 시황",
+                 "close": "마감 시황"}.get(slot, slot)
+        rep = out.get("report") or {}
+        title = str(rep.get("title") or "").strip()
+        caption = f"🏢 한화 ATLAS · {label}\n{_dt.now():%Y-%m-%d %H:%M}" + (f"\n{title}" if title else "")
+        paths = out.get("png_paths") or ([out["png_path"]] if out.get("png_path") else [])
+        sent = False
+        for i, p in enumerate(paths[:3]):
+            if not p or not os.path.exists(p):
+                continue
+            with open(p, "rb") as f:
+                requests.post(
+                    f"https://api.telegram.org/bot{token}/sendPhoto",
+                    data={"chat_id": chat, "caption": caption if i == 0 else ""},
+                    files={"photo": f}, timeout=30)
+            sent = True
+        if not sent:   # PNG 미가용(렌더러 없음 등) → 텍스트라도 발송
+            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                          data={"chat_id": chat, "text": caption}, timeout=15)
+        print(f"[브리핑] 텔레그램 발송 완료 (slot={slot}, photos={len(paths)})")
+    except Exception as e:
+        print(f"[WARN] 텔레그램 발송 실패: {e}")
 
 
 def save_slot_cache(slot: str, out: dict) -> None:
@@ -446,8 +512,10 @@ def run_briefing(slot: str) -> dict:
             except Exception:
                 pass
 
+        _persist_pngs(slot, out)   # PNG 를 볼륨으로 복사 + out 경로 교체(영속)
         _set_latest(out)
         save_slot_cache(slot, out)
+        _send_telegram_png(slot, out)   # 생성 시마다 텔레그램으로 PNG 발송(env 설정 시)
         return out
 
     except Exception as e:
