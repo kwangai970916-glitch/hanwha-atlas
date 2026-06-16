@@ -1,9 +1,41 @@
 from __future__ import annotations
-import sys, os, glob, importlib
+import sys, os, glob, importlib, json, time
 from pathlib import Path
 
 SITELE_DIR = Path(__file__).resolve().parents[1] / "sitele"
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# 슬롯별 전체 결과를 디스크에 영속화 → 재배포/재시작 후에도 24h 복원(영구 볼륨과 결합).
+_SLOT_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "briefing_cache"
+_SLOT_MAX_AGE = 86400
+
+
+def save_slot_cache(slot: str, out: dict) -> None:
+    """성공한 슬롯 결과 전체(report/sections/png/interactive)를 디스크에 저장."""
+    try:
+        if not (isinstance(out, dict) and out.get("success")):
+            return
+        _SLOT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        rec = dict(out)
+        rec.setdefault("_cached_at", time.time())
+        (_SLOT_CACHE_DIR / f"{slot}.json").write_text(
+            json.dumps(rec, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def load_slot_cache(slot: str, max_age: float = _SLOT_MAX_AGE) -> "dict | None":
+    """24h 이내 디스크 저장 슬롯 결과를 복원(없으면 None)."""
+    try:
+        p = _SLOT_CACHE_DIR / f"{slot}.json"
+        if not p.exists():
+            return None
+        rec = json.loads(p.read_text(encoding="utf-8"))
+        ts = float(rec.get("_cached_at") or 0)
+        if rec.get("success") and ts and (time.time() - ts) < max_age:
+            return rec
+    except Exception:
+        pass
+    return None
 # 위원회 엔진 쪽에 실제 키가 들어있는 .env (MIMO/ANTHROPIC/OPENAI/ALPHA_VANTAGE 등)
 COMMITTEE_ENV = REPO_ROOT / "committee_engine" / "TradingAgents" / ".env"
 
@@ -28,6 +60,15 @@ def get_latest_briefing() -> dict:
     없으면 발송 이력(png/요약)으로 최소 폴백. 둘 다 없으면 available=False."""
     if _LATEST_RESULT:
         return _LATEST_RESULT
+    # 디스크 슬롯 캐시(재배포 후에도 24h 복원) — 가장 최근 것
+    newest = None
+    for s in ("premarket", "intraday", "close"):
+        rec = load_slot_cache(s)
+        if rec and (newest is None or
+                    float(rec.get("_cached_at", 0)) > float(newest.get("_cached_at", 0))):
+            newest = rec
+    if newest:
+        return newest
     try:
         from app.briefing_history import list_history
     except Exception:
@@ -406,6 +447,7 @@ def run_briefing(slot: str) -> dict:
                 pass
 
         _set_latest(out)
+        save_slot_cache(slot, out)
         return out
 
     except Exception as e:

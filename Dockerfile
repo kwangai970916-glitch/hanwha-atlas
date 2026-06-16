@@ -42,6 +42,10 @@ RUN (python -m playwright install --with-deps chromium \
 COPY backend/ backend/
 COPY --from=frontend /fe/dist frontend/dist
 
+# 동봉 데이터 스냅샷 — backend/data 에 영구 볼륨을 mount 하면 첫 부팅 때 가려지므로
+# 볼륨 밖 경로(_data_seed)에 떠 둔다. 런타임에 _restore_data_seed 가 누락분만 복원.
+RUN cp -r backend/data backend/_data_seed
+
 EXPOSE 8000
 # Railway/Render 가 주입하는 $PORT 를 사용, 없으면 8000
 CMD ["sh", "-c", "uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT:-8000}"]

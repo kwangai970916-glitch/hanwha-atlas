@@ -838,6 +838,44 @@ def pnl_news(codes: str = ""):
 
 
 # ---------------------------------------------------------------------------
+# 영구 볼륨 seed 복원
+# ---------------------------------------------------------------------------
+# Railway 영구 볼륨을 backend/data 에 mount 하면 첫 부팅 때 비어 있어 이미지에
+# 동봉된 seed/마스터파일이 가려진다. 이미지 빌드 시 backend/_data_seed 에 떠 둔
+# 스냅샷에서 누락분만 복원한다(생성물은 볼륨에 영속). best-effort.
+def _restore_data_seed() -> None:
+    import shutil
+    from pathlib import Path as _P
+    base = _P(__file__).resolve().parents[1]          # backend/
+    src_root, dst_root = base / "_data_seed", base / "data"
+    if not src_root.is_dir():
+        return
+    rels = [
+        "committee_runs/seed", "idea_committee_runs/seed",
+        "idea_committee_runs/_seed_build", "idea_history.json",
+        "주간주식시황_V10_마스터파일.xlsx",
+    ]
+    for rel in rels:
+        try:
+            src, dst = src_root / rel, dst_root / rel
+            if not src.exists() or dst.exists():
+                continue
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            if src.is_dir():
+                shutil.copytree(src, dst)
+            else:
+                shutil.copy2(src, dst)
+        except Exception:
+            pass
+
+
+try:
+    _restore_data_seed()
+except Exception:
+    pass
+
+
+# ---------------------------------------------------------------------------
 # Briefing agent
 # ---------------------------------------------------------------------------
 
@@ -925,6 +963,14 @@ async def trigger_briefing(slot: str, background_tasks: BackgroundTasks, force: 
                 return {"status": "cached", "slot": slot, "age_sec": int(age)}
         except Exception:
             pass
+    # 인메모리 미스(재배포 직후 등) → 디스크 24h 캐시 복원
+    if not force:
+        from .briefing import load_slot_cache
+        disk = load_slot_cache(slot)
+        if disk:
+            _briefing_cache[slot] = disk
+            return {"status": "cached", "slot": slot,
+                    "age_sec": int(time.time() - float(disk.get("_cached_at", 0)))}
     _briefing_cache[slot] = {"status": "running"}
     def _run():
         from .briefing import run_briefing
@@ -938,7 +984,16 @@ async def trigger_briefing(slot: str, background_tasks: BackgroundTasks, force: 
 
 @app.get("/api/briefing/{slot}/status")
 def briefing_status(slot: str):
-    return _briefing_cache.get(slot, {"status": "idle"})
+    cur = _briefing_cache.get(slot)
+    if cur is not None:
+        return cur
+    # 인메모리 미스 → 디스크 24h 캐시 복원(재배포 후 탭 진입 시 직전 결과 표시)
+    from .briefing import load_slot_cache
+    disk = load_slot_cache(slot)
+    if disk:
+        _briefing_cache[slot] = disk
+        return disk
+    return {"status": "idle"}
 
 
 @app.get("/api/briefing/{slot}/png")
