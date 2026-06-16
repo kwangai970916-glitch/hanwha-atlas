@@ -102,7 +102,7 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
       .then(x => x.json())
       .then((d) => {
         if (cancelled || autoloadedRef.current) return
-        if (d && d.reports && Object.keys(d.reports).length) {
+        if (d && !d.is_seed && d.reports && Object.keys(d.reports).length) {
           autoloadedRef.current = true
           setResult(d as Result)
           setActiveReport(d.reports.final_trade_decision ? 'final_trade_decision' : (REPORT_TABS.find(t => d.reports[t.id])?.id ?? 'final_trade_decision'))
@@ -125,7 +125,7 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
     setStderrMsg('')
     try {
       const d = await fetch(`${apiBase}/api/committee/latest`).then(x => x.json())
-      if (d && d.reports && Object.keys(d.reports).length) {
+      if (d && !d.is_seed && d.reports && Object.keys(d.reports).length) {
         setResult(d as Result)
         setActiveReport(d.reports.final_trade_decision ? 'final_trade_decision' : (REPORT_TABS.find(t => d.reports[t.id])?.id ?? 'final_trade_decision'))
         setStage('done')
