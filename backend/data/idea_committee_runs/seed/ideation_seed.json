@@ -1,0 +1,997 @@
+{
+  "generated_at": "2026-06-09T20:48:32+09:00",
+  "horizon_months": 3,
+  "keywords": "AI 반도체 전력망 방산",
+  "engine": "ideation_committee",
+  "market_regime": {
+    "label": "Selective risk-on",
+    "summary": "변동성·환율·지수가 위험선호에 우호적입니다. 다만 테마 간 점수 편차가 커, 지수 베팅보다 테마 확산·뉴스·수급 연속성이 더 중요합니다.",
+    "rationale": [
+      "VIX 18.1 → 중립 변동성",
+      "USD/KRW -1.95% → 환율 변동 보통",
+      "지수 평균 +7.19% → 시장 상방",
+      "테마 컴포짓 점수 분산 15p → 테마 간 차별화가 커 지수보다 선별적 접근 유리"
+    ],
+    "data_basis": [
+      "VIX 18.1 → 중립 변동성",
+      "USD/KRW -1.95% → 환율 변동 보통",
+      "지수 평균 +7.19% → 시장 상방",
+      "테마 컴포짓 점수 분산 15p → 테마 간 차별화가 커 지수보다 선별적 접근 유리"
+    ],
+    "macro_points": [
+      "VIX 18.1 — 변동성 중립",
+      "USD/KRW -1.95% — 환율/금리 급변 여부 확인",
+      "AI·인프라 CAPEX 지속 여부",
+      "정책/수주 뉴스 민감도"
+    ],
+    "inputs": {
+      "vix": 18.06,
+      "usdkrw_change_pct": -1.95,
+      "kospi_change_pct": 8.18,
+      "kosdaq_change_pct": 6.19,
+      "theme_spread": 15
+    },
+    "tilt": "risk-on",
+    "selective": true,
+    "source": "rules",
+    "news_keywords": [
+      "risk-on",
+      "원화 안정",
+      "AI capex",
+      "전력수요",
+      "인프라 투자",
+      "미국 CAPEX"
+    ]
+  },
+  "macro_flow": {
+    "stage": "macro",
+    "label": "Selective risk-on",
+    "score": null,
+    "summary": "변동성·환율·지수가 위험선호에 우호적입니다. 다만 테마 간 점수 편차가 커, 지수 베팅보다 테마 확산·뉴스·수급 연속성이 더 중요합니다.",
+    "keywords": [
+      "risk-on",
+      "원화 안정",
+      "AI capex",
+      "전력수요",
+      "인프라 투자",
+      "미국 CAPEX"
+    ],
+    "signals": [
+      "VIX 18.1 — 변동성 중립",
+      "USD/KRW -1.95% — 환율/금리 급변 여부 확인",
+      "AI·인프라 CAPEX 지속 여부",
+      "정책/수주 뉴스 민감도"
+    ],
+    "source": "rules"
+  },
+  "sector_flow": [
+    {
+      "stage": "sector",
+      "sector": "반도체",
+      "theme": "반도체 AI 인프라",
+      "score": 79,
+      "news_score": 88,
+      "change": null,
+      "foreign_flow": null,
+      "macro_tags": [
+        "risk-on",
+        "원화 안정",
+        "AI capex"
+      ],
+      "why": "반도체 AI 인프라은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다.",
+      "representatives": [
+        {
+          "symbol": "000660",
+          "name": "SK하이닉스",
+          "score": 79
+        },
+        {
+          "symbol": "005930",
+          "name": "삼성전자",
+          "score": 79
+        }
+      ]
+    },
+    {
+      "stage": "sector",
+      "sector": "전력기기",
+      "theme": "전력기기·전력망",
+      "score": 64,
+      "news_score": 88,
+      "change": null,
+      "foreign_flow": null,
+      "macro_tags": [
+        "전력수요",
+        "인프라 투자",
+        "미국 CAPEX"
+      ],
+      "why": "전력기기·전력망은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다.",
+      "representatives": [
+        {
+          "symbol": "267260",
+          "name": "HD현대일렉트릭",
+          "score": 62
+        },
+        {
+          "symbol": "010120",
+          "name": "LS ELECTRIC",
+          "score": 66
+        }
+      ]
+    },
+    {
+      "stage": "sector",
+      "sector": "방산",
+      "theme": "방산·우주",
+      "score": 64,
+      "news_score": 88,
+      "change": null,
+      "foreign_flow": null,
+      "macro_tags": [
+        "지정학",
+        "수출 수주",
+        "국방 예산"
+      ],
+      "why": "방산·우주은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다.",
+      "representatives": [
+        {
+          "symbol": "012450",
+          "name": "한화에어로스페이스",
+          "score": 61
+        },
+        {
+          "symbol": "079550",
+          "name": "LIG넥스원",
+          "score": 67
+        }
+      ]
+    }
+  ],
+  "themes": [
+    {
+      "theme": "반도체 AI 인프라",
+      "sector": "반도체",
+      "score": 79,
+      "macro_tags": [
+        "risk-on",
+        "원화 안정",
+        "AI capex"
+      ],
+      "representatives": [
+        {
+          "symbol": "000660",
+          "name": "SK하이닉스",
+          "score": 79
+        },
+        {
+          "symbol": "005930",
+          "name": "삼성전자",
+          "score": 79
+        }
+      ],
+      "top_factors": [
+        [
+          "chart",
+          100
+        ],
+        [
+          "news",
+          88
+        ],
+        [
+          "supply_demand",
+          83
+        ]
+      ],
+      "commentary": "반도체 AI 인프라은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다."
+    },
+    {
+      "theme": "전력기기·전력망",
+      "sector": "전력기기",
+      "score": 64,
+      "macro_tags": [
+        "전력수요",
+        "인프라 투자",
+        "미국 CAPEX"
+      ],
+      "representatives": [
+        {
+          "symbol": "267260",
+          "name": "HD현대일렉트릭",
+          "score": 62
+        },
+        {
+          "symbol": "010120",
+          "name": "LS ELECTRIC",
+          "score": 66
+        }
+      ],
+      "top_factors": [
+        [
+          "news",
+          88
+        ],
+        [
+          "macro",
+          75
+        ],
+        [
+          "supply_demand",
+          74
+        ]
+      ],
+      "commentary": "전력기기·전력망은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다."
+    },
+    {
+      "theme": "방산·우주",
+      "sector": "방산",
+      "score": 64,
+      "macro_tags": [
+        "지정학",
+        "수출 수주",
+        "국방 예산"
+      ],
+      "representatives": [
+        {
+          "symbol": "012450",
+          "name": "한화에어로스페이스",
+          "score": 61
+        },
+        {
+          "symbol": "079550",
+          "name": "LIG넥스원",
+          "score": 67
+        }
+      ],
+      "top_factors": [
+        [
+          "news",
+          88
+        ],
+        [
+          "macro",
+          74
+        ],
+        [
+          "valuation",
+          70
+        ]
+      ],
+      "commentary": "방산·우주은(는) 차트·뉴스·매크로가 함께 움직이는지 확인할 가치가 있습니다."
+    }
+  ],
+  "top_picks": [
+    {
+      "pick_id": "000660-2026-06-09",
+      "symbol": "000660",
+      "name": "SK하이닉스",
+      "sector": "반도체",
+      "theme": "반도체 AI 인프라",
+      "score": 79,
+      "discovery_score": 79,
+      "conviction_score": 79,
+      "factor_scores": {
+        "chart": 100,
+        "supply_demand": 83,
+        "news": 88,
+        "macro": 75,
+        "valuation": 68,
+        "risk": 54
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 62.8,
+        "ma20_pct": 8.5,
+        "reason": "RSI 62.8 · 이평 대비 +8.5%"
+      },
+      "thesis": "SK하이닉스에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +131.94%",
+      "route": [
+        "Selective risk-on",
+        "반도체",
+        "반도체 AI 인프라",
+        "SK하이닉스(000660)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    },
+    {
+      "pick_id": "005930-2026-06-09",
+      "symbol": "005930",
+      "name": "삼성전자",
+      "sector": "반도체",
+      "theme": "반도체 AI 인프라",
+      "score": 79,
+      "discovery_score": 79,
+      "conviction_score": 79,
+      "factor_scores": {
+        "chart": 100,
+        "supply_demand": 72,
+        "news": 88,
+        "macro": 74,
+        "valuation": 74,
+        "risk": 60
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 59.7,
+        "ma20_pct": 6.1,
+        "reason": "RSI 59.7 · 이평 대비 +6.1%"
+      },
+      "thesis": "삼성전자에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +69.47%",
+      "route": [
+        "Selective risk-on",
+        "반도체",
+        "반도체 AI 인프라",
+        "삼성전자(005930)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    },
+    {
+      "pick_id": "010120-2026-06-09",
+      "symbol": "010120",
+      "name": "LS ELECTRIC",
+      "sector": "전력기기",
+      "theme": "전력기기·전력망",
+      "score": 66,
+      "discovery_score": 66,
+      "conviction_score": 66,
+      "factor_scores": {
+        "chart": 40,
+        "supply_demand": 74,
+        "news": 88,
+        "macro": 75,
+        "valuation": 66,
+        "risk": 55
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 41.5,
+        "ma20_pct": -14.6,
+        "reason": "RSI 41.5 · 이평 대비 -14.6%"
+      },
+      "thesis": "LS ELECTRIC에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +52.01%",
+      "route": [
+        "Selective risk-on",
+        "전력기기",
+        "전력기기·전력망",
+        "LS ELECTRIC(010120)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    },
+    {
+      "pick_id": "267260-2026-06-09",
+      "symbol": "267260",
+      "name": "HD현대일렉트릭",
+      "sector": "전력기기",
+      "theme": "전력기기·전력망",
+      "score": 62,
+      "discovery_score": 62,
+      "conviction_score": 62,
+      "factor_scores": {
+        "chart": 13,
+        "supply_demand": 78,
+        "news": 88,
+        "macro": 76,
+        "valuation": 62,
+        "risk": 54
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 32.3,
+        "ma20_pct": -15.0,
+        "reason": "RSI 32.3 · 이평 대비 -15.0%"
+      },
+      "thesis": "HD현대일렉트릭에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +0.53%",
+      "route": [
+        "Selective risk-on",
+        "전력기기",
+        "전력기기·전력망",
+        "HD현대일렉트릭(267260)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    }
+  ],
+  "stock_candidates": [
+    {
+      "pick_id": "000660-2026-06-09",
+      "symbol": "000660",
+      "name": "SK하이닉스",
+      "sector": "반도체",
+      "theme": "반도체 AI 인프라",
+      "score": 79,
+      "discovery_score": 79,
+      "conviction_score": 79,
+      "factor_scores": {
+        "chart": 100,
+        "supply_demand": 83,
+        "news": 88,
+        "macro": 75,
+        "valuation": 68,
+        "risk": 54
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 62.8,
+        "ma20_pct": 8.5,
+        "reason": "RSI 62.8 · 이평 대비 +8.5%"
+      },
+      "thesis": "SK하이닉스에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +131.94%",
+      "route": [
+        "Selective risk-on",
+        "반도체",
+        "반도체 AI 인프라",
+        "SK하이닉스(000660)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    },
+    {
+      "pick_id": "005930-2026-06-09",
+      "symbol": "005930",
+      "name": "삼성전자",
+      "sector": "반도체",
+      "theme": "반도체 AI 인프라",
+      "score": 79,
+      "discovery_score": 79,
+      "conviction_score": 79,
+      "factor_scores": {
+        "chart": 100,
+        "supply_demand": 72,
+        "news": 88,
+        "macro": 74,
+        "valuation": 74,
+        "risk": 60
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 59.7,
+        "ma20_pct": 6.1,
+        "reason": "RSI 59.7 · 이평 대비 +6.1%"
+      },
+      "thesis": "삼성전자에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +69.47%",
+      "route": [
+        "Selective risk-on",
+        "반도체",
+        "반도체 AI 인프라",
+        "삼성전자(005930)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    },
+    {
+      "pick_id": "010120-2026-06-09",
+      "symbol": "010120",
+      "name": "LS ELECTRIC",
+      "sector": "전력기기",
+      "theme": "전력기기·전력망",
+      "score": 66,
+      "discovery_score": 66,
+      "conviction_score": 66,
+      "factor_scores": {
+        "chart": 40,
+        "supply_demand": 74,
+        "news": 88,
+        "macro": 75,
+        "valuation": 66,
+        "risk": 55
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 41.5,
+        "ma20_pct": -14.6,
+        "reason": "RSI 41.5 · 이평 대비 -14.6%"
+      },
+      "thesis": "LS ELECTRIC에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +52.01%",
+      "route": [
+        "Selective risk-on",
+        "전력기기",
+        "전력기기·전력망",
+        "LS ELECTRIC(010120)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    },
+    {
+      "pick_id": "267260-2026-06-09",
+      "symbol": "267260",
+      "name": "HD현대일렉트릭",
+      "sector": "전력기기",
+      "theme": "전력기기·전력망",
+      "score": 62,
+      "discovery_score": 62,
+      "conviction_score": 62,
+      "factor_scores": {
+        "chart": 13,
+        "supply_demand": 78,
+        "news": 88,
+        "macro": 76,
+        "valuation": 62,
+        "risk": 54
+      },
+      "timing_signal": {
+        "signal": "enter",
+        "rsi": 32.3,
+        "ma20_pct": -15.0,
+        "reason": "RSI 32.3 · 이평 대비 -15.0%"
+      },
+      "thesis": "HD현대일렉트릭에 대해 수집된 실데이터(시세·밸류에이션·수급·뉴스)를 종합하면, 가격 모멘텀과 수급·밸류에이션 신호를 합산한 규칙기반 판단은 '보유'입니다. LLM 생성이 불가하여 정량 규칙으로 산출된 보조 결론이며, evidence의 출처·수치를 검토 후 운용역 판단으로 확정하십시오.",
+      "why_now": "최근 3개월 가격 모멘텀 +0.53%",
+      "route": [
+        "Selective risk-on",
+        "전력기기",
+        "전력기기·전력망",
+        "HD현대일렉트릭(267260)"
+      ],
+      "counter_evidence": [],
+      "checklist": [
+        "거래대금 상위권 유지 확인",
+        "외국인/기관 수급 연속성 확인",
+        "뉴스/공시가 실적 추정으로 연결되는지 확인"
+      ],
+      "evidence": [],
+      "evidence_source": "ideation_committee",
+      "actions": [
+        "save_history",
+        "single_idea",
+        "backtest",
+        "committee"
+      ]
+    }
+  ],
+  "news_flow": [
+    {
+      "title": "미국 AI 인프라 투자 확대 기대 지속",
+      "source": "Sample News",
+      "published_at": "2026-05-27T07:10:00+09:00",
+      "symbols": [
+        "005930",
+        "000660"
+      ],
+      "stage": "stock"
+    },
+    {
+      "title": "전력망 투자 사이클 장기화 전망",
+      "source": "Sample News",
+      "published_at": "2026-05-27T07:20:00+09:00",
+      "symbols": [
+        "267260"
+      ],
+      "stage": "stock"
+    }
+  ],
+  "committee_minutes": [
+    {
+      "agent": "Macro PM",
+      "stage": "discovery",
+      "text": "Selective risk-on · 변동성·환율·지수가 위험선호에 우호적입니다. 다만 테마 간 점수 편차가 커, 지수 베팅보다 테마 확산·뉴스·수급 연속성이 더 중요합니다.",
+      "source": "rules",
+      "icon": "activity"
+    },
+    {
+      "agent": "발굴 스카우트",
+      "stage": "discovery",
+      "text": "3개 레인·5개 후보를 live 데이터로 발굴했습니다.",
+      "source": "live",
+      "icon": "activity"
+    },
+    {
+      "agent": "Bull 리서처",
+      "stage": "sector_debate",
+      "text": "반도체, 전력기기 레인이 뉴스·매크로와 함께 움직여 유망합니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "Bear 리서처",
+      "stage": "sector_debate",
+      "text": "전력기기 레인은 과열·근거 부족 위험이 있습니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "Bull 리서처",
+      "stage": "sector_debate",
+      "text": "반도체, 전력기기 레인이 뉴스·매크로와 함께 움직여 유망합니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "Bear 리서처",
+      "stage": "sector_debate",
+      "text": "전력기기 레인은 과열·근거 부족 위험이 있습니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "리서치 매니저",
+      "stage": "sector_debate",
+      "text": "반도체, 전력기기 레인을 우선 검토 대상으로 채택합니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "스톡피커",
+      "stage": "nomination",
+      "text": "반도체 레인에서 SK하이닉스, 삼성전자을(를) 상정합니다.",
+      "source": "rules",
+      "icon": "target"
+    },
+    {
+      "agent": "스톡피커",
+      "stage": "nomination",
+      "text": "전력기기 레인에서 LS ELECTRIC, HD현대일렉트릭을(를) 상정합니다.",
+      "source": "rules",
+      "icon": "target"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "SK하이닉스 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "SK하이닉스의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "SK하이닉스은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "삼성전자 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "삼성전자의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "삼성전자은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "LS ELECTRIC 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "LS ELECTRIC의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "LS ELECTRIC은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "HD현대일렉트릭 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "HD현대일렉트릭의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "HD현대일렉트릭은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "리스크 매니저",
+      "stage": "risk_review",
+      "text": "리스크 심의를 통과했습니다. 분할 진입을 권고합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "PM 의장",
+      "stage": "decision",
+      "text": "4개 후보를 채택하고 보류 0건을 반영했습니다.",
+      "source": "rules",
+      "icon": "gavel"
+    }
+  ],
+  "transcript": [
+    {
+      "agent": "Macro PM",
+      "stage": "discovery",
+      "text": "Selective risk-on · 변동성·환율·지수가 위험선호에 우호적입니다. 다만 테마 간 점수 편차가 커, 지수 베팅보다 테마 확산·뉴스·수급 연속성이 더 중요합니다.",
+      "source": "rules",
+      "icon": "activity"
+    },
+    {
+      "agent": "발굴 스카우트",
+      "stage": "discovery",
+      "text": "3개 레인·5개 후보를 live 데이터로 발굴했습니다.",
+      "source": "live",
+      "icon": "activity"
+    },
+    {
+      "agent": "Bull 리서처",
+      "stage": "sector_debate",
+      "text": "반도체, 전력기기 레인이 뉴스·매크로와 함께 움직여 유망합니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "Bear 리서처",
+      "stage": "sector_debate",
+      "text": "전력기기 레인은 과열·근거 부족 위험이 있습니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "Bull 리서처",
+      "stage": "sector_debate",
+      "text": "반도체, 전력기기 레인이 뉴스·매크로와 함께 움직여 유망합니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "Bear 리서처",
+      "stage": "sector_debate",
+      "text": "전력기기 레인은 과열·근거 부족 위험이 있습니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "리서치 매니저",
+      "stage": "sector_debate",
+      "text": "반도체, 전력기기 레인을 우선 검토 대상으로 채택합니다.",
+      "source": "rules",
+      "icon": "git-branch"
+    },
+    {
+      "agent": "스톡피커",
+      "stage": "nomination",
+      "text": "반도체 레인에서 SK하이닉스, 삼성전자을(를) 상정합니다.",
+      "source": "rules",
+      "icon": "target"
+    },
+    {
+      "agent": "스톡피커",
+      "stage": "nomination",
+      "text": "전력기기 레인에서 LS ELECTRIC, HD현대일렉트릭을(를) 상정합니다.",
+      "source": "rules",
+      "icon": "target"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "SK하이닉스 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "SK하이닉스의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "SK하이닉스은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "삼성전자 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "삼성전자의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "삼성전자은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "LS ELECTRIC 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "LS ELECTRIC의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "LS ELECTRIC은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "공격 심의역",
+      "stage": "risk_review",
+      "text": "HD현대일렉트릭 모멘텀이 살아있어 상방 여지가 있습니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "보수 심의역",
+      "stage": "risk_review",
+      "text": "HD현대일렉트릭의 하방·변동성을 점검해야 합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "중립 심의역",
+      "stage": "risk_review",
+      "text": "HD현대일렉트릭은 분할 진입·손절선 설정 전제로 검토 가능합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "리스크 매니저",
+      "stage": "risk_review",
+      "text": "리스크 심의를 통과했습니다. 분할 진입을 권고합니다.",
+      "source": "rules",
+      "icon": "shield"
+    },
+    {
+      "agent": "PM 의장",
+      "stage": "decision",
+      "text": "4개 후보를 채택하고 보류 0건을 반영했습니다.",
+      "source": "rules",
+      "icon": "gavel"
+    }
+  ],
+  "pipeline": {
+    "summary": "Selective risk-on 국면에서 위원회가 4개 후보를 채택했습니다.",
+    "stages": [
+      "Macro",
+      "Sector",
+      "Stock"
+    ]
+  },
+  "data_quality": {
+    "mode": "live",
+    "regime_source": "rules",
+    "warnings": [
+      "실데이터 발굴 + 멀티에이전트 토론. LLM/데이터 실패 시 룰기반 폴백."
+    ]
+  }
+}
