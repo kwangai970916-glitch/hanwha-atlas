@@ -112,10 +112,10 @@ export function GenerationStepper({ elapsed, slotLabel }: { elapsed: number; slo
                 <span className="font-mono text-[11px] font-semibold tabular-nums text-muted">{String(idx + 1).padStart(2, '0')}/03</span>
               </div>
 
-              <div className="relative mb-3 grid h-44 place-items-center overflow-hidden rounded-card bg-card/30 pb-3 pt-2">
+              <div className="relative mb-3 grid aspect-[360/214] w-full place-items-center overflow-hidden rounded-card bg-card/30 p-2">
                 {isActive && (
                   <motion.span
-                    className="absolute inset-x-6 bottom-2 h-px rounded-full bg-hanwha/80"
+                    className="absolute inset-x-6 bottom-3 h-px rounded-full bg-hanwha/80"
                     animate={{ scaleX: [0.15, 1, 0.15], opacity: [0.35, 1, 0.35] }}
                     transition={{ repeat: Infinity, duration: 0.95, ease: 'easeInOut' }}
                   />
@@ -126,7 +126,7 @@ export function GenerationStepper({ elapsed, slotLabel }: { elapsed: number; slo
                   aria-hidden="true"
                   loading="lazy"
                   decoding="async"
-                  className={['h-full w-full object-contain transition-opacity', isPending ? 'opacity-35 grayscale' : 'opacity-100'].join(' ')}
+                  className={['h-full w-full object-contain object-bottom transition-opacity', isPending ? 'opacity-35 grayscale' : 'opacity-100'].join(' ')}
                   animate={isActive ? { scale: [1, 1.045, 1] } : { scale: 1 }}
                   transition={isActive ? { repeat: Infinity, duration: 1.35, ease: 'easeInOut' } : {}}
                 />

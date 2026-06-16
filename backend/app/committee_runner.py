@@ -1,13 +1,14 @@
 # backend/app/committee_runner.py
 """TradingAgents 위원회를 subprocess로 실행/추적한다."""
 from __future__ import annotations
-import json, subprocess, threading, datetime as dt
+import json, subprocess, threading, time, datetime as dt
 from pathlib import Path
 
 # 격리 복사본을 사용한다. 원본 (20260115)CLAUDE AI INVESTMENT COMITIEE 프로젝트는 건드리지 않는다.
 TA_DIR = Path(__file__).resolve().parents[2] / "committee_engine" / "TradingAgents"
 TA_PY  = TA_DIR / ".venv" / "Scripts" / "python.exe"
 OUT_ROOT = Path(__file__).resolve().parents[1] / "data" / "committee_runs"
+FRESH_SEC = 86400  # latest 심의 결과를 24시간 동안 유지
 
 _jobs: dict[str, dict] = {}   # job_id -> {ticker, status, out_dir}
 
@@ -148,11 +149,15 @@ def _shape_result(payload: dict, is_seed: bool) -> dict:
         }
     else:
         ko_decision = payload.get("decision")
+    transcript = payload.get("transcript")
+    if not isinstance(transcript, list):
+        transcript = []
     return {
         "ticker": payload.get("ticker"),
         "input": payload.get("input"),
         "decision": ko_decision,
         "reports": reports,
+        "transcript": transcript,
         "is_seed": is_seed,
         "language": "ko" if is_seed and language != "ko" else language,
     }
@@ -171,16 +176,18 @@ def get_latest_result() -> dict:
 
     반환: {ticker, input, decision, reports, is_seed} 또는 {"available": False}.
     """
-    # 1) 라이브 done 잡 (이 세션이 추적 중인 _jobs 기준, mtime 내림차순)
+    # 1) 24h 이내 done 잡 — 디스크(OUT_ROOT) 직접 스캔이라 재배포(_jobs 소실) 후에도 복원
     try:
-        live_dirs = [
-            Path(job["out_dir"]) for job in _jobs.values()
-            if job.get("out_dir")
-        ]
-        done_dirs = [d for d in live_dirs if d.is_dir() and _dir_is_done(d)]
-        done_dirs.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        done_dirs = []
+        if OUT_ROOT.exists():
+            for d in OUT_ROOT.iterdir():
+                if d.is_dir() and d != SEED_DIR and _dir_is_done(d):
+                    done_dirs.append(d)
+        done_dirs.sort(key=lambda p: (p / "decision.json").stat().st_mtime, reverse=True)
         for d in done_dirs:
             try:
+                if time.time() - (d / "decision.json").stat().st_mtime >= FRESH_SEC:
+                    break  # 최신본도 24h 경과 → seed 로 폴백
                 payload = json.loads((d / "decision.json").read_text(encoding="utf-8"))
                 return _shape_result(payload, is_seed=False)
             except Exception:

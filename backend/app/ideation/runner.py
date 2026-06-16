@@ -2,6 +2,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import threading
+import time
 import traceback
 from pathlib import Path
 from typing import Any, Dict
@@ -13,6 +14,7 @@ OUT_ROOT = Path(__file__).resolve().parents[2] / 'data' / 'idea_committee_runs'
 SEED_DIR = OUT_ROOT / 'seed'
 WATCHDOG_SEC = 600
 MAX_DONE_JOBS = 50
+FRESH_SEC = 86400  # latest 결과를 24시간 동안 유지(브리핑 24h 캐시와 동일 정책)
 
 _jobs: Dict[str, Dict[str, Any]] = {}
 _jobs_lock = threading.Lock()
@@ -125,25 +127,31 @@ def get_result(job_id: str) -> Dict[str, Any]:
 
 
 def get_latest_result() -> Dict[str, Any]:
-    """최근 done job → 없으면 seed 폴백(데모 빈화면 방지)."""
+    """24시간 이내 가장 최근 done job → 없으면 seed 폴백(데모 빈화면 방지).
+
+    디스크(OUT_ROOT)를 직접 스캔하므로 서버 재시작으로 _jobs 가 비워져도
+    직전 결과가 24시간 동안 복원된다(이전엔 in-memory 만 봐서 재배포 후 seed 로 떨어졌음).
+    """
     try:
         done = []
-        with _jobs_lock:
-            jobs_snapshot = list(_jobs.values())
-        for job in jobs_snapshot:
-            d = Path(job['out_dir'])
-            sp, dp = d / 'status.json', d / 'decision.json'
-            if sp.exists() and dp.exists():
+        if OUT_ROOT.exists():
+            for d in OUT_ROOT.iterdir():
+                if not d.is_dir() or d == SEED_DIR:
+                    continue
+                sp, dp = d / 'status.json', d / 'decision.json'
+                if not (sp.exists() and dp.exists()):
+                    continue
                 try:
-                    stg = json.loads(sp.read_text(encoding='utf-8')).get('stage')
-                    if stg == 'done':
-                        done.append(d)
+                    if json.loads(sp.read_text(encoding='utf-8')).get('stage') == 'done':
+                        done.append(dp)
                 except Exception:
                     pass
         done.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-        for d in done:
+        for dp in done:
             try:
-                return json.loads((d / 'decision.json').read_text(encoding='utf-8'))
+                if time.time() - dp.stat().st_mtime < FRESH_SEC:
+                    return json.loads(dp.read_text(encoding='utf-8'))
+                break  # 최신본도 24h 경과 → seed 로 폴백
             except Exception:
                 continue
     except Exception:

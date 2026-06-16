@@ -41,7 +41,7 @@ const PIPELINE: ReadonlyArray<{ key: string; label: string; icon: ReactNode; age
   { key: 'decision', label: '트레이딩·최종결정', icon: <Gavel size={15} />, agents: ['트레이더', '포트폴리오 매니저', '의장'], image: '/illustrations/process/committee-decision-agent.png' },
 ]
 
-type Result = { ticker: string; input: string; is_kr: boolean; decision: string; reports: Record<string, string> }
+type Result = { ticker: string; input: string; is_kr: boolean; decision: string; reports: Record<string, string>; transcript?: AgentMessage[] }
 type Stage = 'idle' | 'running' | 'done' | 'error'
 
 const STAGE_TO_PHASE: Record<string, number> = { starting: 0, analysts: 0, research_debate: 1, risk_debate: 2, decision: 3, done: 3 }
@@ -280,6 +280,11 @@ export function AICommittee({ apiBase, presetTicker }: { apiBase: string; preset
             <div className={cn('flex items-center gap-2 font-display text-2xl font-bold', vMeta.text)}><CheckCircle2 size={20} />{vMeta.label}</div>
           </div>
           {result.decision && <div className="rounded-card border border-line bg-card-2/30 px-4 py-3"><div className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Decision Raw</div><p className="font-mono text-sm leading-relaxed text-greige">{result.decision}</p></div>}
+          {(messages.length > 0 || (result.transcript?.length ?? 0) > 0) && (
+            <Card eyebrow="Committee Minutes" title="위원회 토론 발언" action={<Badge tone="neutral" dot>{messages.length || result.transcript?.length || 0}건</Badge>}>
+              <LiveFeed messages={messages.length ? messages : (result.transcript ?? [])} feedBottomRef={feedBottomRef} emptyLabel="발언 기록이 없습니다." />
+            </Card>
+          )}
           <Card eyebrow="Committee Reports" title="심의 리포트" noPadding>
             {availableTabs.length === 0 ? <div className="px-5 pb-5"><EmptyState icon={<MessagesSquare size={20} />} title="리포트가 없습니다" description="이번 심의에서 생성된 세부 리포트가 없습니다." /></div> : <><div className="relative flex gap-1 overflow-x-auto border-b border-line px-3">{availableTabs.map(t => <button key={t.id} onClick={() => setActiveReport(t.id)} className={cn('relative inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-xs font-semibold transition-colors', activeReport === t.id ? 'text-hanwha' : 'text-muted hover:text-beige')}>{t.icon}{t.label}{activeReport === t.id && <motion.span layoutId="committeeReportTab" className="absolute inset-x-2 -bottom-px h-0.5 rounded-pill bg-hanwha" />}</button>)}</div><div className="px-5 py-5">{result.reports?.[activeReport] ? <Markdown>{result.reports[activeReport]}</Markdown> : <EmptyState title="해당 리포트 없음" description="선택한 항목의 리포트가 비어 있습니다." />}</div></>}
           </Card>

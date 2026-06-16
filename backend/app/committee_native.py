@@ -365,6 +365,8 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
     status_path = out / "status.json"
     msg_path = out / "messages.jsonl"
     msg_idx = [0]
+    transcript: list = []        # decision.json 에 보존 → 완료/24h 복원 시 라이브피드 재현
+    last_source = ["rules"]      # 직전 speak() 가 LLM/규칙 중 무엇을 썼는지(AI/규칙 배지용)
 
     yf_ticker, is_kr, code, name = _normalize(raw_ticker)
 
@@ -376,14 +378,17 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
              "engine": "native", "ts": dt.datetime.now().isoformat(), **extra},
             ensure_ascii=False), encoding="utf-8")
 
-    def write_msg(agent: str, stage: str, text: str, icon: str = "") -> None:
+    def write_msg(agent: str, stage: str, text: str, icon: str = "",
+                  source: Optional[str] = None) -> None:
         excerpt = _excerpt(text)
         if not excerpt:
             return
         entry = {"idx": msg_idx[0], "ts": dt.datetime.now().isoformat(),
-                 "agent": agent, "stage": stage, "text": excerpt, "icon": icon}
+                 "agent": agent, "stage": stage, "text": excerpt, "icon": icon,
+                 "source": source or last_source[0]}
         with open(str(msg_path), "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        transcript.append(entry)
         msg_idx[0] += 1
 
     write_status("starting")
@@ -399,13 +404,16 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
         def speak(system: str, user: str, fallback: str, max_tokens: int = 1200,
                   pro: bool = False) -> str:
             if not llm_on or fail_streak[0] >= 2:
+                last_source[0] = "rules"
                 return fallback
             model = MIMO_MODEL_PRO if (pro and _USE_PRO) else None
             text, _provider = _chat(system, user, max_tokens=max_tokens, model=model)
             if text:
                 fail_streak[0] = 0
+                last_source[0] = "llm"
                 return text
             fail_streak[0] += 1
+            last_source[0] = "rules"
             return fallback
 
         reports: Dict[str, str] = {}
@@ -517,6 +525,7 @@ def run_native_committee(raw_ticker: str, date: Optional[str], out_dir: str) -> 
         (out / "decision.json").write_text(json.dumps(
             {"ticker": yf_ticker, "input": raw_ticker, "is_kr": is_kr,
              "date": date, "decision": decision, "reports": reports,
+             "transcript": transcript,
              "language": "ko", "engine": "native"},
             ensure_ascii=False), encoding="utf-8")
         write_status("done")
