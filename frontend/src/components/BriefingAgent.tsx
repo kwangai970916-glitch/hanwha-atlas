@@ -29,7 +29,7 @@ const SLOTS = [
 ] as const
 
 export function BriefingAgent({ apiBase }: { apiBase: string }) {
-  const [slot, setSlot] = useState<SlotId>('close')
+  const [slot, setSlot] = useState<SlotId>('premarket')
   const [status, setStatus] = useState<RunStatus>('idle')
   const [result, setResult] = useState<BriefingStatus | null>(null)
   const [error, setError] = useState<string | null>(null)

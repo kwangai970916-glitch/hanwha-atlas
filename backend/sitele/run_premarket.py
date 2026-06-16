@@ -98,11 +98,28 @@ def _collect_premarket_data() -> dict:
         dxy    = _last_close("DX-Y.NYB")
         usdkrw = _last_close("USDKRW=X")
         vix    = _last_close("^VIX")
-        # 국내 지수 직전 종가 — grounding 핵심(이게 없으면 LLM 이 코스피 레벨을 학습통념으로 환각).
-        kospi_lvl  = _last_close("^KS11")
-        kosdaq_lvl = _last_close("^KQ11")
-        if kospi_lvl:  data["kr_indices"]["kospi"]  = {"close": round(kospi_lvl, 2)}
-        if kosdaq_lvl: data["kr_indices"]["kosdaq"] = {"close": round(kosdaq_lvl, 2)}
+        # 국내 지수 — grounding 핵심. 대시보드와 동일 소스(네이버 get_index)를 1순위로 써
+        # 수치 불일치를 방지한다(yfinance ^KS11 은 데이터센터 IP 에서 stale 값을 주는 경우가 있음).
+        try:
+            from app.price_service import get_index
+            for slot_key, idx_name in (("kospi", "KOSPI"), ("kosdaq", "KOSDAQ")):
+                q = get_index(idx_name)
+                px = q.get("price")
+                if px:
+                    entry: dict = {"close": round(float(px), 2)}
+                    if q.get("change_pct") is not None:
+                        entry["change"] = round(float(q["change_pct"]), 2)
+                    data["kr_indices"][slot_key] = entry
+            print(f"[장전] 국내지수(네이버) 수집: {data['kr_indices']}")
+        except Exception as e:
+            print(f"[WARN] price_service 국내지수 실패: {e}")
+        # 폴백: 네이버가 비면 yfinance 직전 종가
+        if not data["kr_indices"].get("kospi"):
+            kospi_lvl = _last_close("^KS11")
+            if kospi_lvl: data["kr_indices"]["kospi"] = {"close": round(kospi_lvl, 2)}
+        if not data["kr_indices"].get("kosdaq"):
+            kosdaq_lvl = _last_close("^KQ11")
+            if kosdaq_lvl: data["kr_indices"]["kosdaq"] = {"close": round(kosdaq_lvl, 2)}
 
         if us10y:  data["rates"]["us10y"]   = round(us10y, 3)
         if dxy:    data["rates"]["dxy"]     = round(dxy,   2)
