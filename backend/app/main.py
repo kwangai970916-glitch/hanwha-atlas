@@ -113,6 +113,11 @@ def _warm_caches() -> None:
             except Exception:
                 pass
         try:
+            from .price_service import _get_kospi_market_rows
+            _get_kospi_market_rows(force_refresh=True)
+        except Exception:
+            pass
+        try:
             from .price_service import get_market_heatmap
             get_market_heatmap()  # 전종목 KOSPI 행 캐시 예열 (히트맵 첫 진입 콜드 방지)
         except Exception:

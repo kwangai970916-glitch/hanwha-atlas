@@ -404,12 +404,13 @@ def _parse_signed_number(text: str) -> Optional[float]:
         return None
 
 
-def _naver_kospi_market_rows() -> List[Dict[str, Any]]:
+def _naver_kospi_market_rows(force_refresh: bool = False) -> List[Dict[str, Any]]:
     """네이버 시가총액 페이지에서 KOSPI 전종목 현재가/등락률을 수집."""
     ck = "naver:kospi-market-rows"
-    cached = _cache_get(ck, allow_stale=True)
-    if cached is not None:
-        return cached.get("rows", [])
+    if not force_refresh:
+        cached = _cache_get(ck, allow_stale=True)
+        if cached is not None:
+            return cached.get("rows", [])
 
     try:
         s = requests.Session()
@@ -497,18 +498,19 @@ def _row_get(row: Any, *names: str) -> Any:
     return None
 
 
-def _get_kospi_market_rows() -> List[Dict[str, Any]]:
+def _get_kospi_market_rows(force_refresh: bool = False) -> List[Dict[str, Any]]:
     """KOSPI 전종목 시세 스냅샷.
 
     한 종목씩 호출하지 않고 pykrx의 by_ticker 일괄 스냅샷을 사용해 대상을 KOSPI
     전체로 넓힌다. 실패 시 빈 리스트를 반환하고 기존 WATCH_STOCKS 경로가 폴백한다.
     """
     ck = "kospi:all-stocks"
-    cached = _cache_get(ck, allow_stale=True)
-    if cached is not None:
-        return cached.get("rows", [])
+    if not force_refresh:
+        cached = _cache_get(ck, allow_stale=True)
+        if cached is not None:
+            return cached.get("rows", [])
 
-    naver_rows = _naver_kospi_market_rows()
+    naver_rows = _naver_kospi_market_rows(force_refresh=force_refresh)
     if naver_rows:
         _cache_set(ck, {"rows": naver_rows})
         return naver_rows

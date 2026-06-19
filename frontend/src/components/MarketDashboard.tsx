@@ -216,6 +216,7 @@ function TopStocks({ stocks, apiBase }: { stocks: Tick[]; apiBase: string }) {
   const [sector, setSector] = useState('')
   const [minMarketCap, setMinMarketCap] = useState('')
   const [direction, setDirection] = useState<'all' | 'up' | 'down'>('all')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -227,7 +228,15 @@ function TopStocks({ stocks, apiBase }: { stocks: Tick[]; apiBase: string }) {
       })
       .catch(() => {})
     return () => { alive = false }
-  }, [apiBase])
+  }, [apiBase, refreshTrigger])
+
+  // 15초마다 자동 갱신 타이머 실행
+  useEffect(() => {
+    const id = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1)
+    }, 15_000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     const q = query.trim()
@@ -242,7 +251,7 @@ function TopStocks({ stocks, apiBase }: { stocks: Tick[]; apiBase: string }) {
         .catch(() => { if (!ctl.signal.aborted) setDisplayRows([]) })
     }, 250)
     return () => { window.clearTimeout(t); ctl.abort() }
-  }, [apiBase, query, sort, order, sector, minMarketCap, direction])
+  }, [apiBase, query, sort, order, sector, minMarketCap, direction, refreshTrigger])
 
   const sectorOptions = Array.from(
     new Set([
@@ -251,7 +260,7 @@ function TopStocks({ stocks, apiBase }: { stocks: Tick[]; apiBase: string }) {
     ] as string[]),
   ).sort()
 
-  const tableRows: UniverseRow[] =
+  const rawRows: UniverseRow[] =
     displayRows.length > 0
       ? displayRows
       : stocks.map(s => ({
@@ -261,6 +270,19 @@ function TopStocks({ stocks, apiBase }: { stocks: Tick[]; apiBase: string }) {
           change: s.change,
           sector: s.sector,
         }))
+
+  // 실시간 틱 데이터가 존재하면 실시간 가격 및 변동률 병합
+  const tableRows: UniverseRow[] = rawRows.map(row => {
+    const live = stocks.find(s => s.symbol === row.symbol)
+    if (live) {
+      return {
+        ...row,
+        price: live.price,
+        change: live.change,
+      }
+    }
+    return row
+  })
 
   return (
     <Card
